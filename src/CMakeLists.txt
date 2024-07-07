@@ -6,6 +6,26 @@ add_executable(main
     main.cc
 )
 
+## disk
+add_library(disk
+  disk.cc
+)
+target_include_directories(disk
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(disk_test
+  disk_test.cc
+)
+target_include_directories(disk_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(disk_test
+  disk
+  GTest::gtest_main
+)
+gtest_discover_tests(disk_test)
+
 ## result
 add_library(result
   INTERFACE result.h
