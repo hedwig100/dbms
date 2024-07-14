@@ -6,6 +6,29 @@ add_executable(main
     main.cc
 )
 
+## buffer
+add_library(buffer
+  buffer.cc
+)
+target_link_libraries(buffer
+  disk
+)
+target_include_directories(buffer
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(buffer_test
+  buffer_test.cc
+)
+target_include_directories(buffer_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(buffer_test
+  buffer
+  GTest::gtest_main
+)
+gtest_discover_tests(buffer_test)
+
 ## disk
 add_library(disk
   disk.cc
