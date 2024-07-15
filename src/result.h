@@ -21,8 +21,8 @@ namespace result {
 //
 template <typename T, typename E> class ResultVE {
   public:
-    ResultVE(T const &ok) : tag_(Tag::Ok) { ok_ = ok; }
-    ResultVE(E const &error) : tag_(Tag::Error) { error_ = error; }
+    explicit ResultVE(T const &ok) : tag_(Tag::Ok) { ok_ = ok; }
+    explicit ResultVE(E const &error) : tag_(Tag::Error) { error_ = error; }
     ResultVE(ResultVE const &result) : tag_(result.tag_) {
         switch (tag_) {
         case Tag::Ok:
