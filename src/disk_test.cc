@@ -16,6 +16,17 @@ TEST(BlockID, ReturnsCorrectBlockIndex) {
     EXPECT_EQ(block_id.BlockIndex(), 0);
 }
 
+TEST(BlockID, CorrectlyCompare) {
+    const disk::BlockID block_id0("file0.tbl", 0), block_id1("file0.tbl", 0),
+        block_id2("file1.tbl", 0), block_id3("file0.tbl", 1),
+        block_id4("file1.tbl", 1);
+
+    EXPECT_TRUE(block_id0 == block_id1);
+    EXPECT_FALSE(block_id0 == block_id2);
+    EXPECT_FALSE(block_id0 == block_id3);
+    EXPECT_FALSE(block_id0 == block_id4);
+}
+
 TEST(Block, InstanciationAndReadByte) {
     char hello[] = "hello";
     const disk::Block block(5, hello);
