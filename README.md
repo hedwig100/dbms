@@ -2,20 +2,23 @@
 
 ## Build
 ```
-cmake -S . -B build
-cmake --build build
+./x build
 ```
 
 ## Run
-After you build the sources, run the following command.
 ```
-./build/src/main
+./x run main
 ```
 
 ## Test
-After you build the sources, run the following command.
+The following command runs all test.
 ```
-cd build/src && ctest
+./x test
+```
+
+If you want to run test in a file, you can use the following command.
+```
+./x test sample_lib
 ```
 
 ## Development
