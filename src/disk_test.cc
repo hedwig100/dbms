@@ -35,7 +35,7 @@ TEST(Block, ReadByteWithOutsideIndex) {
 
 class TempFileTest : public ::testing::Test {
   protected:
-    TempFileTest() : directory_path("parent/dir/"), filename("metadata.tbl") {
+    TempFileTest() : directory_path("parent-dir/"), filename("metadata.tbl") {
         if (!std::filesystem::exists(directory_path)) {
             std::filesystem::create_directories(directory_path);
         }
@@ -48,7 +48,7 @@ class TempFileTest : public ::testing::Test {
     }
 
     virtual ~TempFileTest() override {
-        remove((directory_path + filename).c_str());
+        std::filesystem::remove_all(directory_path);
     }
 
     const std::string directory_path;
@@ -58,7 +58,7 @@ class TempFileTest : public ::testing::Test {
 class NonExistentFileTest : public ::testing::Test {
   protected:
     NonExistentFileTest()
-        : directory_path("non/existent/directory/"),
+        : directory_path("non-existent-directory/"),
           non_existent_filename("deleted.txt") {
         if (std::filesystem::exists(directory_path + non_existent_filename)) {
             remove((directory_path + non_existent_filename).c_str());
@@ -66,8 +66,8 @@ class NonExistentFileTest : public ::testing::Test {
     }
 
     virtual ~NonExistentFileTest() override {
-        if (std::filesystem::exists(directory_path + non_existent_filename)) {
-            remove((directory_path + non_existent_filename).c_str());
+        if (std::filesystem::exists(directory_path)) {
+            std::filesystem::remove_all(directory_path);
         }
     }
 
