@@ -16,6 +16,11 @@ const std::string &BlockID::Filename() const { return filename_; }
 
 const int BlockID::BlockIndex() const { return block_index_; }
 
+bool BlockID::operator==(const BlockID &other_block) const {
+    return (filename_ == other_block.filename_) &&
+           (block_index_ == other_block.block_index_);
+}
+
 /** Block */
 Block::Block() {}
 

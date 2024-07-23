@@ -24,9 +24,11 @@ class BlockID {
     // Returns the block index.
     const int BlockIndex() const;
 
+    bool operator==(const BlockID &other_block) const;
+
   private:
-    const std::string filename_;
-    const int block_index_;
+    std::string filename_;
+    int block_index_;
 };
 
 // The unit of data exchanged with disk.

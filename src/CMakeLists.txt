@@ -6,6 +6,29 @@ add_executable(main
     main.cc
 )
 
+## buffer
+add_library(buffer
+  buffer.cc
+)
+target_link_libraries(buffer
+  disk
+)
+target_include_directories(buffer
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(buffer_test
+  buffer_test.cc
+)
+target_include_directories(buffer_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(buffer_test
+  buffer
+  GTest::gtest_main
+)
+gtest_discover_tests(buffer_test)
+
 ## disk
 add_library(disk
   disk.cc
@@ -25,6 +48,14 @@ target_link_libraries(disk_test
   GTest::gtest_main
 )
 gtest_discover_tests(disk_test)
+
+## macro_test
+add_library(macro_test
+  INTERFACE macro_test.h
+)
+target_include_directories(macro_test
+  INTERFACE ${PROJECT_SOURCE_DIR}/src
+)
 
 ## result
 add_library(result

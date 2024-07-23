@@ -1,4 +1,5 @@
 #include "disk.h"
+#include "macro_test.h"
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -14,6 +15,17 @@ TEST(BlockID, ReturnsCorrectFilename) {
 TEST(BlockID, ReturnsCorrectBlockIndex) {
     const disk::BlockID block_id("metatable.tbl", 0);
     EXPECT_EQ(block_id.BlockIndex(), 0);
+}
+
+TEST(BlockID, CorrectlyCompare) {
+    const disk::BlockID block_id0("file0.tbl", 0), block_id1("file0.tbl", 0),
+        block_id2("file1.tbl", 0), block_id3("file0.tbl", 1),
+        block_id4("file1.tbl", 1);
+
+    EXPECT_TRUE(block_id0 == block_id1);
+    EXPECT_FALSE(block_id0 == block_id2);
+    EXPECT_FALSE(block_id0 == block_id3);
+    EXPECT_FALSE(block_id0 == block_id4);
 }
 
 TEST(Block, InstanciationAndReadByte) {
@@ -33,47 +45,8 @@ TEST(Block, ReadByteWithOutsideIndex) {
     EXPECT_TRUE(block.ReadByte(6).IsError());
 }
 
-class TempFileTest : public ::testing::Test {
-  protected:
-    TempFileTest() : directory_path("parent-dir/"), filename("metadata.tbl") {
-        if (!std::filesystem::exists(directory_path)) {
-            std::filesystem::create_directories(directory_path);
-        }
-
-        std::ofstream file(directory_path + filename);
-        if (file.is_open()) {
-            file << "hello ";
-            file.close();
-        }
-    }
-
-    virtual ~TempFileTest() override {
-        std::filesystem::remove_all(directory_path);
-    }
-
-    const std::string directory_path;
-    const std::string filename;
-};
-
-class NonExistentFileTest : public ::testing::Test {
-  protected:
-    NonExistentFileTest()
-        : directory_path("non-existent-directory/"),
-          non_existent_filename("deleted.txt") {
-        if (std::filesystem::exists(directory_path + non_existent_filename)) {
-            remove((directory_path + non_existent_filename).c_str());
-        }
-    }
-
-    virtual ~NonExistentFileTest() override {
-        if (std::filesystem::exists(directory_path)) {
-            std::filesystem::remove_all(directory_path);
-        }
-    }
-
-    const std::string directory_path;
-    const std::string non_existent_filename;
-};
+FILE_EXISTENT_TEST(TempFileTest, "hello ");
+FILE_NONEXISTENT_TEST(NonExistentFileTest);
 
 TEST_F(TempFileTest, DiskManagerCorrectlyReads) {
     const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
