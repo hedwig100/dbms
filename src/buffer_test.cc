@@ -1,5 +1,6 @@
 #include "buffer.h"
 #include "disk.h"
+#include "macro_test.h"
 #include "result.h"
 #include <filesystem>
 #include <fstream>
@@ -28,51 +29,8 @@ TEST(BufferSetBlock, CorrectlySetBlock) {
     EXPECT_EQ(buf.Block().Content(), block.Content());
 }
 
-// TODO: move TempFilTest of disk_test.cc to util direcoty and use it from
-// there.
-class TempFileTest : public ::testing::Test {
-  protected:
-    TempFileTest() : directory_path("parent-dir/"), filename("metadata.tbl") {
-        if (!std::filesystem::exists(directory_path)) {
-            std::filesystem::create_directories(directory_path);
-        }
-
-        std::ofstream file(directory_path + filename);
-        if (file.is_open()) {
-            file << "hello ";
-            file.close();
-        }
-    }
-
-    virtual ~TempFileTest() override {
-        std::filesystem::remove_all(directory_path);
-    }
-
-    const std::string directory_path;
-    const std::string filename;
-};
-
-// TODO: move NonExistentFileTest of disk_test.cc to util direcoty and use it
-// from there.
-class NonExistentFileTest : public ::testing::Test {
-  protected:
-    NonExistentFileTest()
-        : directory_path("non-existent-directory/"),
-          non_existent_filename("deleted.txt") {
-        if (std::filesystem::exists(directory_path + non_existent_filename)) {
-            remove((directory_path + non_existent_filename).c_str());
-        }
-    }
-
-    virtual ~NonExistentFileTest() override {
-        if (std::filesystem::exists(directory_path)) {
-            std::filesystem::remove_all(directory_path);
-        }
-    }
-
-    const std::string directory_path;
-    const std::string non_existent_filename;
-};
+FILE_EXISTENT_TEST(TempFileTest, "hello ");
+FILE_NONEXISTENT_TEST(NonExistentFileTest);
 
 bool DoesBufferPoolContainTheBlock(
     const std::vector<buffer::Buffer> &buffer_pool,
