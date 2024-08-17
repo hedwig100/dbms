@@ -49,6 +49,29 @@ target_link_libraries(disk_test
 )
 gtest_discover_tests(disk_test)
 
+## log
+add_library(log
+  log.cc
+)
+target_link_libraries(log
+  disk
+)
+target_include_directories(log
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(log_test
+  log_test.cc
+)
+target_include_directories(log_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(log_test
+  log
+  GTest::gtest_main
+)
+gtest_discover_tests(log_test)
+
 ## macro_test
 add_library(macro_test
   INTERFACE macro_test.h
