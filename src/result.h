@@ -128,6 +128,22 @@ template <typename T> class ResultVE<T, T> {
 //
 template <typename T> using ResultV = ResultVE<T, std::string>;
 
+// Has either a sign of success or an error. The success is represented as int.
+// Usually, you should use result::Ok() or result::Error() below to instantiate
+// this class. One of the typical use case is below;
+//
+// result::ResultE<int> WriteAppend(std::vector<int> &A, const std::vector<int>
+// &B) {
+//   if (B.size() > A.size()) {
+//     std::copy(B.begin(), B.end() + A.size(), A.begin());
+//     return result::Error(A.size());
+//   }
+//   std::copy(B.begin(), B.end(), A.begin());
+//   return result::Ok();
+// }
+//
+template <typename T> using ResultE = ResultVE<int, T>;
+
 // Has an error or nothing. You should use this class when you don't have to
 // return values when the function succeeds.
 // Usually, you should use result::Ok() or result::Error() below to instantiate
