@@ -16,6 +16,7 @@ namespace disk {
 // block in the file with the block size.
 class BlockID {
   public:
+    inline BlockID() : filename_(""), block_index_(0) {};
     BlockID(const std::string &filename, const int block_index);
 
     // Returns the filename.
@@ -42,8 +43,14 @@ class Block {
     // Initialize a block with the `content`.
     Block(const int block_size, const char *content);
 
+    inline int Size() const { return size_; }
+    inline void SetSize(int size) { size_ = size; }
+
     // Reads the byte with the `offset`.
     ResultV<uint8_t> ReadByte(const int offset) const;
+
+    // Reads int a 4-byte integer) with the `offset`
+    ResultV<int> ReadInt(const int offset) const;
 
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;

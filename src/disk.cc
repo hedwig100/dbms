@@ -39,6 +39,13 @@ ResultV<uint8_t> Block::ReadByte(const int offset) const {
     return Ok(content_[offset]);
 }
 
+ResultV<int> Block::ReadInt(const int offset) const {
+    if (offset + 3 >= content_.size())
+        return Error("an integer to be read should be fit in the content.");
+    return Ok((content_[offset + 3] << 24) | (content_[offset + 2] << 16) |
+              (content_[offset + 1] << 8) | content_[offset]);
+}
+
 const std::vector<uint8_t> &Block::Content() const { return content_; }
 
 ResultE<size_t>
