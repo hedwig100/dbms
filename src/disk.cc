@@ -22,13 +22,11 @@ bool BlockID::operator==(const BlockID &other_block) const {
 }
 
 /** Block */
-Block::Block() : size_(0) {}
+Block::Block() {}
 
-Block::Block(const int block_size) : size_(0) {
-    content_.assign(block_size, 0);
-}
+Block::Block(const int block_size) { content_.assign(block_size, 0); }
 
-Block::Block(const int block_size, const char *content) : size_(block_size) {
+Block::Block(const int block_size, const char *content) {
     content_.resize(block_size);
     std::copy(content, content + block_size, content_.begin());
 }
@@ -47,22 +45,6 @@ ResultV<int> Block::ReadInt(const int offset) const {
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }
-
-ResultE<size_t>
-Block::WriteAppend(const std::vector<uint8_t>::iterator &bytes_begin,
-                   const std::vector<uint8_t>::iterator &bytes_end) {
-    const size_t bytes_size      = bytes_end - bytes_begin;
-    const size_t appendable_size = content_.size() - size_;
-    if (bytes_size > appendable_size) {
-        std::copy(bytes_begin, bytes_begin + appendable_size,
-                  content_.begin() + size_);
-        size_ += appendable_size;
-        return Error(appendable_size);
-    }
-    std::copy(bytes_begin, bytes_end, content_.begin() + size_);
-    size_ += bytes_size;
-    return Ok();
-}
 
 /** DiskManager */
 

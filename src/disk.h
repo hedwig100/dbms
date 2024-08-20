@@ -43,9 +43,6 @@ class Block {
     // Initialize a block with the `content`.
     Block(const int block_size, const char *content);
 
-    inline int Size() const { return size_; }
-    inline void SetSize(int size) { size_ = size; }
-
     // Reads the byte with the `offset`.
     ResultV<uint8_t> ReadByte(const int offset) const;
 
@@ -55,18 +52,7 @@ class Block {
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;
 
-    // Appends `bytes` to the tail of this block. If the input bytes sequece
-    // does not fit to the block, returns an error. The error contains the
-    // length of bytes sequence appended to the block.
-    ResultE<size_t>
-    WriteAppend(const std::vector<uint8_t>::iterator &bytes_begin,
-                const std::vector<uint8_t>::iterator &bytes_end);
-
   private:
-    // The size of the content of the block in bytes (`block_size` is the
-    // maximum size of the block).
-    int size_;
-
     std::vector<uint8_t> content_;
 };
 
