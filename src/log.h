@@ -9,6 +9,30 @@
 
 namespace dblog {
 
+class LogBlock {
+  public:
+    inline LogBlock() : offset_(0), block_() {};
+
+    explicit LogBlock(const int block_size);
+
+    inline int Offset() const { return offset_; }
+    inline void SetOffset(int offset) { offset_ = offset; }
+
+    // Appends `bytes` to the tail of this block. If the input bytes sequece
+    // does not fit to the block, returns an error. The error contains the
+    // length of bytes sequence appended to the block.
+    ResultE<size_t>
+    WriteAppend(const std::vector<uint8_t>::iterator &bytes_begin,
+                const std::vector<uint8_t>::iterator &bytes_end);
+
+  private:
+    // The size of the content of the block in bytes (`block_size` is the
+    // maximum size of the block).
+    int offset_;
+
+    disk::Block block_;
+};
+
 // Types of log records
 enum class LogType {
     kTransactionBegin = 0,

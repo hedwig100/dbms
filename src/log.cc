@@ -25,7 +25,7 @@ std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record) {
     log_record_with_header.reserve(log_record_with_header.size() +
                                    /*size of `log_length` in bytes*/ 8 +
                                    log_body.size());
-    for (int shift_size = 0; shift_size < 256; shift_size += 32)
+    for (int shift_size = 0; shift_size < 64; shift_size += 8)
         log_record_with_header.push_back((log_length >> shift_size) & 0xFFFF);
     std::copy(log_body.begin(), log_body.end(),
               std::back_inserter(log_record_with_header));
@@ -45,6 +45,32 @@ ConcatenateLogRecords(const std::vector<LogRecord *> &log_records) {
                   std::back_inserter(concatenated_logs));
     }
     return concatenated_logs;
+}
+
+// The head of each block is offset of the block (the block is empty from the
+// offset). The offset is represented as a 4-byte integer.
+const int kOffsetSize = 4;
+
+explicit LogBlock::LogBlock(const int block_size) {
+    offset_ = kOffsetSize;
+    block_  = disk::Block(block_size);
+    block_.WriteInt(0, offset_);
+}
+
+ResultE<size_t>
+LogBlock::WriteAppend(const std::vector<uint8_t>::iterator &bytes_begin,
+                      const std::vector<uint8_t>::iterator &bytes_end) {
+    const size_t bytes_size      = bytes_end - bytes_begin;
+    const size_t appendable_size = block_.content_.size() - size_;
+    if (bytes_size > appendable_size) {
+        std::copy(bytes_begin, bytes_begin + appendable_size,
+                  content_.begin() + size_);
+        size_ += appendable_size;
+        return Error(appendable_size);
+    }
+    std::copy(bytes_begin, bytes_end, content_.begin() + size_);
+    size_ += bytes_size;
+    return Ok();
 }
 
 LogManager::LogManager(const std::string &log_filename,
@@ -67,8 +93,8 @@ Result LogManager::Init() {
         }
         last_block_info_ = LogManager::LogBlockInfo{
             .block_id = disk::BlockID(log_filename_, 0),
-            .block    = disk::Block(),
-            .offset   = 0};
+            .block    = disk::Block(/**/),
+            .offset   = kOffsetSize};
         return Ok();
     }
 
@@ -102,7 +128,7 @@ Result LogManager::WriteLogs(const std::vector<LogRecord *> &log_records) {
     while (log_iterator < concatenated_logs.end()) {
         const size_t space_left =
             disk_manager_.BlockSize() - last_block_info_.block.Size();
-        }
+    }
 
     return Ok();
 }
