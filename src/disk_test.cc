@@ -45,6 +45,154 @@ TEST(Block, ReadByteWithOutsideIndex) {
     EXPECT_TRUE(block.ReadByte(6).IsError());
 }
 
+TEST(Block, CorrectlyWriteByte) {
+    disk::Block block(10);
+    EXPECT_TRUE(block.WriteByte(0, 'h').IsOk());
+    EXPECT_TRUE(block.WriteByte(1, 'e').IsOk());
+
+    EXPECT_EQ(block.ReadByte(0).Get(), 'h');
+    EXPECT_EQ(block.ReadByte(1).Get(), 'e');
+}
+
+TEST(Block, WriteByteWithOutsideIndex) {
+    disk::Block block(3);
+    EXPECT_TRUE(block.WriteByte(-1, 'a').IsError());
+    EXPECT_TRUE(block.WriteByte(3, 'b').IsError());
+    EXPECT_TRUE(block.WriteByte(5, 'b').IsError());
+}
+
+TEST(Block, CorrectlyReadBytes) {
+    char hello[] = "hello";
+    const disk::Block block(5, hello);
+
+    std::vector<uint8_t> read_value;
+    EXPECT_TRUE(block.ReadBytes(1, /*length=*/3, read_value).IsOk());
+
+    const std::vector<uint8_t> expect_value = {'e', 'l', 'l'};
+    EXPECT_EQ(read_value, expect_value);
+}
+
+TEST(BLock, ReadBytesWithOutsideIndex) {
+    const disk::Block block(3);
+
+    std::vector<uint8_t> read_value;
+    EXPECT_TRUE(
+        block.ReadBytes(/*offset=*/-1, /*length=*/2, read_value).IsError());
+    EXPECT_TRUE(
+        block.ReadBytes(/*offset=*/3, /*length=*/2, read_value).IsError());
+    EXPECT_TRUE(
+        block.ReadBytes(/*offset=*/5, /*length=*/2, read_value).IsError());
+}
+
+TEST(Block, CorrectlyWriteBytes) {
+    disk::Block block(10);
+    const std::vector<uint8_t> write_value = {'h', 'e', 'l', 'l', 'o'};
+
+    EXPECT_TRUE(
+        block.WriteBytes(/*offset=*/3, /*length=*/2, write_value).IsOk());
+    EXPECT_EQ(block.ReadByte(3).Get(), 'h');
+    EXPECT_EQ(block.ReadByte(4).Get(), 'e');
+
+    EXPECT_TRUE(
+        block.WriteBytes(/*offset=*/5, /*length=*/5, write_value).IsOk());
+    EXPECT_EQ(block.ReadByte(3).Get(), 'h');
+    EXPECT_EQ(block.ReadByte(4).Get(), 'e');
+    EXPECT_EQ(block.ReadByte(5).Get(), 'h');
+    EXPECT_EQ(block.ReadByte(6).Get(), 'e');
+    EXPECT_EQ(block.ReadByte(7).Get(), 'l');
+    EXPECT_EQ(block.ReadByte(8).Get(), 'l');
+    EXPECT_EQ(block.ReadByte(9).Get(), 'o');
+}
+
+TEST(Block, WriteBytesWithOutsideIndex) {
+    disk::Block block(3);
+    const std::vector<uint8_t> write_value = {'h'};
+
+    EXPECT_TRUE(
+        block.WriteBytes(/*offset=*/-1, /*length=*/1, write_value).IsError());
+    EXPECT_TRUE(
+        block.WriteBytes(/*offset=*/3, /*length=*/1, write_value).IsError());
+    EXPECT_TRUE(
+        block.WriteBytes(/*offset=*/1, /*length=*/2, write_value).IsError());
+}
+
+TEST(Block, CorrectlyReadInt) {
+    disk::Block block(5);
+
+    ASSERT_TRUE(block.WriteByte(1, /*0b01010110=0x56=*/'V').IsOk());
+
+    auto expect_int = block.ReadInt(1);
+    EXPECT_TRUE(expect_int.IsOk());
+    EXPECT_EQ(expect_int.Get(), /*0b01010110=*/86);
+
+    expect_int = block.ReadInt(0);
+    EXPECT_TRUE(expect_int.IsOk());
+    EXPECT_EQ(expect_int.Get(), /*0b0101011000000000=*/86 << 8);
+}
+
+TEST(Block, ReadIntWithOutsideIndex) {
+    disk::Block block(5);
+
+    EXPECT_TRUE(block.ReadInt(-1).IsError());
+    EXPECT_TRUE(block.ReadInt(2).IsError());
+}
+
+TEST(Block, CorrectlyWriteInt) {
+    disk::Block block(10);
+
+    EXPECT_TRUE(block.WriteInt(5, 1313109832).IsOk());
+
+    auto expect_int = block.ReadInt(5);
+    ASSERT_TRUE(expect_int.IsOk());
+    EXPECT_EQ(expect_int.Get(), 1313109832);
+}
+
+TEST(Block, WriteIntWithOutsideIndex) {
+    disk::Block block(10);
+    EXPECT_TRUE(block.WriteInt(-1, 0).IsError());
+    EXPECT_TRUE(block.WriteInt(7, 0).IsError());
+    EXPECT_TRUE(block.WriteInt(9, 0).IsError());
+}
+
+TEST(Block, CorrectlyReadString) {
+    disk::Block block(10, "abcdefghi");
+
+    auto expect_str = block.ReadString(/*offset=*/1, /*length=*/4);
+    EXPECT_TRUE(expect_str.IsOk());
+    EXPECT_EQ(expect_str.Get(), "bcde");
+
+    expect_str = block.ReadString(/*offset=*/4, /*length=*/1);
+    EXPECT_TRUE(expect_str.IsOk());
+    EXPECT_EQ(expect_str.Get(), "e");
+}
+
+TEST(Block, ReadStringWithOutsideIndex) {
+    disk::Block block(10, "abcdefghi");
+
+    EXPECT_TRUE(block.ReadString(/*offset=*/-1, /*length=*/3).IsError());
+    EXPECT_TRUE(block.ReadString(/*offset=*/8, /*length=*/3).IsError());
+}
+
+TEST(Block, CorrectlyWriteString) {
+    disk::Block block(20);
+
+    EXPECT_TRUE(block.WriteString(/*offset=*/3, "abc").IsOk());
+
+    auto expect_str = block.ReadString(/*offset=*/3, /*length=*/3);
+    ASSERT_TRUE(expect_str.IsOk());
+    EXPECT_EQ(expect_str.Get(), "abc");
+    expect_str = block.ReadString(/*offset=*/5, /*length=*/1);
+    ASSERT_TRUE(expect_str.IsOk());
+    EXPECT_EQ(expect_str.Get(), "c");
+}
+
+TEST(Block, WriteStringWithOutsideIndex) {
+    disk::Block block(20);
+
+    EXPECT_TRUE(block.WriteString(/*offset=*/-1, "").IsError());
+    EXPECT_TRUE(block.WriteString(/*offset=*/9, "aaaaaaaaaaaa").IsError());
+}
+
 FILE_EXISTENT_TEST(TempFileTest, "hello ");
 FILE_NONEXISTENT_TEST(NonExistentFileTest);
 
