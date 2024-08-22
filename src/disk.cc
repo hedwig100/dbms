@@ -1,5 +1,7 @@
 #include "disk.h"
 
+#include <algorithm>
+#include <cstring>
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
@@ -22,17 +24,77 @@ bool BlockID::operator==(const BlockID &other_block) const {
 }
 
 /** Block */
-Block::Block() {}
-
 Block::Block(const int block_size, const char *content) {
     content_.resize(block_size);
-    std::copy(content, content + block_size, content_.begin());
+    const int copiable_size = std::min(block_size, int(strlen(content)));
+    std::copy(content, content + copiable_size, content_.begin());
 }
 
 ResultV<uint8_t> Block::ReadByte(const int offset) const {
-    if (offset >= content_.size())
-        return Error("offset should be smaller than content size.");
+    if (offset < 0 || offset >= content_.size())
+        return Error("offset should be fit the size");
     return Ok(content_[offset]);
+}
+
+Result Block::WriteByte(const int offset, const uint8_t value) {
+    if (offset < 0 || offset >= content_.size())
+        return Error("offset should be fit the size");
+    content_[offset] = value;
+    return Ok();
+}
+
+Result Block::ReadBytes(const int offset, const size_t length,
+                        std::vector<uint8_t> &bytes) const {
+    if (offset < 0 || offset + length > content_.size())
+        return Error("offset should be fit the size");
+    bytes.resize(length);
+    std::copy(content_.begin() + offset, content_.begin() + offset + length,
+              bytes.begin());
+    return Ok();
+}
+
+Result Block::WriteBytes(const int offset, const size_t length,
+                         const std::vector<uint8_t> &value) {
+    if (offset < 0 || offset + length > content_.size())
+        return Error("offset should be fit the size");
+    if (value.size() < length)
+        return Error("value should be longer than length");
+    std::copy(value.begin(), value.begin() + length, content_.begin() + offset);
+    return Ok();
+}
+
+constexpr int kIntBytesize = 4;
+
+ResultV<int> Block::ReadInt(const int offset) const {
+    if (offset < 0 || offset + kIntBytesize > content_.size())
+        return Error("offset should be fit the size");
+    int read_value = 0;
+    std::memcpy(&read_value, &(content_[offset]), kIntBytesize);
+    return Ok(read_value);
+}
+
+Result Block::WriteInt(const int offset, const int value) {
+    if (offset < 0 || offset + kIntBytesize > content_.size())
+        return Error("offset should be fit the size");
+    std::memcpy(&(content_[offset]), &value, kIntBytesize);
+    return Ok();
+}
+
+ResultV<std::string> Block::ReadString(const int offset,
+                                       const int length) const {
+    if (offset < 0 || offset + length > content_.size())
+        return Error("offset should be fit the size");
+    std::string read_value;
+    read_value.resize(length);
+    std::memcpy(&read_value[0], &content_[offset], length);
+    return Ok(read_value);
+}
+
+Result Block::WriteString(const int offset, const std::string &value) {
+    if (offset < 0 || offset + value.size() > content_.size())
+        return Error("offset should be fit the size");
+    std::memcpy(&content_[offset], &value[0], value.size());
+    return Ok();
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }

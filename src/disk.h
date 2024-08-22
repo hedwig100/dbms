@@ -34,11 +34,42 @@ class BlockID {
 // The unit of data exchanged with disk.
 class Block {
   public:
-    Block();
+    inline Block() {}
+    inline explicit Block(const int block_size) {
+        content_.assign(block_size, 0);
+    }
+
+    // Initialize the block with `block_size` and `content`.
+    // If `content` is smaller than `block_size`, the trailing bytes are empty.
     Block(const int block_size, const char *content);
 
     // Reads the byte with the `offset`.
     ResultV<uint8_t> ReadByte(const int offset) const;
+
+    // Writes the byte `value` with the `offset`.
+    Result WriteByte(const int offset, const uint8_t value);
+
+    // Reads the bytes of `length` with the `offset` to `bytes`.
+    Result ReadBytes(const int offset, const size_t length,
+                     std::vector<uint8_t> &bytes) const;
+
+    // Writes the bytes `value` with the `offset`. If the `value` is shorter
+    // than `length`, only writes the first `length` bytes.
+    Result WriteBytes(const int offset, const size_t length,
+                      const std::vector<uint8_t> &value);
+
+    // Reads the int with the `offset`. The value is read as little-endian.
+    ResultV<int> ReadInt(const int offset) const;
+
+    // Writes the int `value` with the `offset`. The value is written as
+    // little-endian.
+    Result WriteInt(const int offset, const int value);
+
+    // Reads the string of length `length` with the `offset`.
+    ResultV<std::string> ReadString(const int offset, const int length) const;
+
+    // Writes the string `value` with the `offset`.
+    Result WriteString(const int offset, const std::string &value);
 
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;
