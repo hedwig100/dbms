@@ -1,6 +1,8 @@
 enable_testing()
 include(GoogleTest)
 
+add_subdirectory(datatype)
+
 ## main
 add_executable(main
     main.cc
@@ -32,6 +34,10 @@ gtest_discover_tests(buffer_test)
 ## disk
 add_library(disk
   disk.cc
+)
+target_link_libraries(disk
+  char
+  int
 )
 target_include_directories(disk
   PUBLIC ${PROJECT_SOURCE_DIR}/src
