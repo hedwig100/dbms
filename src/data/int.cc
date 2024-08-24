@@ -21,4 +21,17 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset,
     return Ok();
 }
 
+void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
+                    const int value) {
+    if (offset + kIntBytesize > bytes.size())
+        bytes.resize(offset + kIntBytesize);
+    WriteInt(bytes, offset, value);
 }
+
+void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
+    if (offset + kIntBytesize > bytes.size())
+        bytes.resize(offset + kIntBytesize);
+    WriteInt(bytes, offset, value_);
+}
+
+} // namespace data
