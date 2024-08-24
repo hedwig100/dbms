@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace datatype {
+namespace data {
 
 using namespace result;
 
@@ -18,6 +18,6 @@ ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
 Result WriteString(std::vector<uint8_t> &bytes, const int offset,
                    const int length, const std::string &value);
 
-} // namespace datatype
+} // namespace data
 
 #endif // _DATATYPE_CHAR_H

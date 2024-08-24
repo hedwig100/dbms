@@ -1,10 +1,10 @@
-#ifndef _DATATYPE_INT_H
-#define _DATATYPE_INT_H
+#ifndef _DATA_INT_H
+#define _DATA_INT_H
 
 #include "result.h"
 #include <vector>
 
-namespace datatype {
+namespace data {
 
 using namespace result;
 
@@ -16,6 +16,6 @@ ResultV<int> ReadInt(const std::vector<uint8_t> &bytes, const int offset);
 // little-endian.
 Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 
-} // namespace datatype
+} // namespace data
 
-#endif // _DATATYPE_INT_H
+#endif // _DATA_INT_H

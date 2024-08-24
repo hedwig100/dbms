@@ -1,7 +1,7 @@
 #include "char.h"
 #include <cstring>
 
-namespace datatype {
+namespace data {
 
 ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
                                 const int offset, const int length) {
@@ -23,4 +23,4 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
     return Ok();
 }
 
-} // namespace datatype
+} // namespace data

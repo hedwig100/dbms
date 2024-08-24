@@ -1,7 +1,7 @@
 enable_testing()
 include(GoogleTest)
 
-add_subdirectory(datatype)
+add_subdirectory(data)
 
 ## main
 add_executable(main

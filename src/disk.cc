@@ -1,7 +1,7 @@
 #include "disk.h"
 
-#include "datatype/char.h"
-#include "datatype/int.h"
+#include "data/char.h"
+#include "data/int.h"
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>
@@ -66,20 +66,20 @@ Result Block::WriteBytes(const int offset, const size_t length,
 }
 
 ResultV<int> Block::ReadInt(const int offset) const {
-    return datatype::ReadInt(content_, offset);
+    return data::ReadInt(content_, offset);
 }
 
 Result Block::WriteInt(const int offset, const int value) {
-    return datatype::WriteInt(content_, offset, value);
+    return data::WriteInt(content_, offset, value);
 }
 
 ResultV<std::string> Block::ReadString(const int offset,
                                        const int length) const {
-    return datatype::ReadString(content_, offset, length);
+    return data::ReadString(content_, offset, length);
 }
 
 Result Block::WriteString(const int offset, const std::string &value) {
-    return datatype::WriteString(content_, offset, value.size(), value);
+    return data::WriteString(content_, offset, value.size(), value);
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }

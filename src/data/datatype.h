@@ -1,7 +1,7 @@
-#ifndef _DATATYPE_DATATYPE_H
-#define _DATATYPE_DATATYPE_H
+#ifndef _DATA_DATATYPE_H
+#define _DATA_DATATYPE_H
 
-namespace datatype {
+namespace data {
 
 enum class DataType {
     // 32-bit integer
@@ -11,6 +11,6 @@ enum class DataType {
     kChar = 1,
 };
 
-} // namespace datatype
+} // namespace data
 
 #endif // _DATATYPE_DATATYPE_H

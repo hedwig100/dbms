@@ -1,7 +1,7 @@
 #include "int.h"
 #include <cstring>
 
-namespace datatype {
+namespace data {
 
 const static int kIntBytesize = 4;
 

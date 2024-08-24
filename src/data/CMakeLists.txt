@@ -13,7 +13,7 @@ add_executable(char_test
   char_test.cc
 )
 target_include_directories(char_test
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/datatypoe
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
 )
 target_link_libraries(char_test
   char
@@ -33,7 +33,7 @@ add_executable(int_test
   int_test.cc
 )
 target_include_directories(int_test
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/datatypoe
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
 )
 target_link_libraries(int_test
   int
