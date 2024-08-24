@@ -1,5 +1,7 @@
 #include "disk.h"
 
+#include "datatype/char.h"
+#include "datatype/int.h"
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>
@@ -63,38 +65,21 @@ Result Block::WriteBytes(const int offset, const size_t length,
     return Ok();
 }
 
-constexpr int kIntBytesize = 4;
-
 ResultV<int> Block::ReadInt(const int offset) const {
-    if (offset < 0 || offset + kIntBytesize > content_.size())
-        return Error("offset should be fit the size");
-    int read_value = 0;
-    std::memcpy(&read_value, &(content_[offset]), kIntBytesize);
-    return Ok(read_value);
+    return datatype::ReadInt(content_, offset);
 }
 
 Result Block::WriteInt(const int offset, const int value) {
-    if (offset < 0 || offset + kIntBytesize > content_.size())
-        return Error("offset should be fit the size");
-    std::memcpy(&(content_[offset]), &value, kIntBytesize);
-    return Ok();
+    return datatype::WriteInt(content_, offset, value);
 }
 
 ResultV<std::string> Block::ReadString(const int offset,
                                        const int length) const {
-    if (offset < 0 || offset + length > content_.size())
-        return Error("offset should be fit the size");
-    std::string read_value;
-    read_value.resize(length);
-    std::memcpy(&read_value[0], &content_[offset], length);
-    return Ok(read_value);
+    return datatype::ReadString(content_, offset, length);
 }
 
 Result Block::WriteString(const int offset, const std::string &value) {
-    if (offset < 0 || offset + value.size() > content_.size())
-        return Error("offset should be fit the size");
-    std::memcpy(&content_[offset], &value[0], value.size());
-    return Ok();
+    return datatype::WriteString(content_, offset, value.size(), value);
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }
