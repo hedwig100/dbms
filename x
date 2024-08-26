@@ -38,8 +38,9 @@ elif [ $cmd = "test" ]; then
         build 
         cd build/src && ctest
     else 
-        target=$2
+        target_with_directory=$2
+        target=${target_with_directory##*/}
         build "${target}_test"
-        cd build/src && ./${target}_test
+        cd build/src && ./${target_with_directory}_test
     fi
 fi
