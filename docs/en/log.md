@@ -33,48 +33,44 @@ Length of loggings for each kind (log length, log body) is the following.
 
 ### Beginning of a transaction
 
+Has the following log body.
 ```
-| 00 | transaction_id |
+| 0b00000000 | transaction_id |
 ```
 
 ### An operation to a data item
 
-Let MANIP_TYPE be 
-
-- 00: insert
-- 01: update
-- 10: delete.
-
-Then, the log format is 
-
+Has the following log body.
 ```
-| 01 | transaction_id | MANIP_TYPE (2bits) | filename | offset | TYPE (4bits) | content | 
+| 0b01{MANIP_TYPE(2bits)}{TYPE(4bits)} | transaction_id | filename | offset | type_parameter* | previous_content* | new_content* | 
 ```
 
-The offset is in bytes. TYPE represents the type of a data item such as an integer of char(N), and content is the value of the data item.
+- MANIP_TYPE represents insert, update, or delete in 2bits.
+- TYPE represents type of a data item like an integer, char.
+- filename, offset is the place where the data item is written.
+- type_parameter is any values equipped with the type. For example, in the case of `Char`, type parameters are length of the `Char`. This can be empty.
+- previous_content is the previous value of the data item. This is empty in the case of insert log.
+- new_content is the new value of the data item. This is empty in the case of delete log.
 
 ### End of a transaction
 
-Let END_TYPE be
-
-- 0: commit
-- 1: rollback.
-
-Then, the log format is 
-
+Has the following log body.
 ```
-| 10 | transaction_id | END_TYPE (1bit) |
+| 0b10{END_TYPE(1bit)}00000 | transaction_id |
 ```
+
+- END_TYPE represents commit or rollback in 1bit.
 
 ### Checkpointing
 
 This log implies that all updates before this log is written to the disk.
 
+Has the following log body.
 ```
-| 11 |
+| 0b11000000 |
 ```
 
-## Atomic write of log
+## Atomic writes of log
 
 A log needs to be added atomically. This is realized by using the checksum.
 
