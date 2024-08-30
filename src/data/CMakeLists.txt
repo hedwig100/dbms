@@ -40,3 +40,23 @@ target_link_libraries(int_test
   GTest::gtest_main
 )
 gtest_discover_tests(int_test)
+
+## uint32
+add_library(uint32
+  uint32.cc
+)
+target_include_directories(uint32
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(uint32_test
+  uint32_test.cc
+)
+target_include_directories(uint32_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
+)
+target_link_libraries(uint32_test
+  uint32
+  GTest::gtest_main
+)
+gtest_discover_tests(uint32_test)
