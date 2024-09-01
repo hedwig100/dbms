@@ -1,7 +1,7 @@
 enable_testing()
 include(GoogleTest)
 
-add_subdirectory(datatype)
+add_subdirectory(data)
 
 ## main
 add_executable(main
@@ -54,6 +54,32 @@ target_link_libraries(disk_test
   GTest::gtest_main
 )
 gtest_discover_tests(disk_test)
+
+## log_record
+add_library(log_record
+  log_record.cc
+)
+target_link_libraries(log_record
+  char
+  disk
+  int 
+  uint32
+)
+target_include_directories(log_record
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(log_record_test
+  log_record_test.cc
+)
+target_include_directories(log_record_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(log_record_test
+  log_record
+  GTest::gtest_main
+)
+gtest_discover_tests(log_record_test)
 
 ## macro_test
 add_library(macro_test

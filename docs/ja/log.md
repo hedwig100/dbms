@@ -29,41 +29,42 @@ DBMSはコミットされたトランザクションの永続化のため, ロ�
 
 ### トランザクション開始
 
+ログ本体は以下のようである.
+
 ```
-| 00 | transaction_id |
+| 0b00000000 | transaction_id |
 ```
 
 ### 一つのアイテム(整数、文字列など)に対する操作
 
-MANIP_TYPEは
-- 追加: 00
-- 更新: 01
-- 削除: 10
-として,
-
+ログ本体は以下のようである.
 ```
-| 01 | transaction_id | MANIP_TYPE (2bits) | filename | offset | TYPE(4bits) | content | 
+| 0b01{MANIP_TYPE(2bit)}{TYPE(4bit)} | transaction_id | filename | offset | type_parameter* | previous_content* | new_content* | 
 ```
 
-となる. offsetはバイト単位で記す. TYPEは整数, 固定長文字列などのデータアイテムの型を表すもので, contentはデータアイテムの値である. contentはデータアイテムを復元するのに用いられる.
+- MANIP_TYPEは追加, 更新, 削除のいずれかを2bitであらわす.
+- TYPEは整数, 固定長文字列などのデータアイテムの型を表す.
+- filename, offsetはこのデータアイテムが書かれていた場所を指す.
+- type_parameterは型に付随する値をあらわす. たとえば`Char`型の場合, 文字列の長さなどを持つ. これは`Int`のようにない場合もある.
+- previous_contentはデータアイテムの以前のである. これは追加ログの場合はない.
+- new_contentはデータアイテムの新しい値. これは削除ログの場合はない.
 
 ### トランザクション終了
 
-END_TYPEは
-- コミット: 0
-- ロールバック: 1
-として,
+ログ本体は以下のようである.
+```
+| 0b10{END_TYPE(1bit)}00000 | transaction_id |
+```
 
-```
-| 10 | transaction_id | END_TYPE (1bit) |
-```
+- END_TYPEはコミットまたはロールバックを1bitであらわす.
 
 ### チェックポイント
 
 これ以前のログに書かれた変更ははすべてディスクになされたことを示すログ. 
 
+ログ本体は以下のようである.
 ```
-| 11 |
+| 0b11000000 |
 ```
 
 ## ログのAtomicな追加

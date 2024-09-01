@@ -1,7 +1,8 @@
 #include "char.h"
+#include "uint32.h"
 #include <cstring>
 
-namespace datatype {
+namespace data {
 
 ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
                                 const int offset, const int length) {
@@ -23,4 +24,26 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
     return Ok();
 }
 
-} // namespace datatype
+void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
+                       const std::string &value) {
+    if (offset + value.size() > bytes.size())
+        bytes.resize(offset + value.size());
+    WriteString(bytes, offset, value.size(), value);
+}
+
+Char::Char(const std::string &value, uint8_t length) : length_(length) {
+    value_ = value.substr(0, length);
+    if (value_.size() < length) value_.resize(length, ' ');
+}
+
+void Char::WriteTypeParameter(std::vector<uint8_t> &bytes,
+                              const size_t offset) const {
+    if (offset + 1 > bytes.size()) bytes.resize(offset + 1);
+    bytes[offset] = length_;
+}
+
+void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
+    WriteStringNoFail(bytes, offset, value_);
+}
+
+} // namespace data
