@@ -148,6 +148,16 @@ Result DiskManager::Flush(const std::string &filename) const {
     return Ok();
 }
 
+ResultV<size_t> DiskManager::Size(const std::string &filename) const {
+    try {
+        std::uintmax_t filesize =
+            std::filesystem::file_size(directory_path_ + filename);
+        return Ok((filesize / block_size_));
+    } catch (std::filesystem::filesystem_error) {
+        return Error("failed to compute file size");
+    }
+}
+
 Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
     const auto filepath = directory_path_ + block_id.Filename();
     if (!std::filesystem::exists(filepath)) {

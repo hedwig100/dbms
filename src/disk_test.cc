@@ -276,6 +276,19 @@ TEST_F(NonExistentFileTest, DiskManagerFlushFails) {
     EXPECT_TRUE(disk_manager.Flush(non_existent_filename).IsError());
 }
 
+TEST_F(TempFileTest, DiskManagerSizeSucceeds) {
+    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    const auto expect_ok = disk_manager.Size(filename);
+    EXPECT_TRUE(expect_ok.IsOk());
+    EXPECT_EQ(expect_ok.Get(), 2);
+}
+
+TEST_F(NonExistentFileTest, DiskManagerSizeFails) {
+    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    const auto expect_ok = disk_manager.Size(non_existent_filename);
+    EXPECT_TRUE(expect_ok.IsError());
+}
+
 TEST_F(TempFileTest, DiskManagerAllocateNewFileSucceeds) {
     const int block_size  = 3;
     const int block_index = 10;

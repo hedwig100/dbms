@@ -82,7 +82,15 @@ class Block {
 // Manages writes and reads to disk.
 class DiskManager {
   public:
+    // Initiate a disk manager, the directory of `directory_path` should exist
+    // when this disk manager is initiated.
     DiskManager(const std::string &directory_path, const int block_size);
+
+    // Returns a directory path which this instance manages.
+    inline const std::string &DirectoryPath() const { return directory_path_; }
+
+    // Returns the block size of this manager.
+    inline int BlockSize() const { return block_size_; }
 
     // Reads the bytes of `block_id` into `block`.
     Result Read(const BlockID &block_id, Block &block) const;
@@ -92,6 +100,9 @@ class DiskManager {
 
     // Flushes the writes of `directory_path`/`filename` to the disk.
     Result Flush(const std::string &filename) const;
+
+    // The number of blocks in the file of `filename`.
+    ResultV<size_t> Size(const std::string &filename) const;
 
     // Allocates new blocks until the id of `block_id`.
     // If file of `block_id.Filename()` does not exist, this function creates a
