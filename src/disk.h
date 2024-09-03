@@ -16,6 +16,7 @@ namespace disk {
 // block in the file with the block size.
 class BlockID {
   public:
+    inline BlockID() {}
     BlockID(const std::string &filename, const int block_index);
 
     // Returns the filename.
