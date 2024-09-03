@@ -298,7 +298,7 @@ TEST_F(TempFileTest, DiskManagerAllocateNewFileSucceeds) {
         disk_manager.AllocateNewBlocks(disk::BlockID(filename, block_index))
             .IsOk());
     EXPECT_EQ(std::filesystem::file_size(directory_path + filename),
-              block_index * block_size);
+              (block_index + 1) * block_size);
 }
 
 TEST_F(NonExistentFileTest, DiskManagerAllocateNewFileSucceedsWithoutFile) {
@@ -312,5 +312,5 @@ TEST_F(NonExistentFileTest, DiskManagerAllocateNewFileSucceedsWithoutFile) {
                     .IsOk());
     EXPECT_EQ(
         std::filesystem::file_size(directory_path + non_existent_filename),
-        block_index * block_size);
+        (block_index + 1) * block_size);
 }

@@ -104,7 +104,7 @@ class DiskManager {
     // The number of blocks in the file of `filename`.
     ResultV<size_t> Size(const std::string &filename) const;
 
-    // Allocates new blocks until the id of `block_id`.
+    // Allocates new blocks until the id of `block_id` (including the end).
     // If file of `block_id.Filename()` does not exist, this function creates a
     // new file and resize it to the `block_id.BlockIndex()`. If file of
     // `block_id.Filename()` exists, resize it.

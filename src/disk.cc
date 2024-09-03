@@ -173,7 +173,7 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
 
     try {
         std::filesystem::resize_file(filepath,
-                                     block_id.BlockIndex() * block_size_);
+                                     (block_id.BlockIndex() + 1) * block_size_);
         return Ok();
     } catch (std::filesystem::filesystem_error) {
         return Error("failed to allocate new blocks");
