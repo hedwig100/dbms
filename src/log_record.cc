@@ -64,11 +64,11 @@ uint8_t LogTransactionEndMask(TransactionEndType transaction_end_type) {
     return 0;
 }
 
-std::vector<uint8_t> LogTransactionBegin::LogBody() const {
-    std::vector<uint8_t> body(kLogTransactionBeginByteSize);
-    body[0] = kLogTransactionBeginMask;
-    data::WriteUint32(body, 1, transaction_id_);
-    return body;
+LogTransactionBegin::LogTransactionBegin(const TransactionID transaction_id)
+    : transaction_id_(transaction_id) {
+    log_body_.resize(kLogTransactionBeginByteSize);
+    log_body_[0] = kLogTransactionBeginMask;
+    data::WriteUint32(log_body_, 1, transaction_id_);
 }
 
 // This is an super roughly estimated average size of log operation.
@@ -102,17 +102,12 @@ LogOperation::LogOperation(TransactionID transaction_id,
 LogTransactionEnd::LogTransactionEnd(TransactionID transaction_id,
                                      TransactionEndType transaction_end_type)
     : transaction_id_(transaction_id),
-      transaction_end_type_(transaction_end_type) {}
-
-std::vector<uint8_t> LogTransactionEnd::LogBody() const {
-    std::vector<uint8_t> body(kLogTransactionEndByteSize);
-    body[0] = LogTransactionEndMask(transaction_end_type_);
-    data::WriteUint32(body, 1, transaction_id_);
-    return body;
+      transaction_end_type_(transaction_end_type) {
+    log_body_.resize(kLogTransactionEndByteSize);
+    log_body_[0] = LogTransactionEndMask(transaction_end_type_);
+    data::WriteUint32(log_body_, 1, transaction_id_);
 }
 
-std::vector<uint8_t> LogCheckpointing::LogBody() const {
-    return {kLogCheckpointingMask};
-}
+LogCheckpointing::LogCheckpointing() { log_body_ = {kLogCheckpointingMask}; }
 
 } // namespace dblog
