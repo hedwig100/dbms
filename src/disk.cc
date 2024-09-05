@@ -65,6 +65,20 @@ Result Block::WriteBytes(const int offset, const size_t length,
     return Ok();
 }
 
+ResultE<size_t> Block::WriteBytesWithOffset(const size_t offset,
+                                            const std::vector<uint8_t> &value,
+                                            const size_t value_offset) {
+    if (offset + value.size() - value_offset <= content_.size()) {
+        std::copy(value.begin() + value_offset, value.end(),
+                  content_.begin() + offset);
+        return Ok();
+    }
+    const size_t length = content_.size() - offset;
+    std::copy(value.begin() + value_offset,
+              value.begin() + value_offset + length, content_.begin() + offset);
+    return Error(value_offset + length);
+}
+
 ResultV<int> Block::ReadInt(const int offset) const {
     return data::ReadInt(content_, offset);
 }

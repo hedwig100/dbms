@@ -44,6 +44,9 @@ class Block {
     // If `content` is smaller than `block_size`, the trailing bytes are empty.
     Block(const int block_size, const char *content);
 
+    // Blocksize of this block
+    inline size_t BlockSize() const { return content_.size(); }
+
     // Reads the byte with the `offset`.
     ResultV<uint8_t> ReadByte(const int offset) const;
 
@@ -58,6 +61,13 @@ class Block {
     // than `length`, only writes the first `length` bytes.
     Result WriteBytes(const int offset, const size_t length,
                       const std::vector<uint8_t> &value);
+
+    // Writes `value`[`value_offset`:] to the block with `offset`. If
+    // `value`[`value_offset`:] does not fit the block, writes the bytes to the
+    // block and returns the offset of the bytes left with ResultE.
+    ResultE<size_t> WriteBytesWithOffset(const size_t offset,
+                                         const std::vector<uint8_t> &value,
+                                         const size_t value_offset);
 
     // Reads the int with the `offset`. The value is read as little-endian.
     ResultV<int> ReadInt(const int offset) const;

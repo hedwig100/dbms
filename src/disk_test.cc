@@ -38,6 +38,12 @@ TEST(Block, InstanciationAndReadByte) {
     EXPECT_EQ(block.ReadByte(4).Get(), 'o');
 }
 
+TEST(Block, CorrectBlockSize) {
+    char hello[] = "hello";
+    const disk::Block block(5, hello);
+    EXPECT_EQ(block.BlockSize(), 5);
+}
+
 TEST(Block, ReadByteWithOutsideIndex) {
     char hello[] = "hello";
     const disk::Block block(5, hello);
@@ -114,6 +120,35 @@ TEST(Block, WriteBytesWithOutsideIndex) {
         block.WriteBytes(/*offset=*/3, /*length=*/1, write_value).IsError());
     EXPECT_TRUE(
         block.WriteBytes(/*offset=*/1, /*length=*/2, write_value).IsError());
+}
+
+TEST(Block, WriteBytesWithOffsetSuccess) {
+    disk::Block block(5);
+    const std::vector<uint8_t> write_value  = {'a', 'b', 'c', 'd'},
+                               expect_value = {'c', 'd'};
+
+    EXPECT_TRUE(block.WriteBytesWithOffset(1, write_value, 2).IsOk());
+
+    std::vector<uint8_t> read_value(2);
+    auto read_result = block.ReadBytes(1, 2, read_value);
+    ASSERT_TRUE(read_result.IsOk());
+    EXPECT_EQ(read_value, expect_value);
+}
+
+TEST(Block, WriteBytesWithOffsetTooLong) {
+    disk::Block block(5);
+    const std::vector<uint8_t> write_value  = {'a', 'b', 'c', 'd', 'e', 'f'},
+                               expect_value = {'a', 'b', 'c', 'd'};
+
+    auto write_result = block.WriteBytesWithOffset(
+        /*offset=*/1, /*value=*/write_value, /*value_offset=*/0);
+    EXPECT_TRUE(write_result.IsError());
+    EXPECT_EQ(write_result.Error(), 4);
+
+    std::vector<uint8_t> read_value(4);
+    auto read_result = block.ReadBytes(1, 4, read_value);
+    ASSERT_TRUE(read_result.IsOk());
+    EXPECT_EQ(read_value, expect_value);
 }
 
 TEST(Block, CorrectlyReadInt) {
