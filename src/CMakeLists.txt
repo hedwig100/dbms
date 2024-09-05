@@ -61,6 +61,7 @@ add_library(log
 )
 target_link_libraries(log
   disk
+  log_record
 )
 target_include_directories(log
   PUBLIC ${PROJECT_SOURCE_DIR}/src
