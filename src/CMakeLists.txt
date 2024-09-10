@@ -7,6 +7,9 @@ add_subdirectory(data)
 add_executable(main
     main.cc
 )
+target_link_libraries(main
+    disk
+)
 
 ## buffer
 add_library(buffer
