@@ -65,6 +65,20 @@ Result Block::WriteBytes(const int offset, const size_t length,
     return Ok();
 }
 
+ResultE<size_t> Block::WriteBytesWithOffset(const size_t offset,
+                                            const std::vector<uint8_t> &value,
+                                            const size_t value_offset) {
+    if (offset + value.size() - value_offset <= content_.size()) {
+        std::copy(value.begin() + value_offset, value.end(),
+                  content_.begin() + offset);
+        return Ok();
+    }
+    const size_t length = content_.size() - offset;
+    std::copy(value.begin() + value_offset,
+              value.begin() + value_offset + length, content_.begin() + offset);
+    return Error(value_offset + length);
+}
+
 ResultV<int> Block::ReadInt(const int offset) const {
     return data::ReadInt(content_, offset);
 }
@@ -148,6 +162,16 @@ Result DiskManager::Flush(const std::string &filename) const {
     return Ok();
 }
 
+ResultV<size_t> DiskManager::Size(const std::string &filename) const {
+    try {
+        std::uintmax_t filesize =
+            std::filesystem::file_size(directory_path_ + filename);
+        return Ok((filesize / block_size_));
+    } catch (std::filesystem::filesystem_error) {
+        return Error("failed to compute file size");
+    }
+}
+
 Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
     const auto filepath = directory_path_ + block_id.Filename();
     if (!std::filesystem::exists(filepath)) {
@@ -163,7 +187,7 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
 
     try {
         std::filesystem::resize_file(filepath,
-                                     block_id.BlockIndex() * block_size_);
+                                     (block_id.BlockIndex() + 1) * block_size_);
         return Ok();
     } catch (std::filesystem::filesystem_error) {
         return Error("failed to allocate new blocks");

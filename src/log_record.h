@@ -30,7 +30,13 @@ class LogRecord {
     virtual LogType Type() const = 0;
 
     // The log body which is written to the log file with a header
-    virtual std::vector<uint8_t> LogBody() const = 0;
+    virtual const std::vector<uint8_t> &LogBody() const = 0;
+
+    // Appends the log body to `bytes`.
+    void AppendLogBody(std::vector<uint8_t> &bytes) const {
+        const std::vector<uint8_t> &log_body = this->LogBody();
+        std::copy(log_body.begin(), log_body.end(), std::back_inserter(bytes));
+    }
 };
 
 // TransactionID is represented as an unsigned 32-bit integer.
@@ -39,13 +45,13 @@ using TransactionID = uint32_t;
 // Log record which indicates that a transaction begins.
 class LogTransactionBegin : public LogRecord {
   public:
-    inline explicit LogTransactionBegin(const TransactionID transaction_id)
-        : transaction_id_(transaction_id) {}
-    std::vector<uint8_t> LogBody() const;
+    explicit LogTransactionBegin(const TransactionID transaction_id);
     inline LogType Type() const { return LogType::kTransactionBegin; }
+    inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
 
   private:
     TransactionID transaction_id_;
+    std::vector<uint8_t> log_body_;
 };
 
 // Maniplation type to an item (like integer, char) in disk
@@ -71,7 +77,7 @@ class LogOperation : public LogRecord {
                  const data::DataItem *previous_item,
                  const data::DataItem *new_item);
     inline LogType Type() const { return LogType::kOperation; }
-    inline std::vector<uint8_t> LogBody() const { return log_body_; }
+    inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
 
   private:
     TransactionID transaction_id_;
@@ -95,19 +101,23 @@ class LogTransactionEnd : public LogRecord {
     LogTransactionEnd(TransactionID transaction_id,
                       TransactionEndType transaction_end_type);
     inline LogType Type() const { return LogType::kTransactionEnd; }
-    std::vector<uint8_t> LogBody() const;
+    const std::vector<uint8_t> &LogBody() const { return log_body_; }
 
   private:
     TransactionID transaction_id_;
     TransactionEndType transaction_end_type_;
+    std::vector<uint8_t> log_body_;
 };
 
 // Log record which indicates that a checkpointing finishes.
 class LogCheckpointing : public LogRecord {
   public:
-    inline LogCheckpointing() {}
+    LogCheckpointing();
     inline LogType Type() const { return LogType::kCheckpointing; }
-    std::vector<uint8_t> LogBody() const;
+    inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
+
+  private:
+    std::vector<uint8_t> log_body_;
 };
 
 } // namespace dblog

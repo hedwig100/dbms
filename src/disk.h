@@ -16,6 +16,7 @@ namespace disk {
 // block in the file with the block size.
 class BlockID {
   public:
+    inline BlockID() {}
     BlockID(const std::string &filename, const int block_index);
 
     // Returns the filename.
@@ -43,6 +44,9 @@ class Block {
     // If `content` is smaller than `block_size`, the trailing bytes are empty.
     Block(const int block_size, const char *content);
 
+    // Blocksize of this block
+    inline size_t BlockSize() const { return content_.size(); }
+
     // Reads the byte with the `offset`.
     ResultV<uint8_t> ReadByte(const int offset) const;
 
@@ -57,6 +61,13 @@ class Block {
     // than `length`, only writes the first `length` bytes.
     Result WriteBytes(const int offset, const size_t length,
                       const std::vector<uint8_t> &value);
+
+    // Writes `value`[`value_offset`:] to the block with `offset`. If
+    // `value`[`value_offset`:] does not fit the block, writes the bytes to the
+    // block and returns the offset of the bytes left with ResultE.
+    ResultE<size_t> WriteBytesWithOffset(const size_t offset,
+                                         const std::vector<uint8_t> &value,
+                                         const size_t value_offset);
 
     // Reads the int with the `offset`. The value is read as little-endian.
     ResultV<int> ReadInt(const int offset) const;
@@ -81,7 +92,15 @@ class Block {
 // Manages writes and reads to disk.
 class DiskManager {
   public:
+    // Initiate a disk manager, the directory of `directory_path` should exist
+    // when this disk manager is initiated.
     DiskManager(const std::string &directory_path, const int block_size);
+
+    // Returns a directory path which this instance manages.
+    inline const std::string &DirectoryPath() const { return directory_path_; }
+
+    // Returns the block size of this manager.
+    inline int BlockSize() const { return block_size_; }
 
     // Reads the bytes of `block_id` into `block`.
     Result Read(const BlockID &block_id, Block &block) const;
@@ -92,7 +111,10 @@ class DiskManager {
     // Flushes the writes of `directory_path`/`filename` to the disk.
     Result Flush(const std::string &filename) const;
 
-    // Allocates new blocks until the id of `block_id`.
+    // The number of blocks in the file of `filename`.
+    ResultV<size_t> Size(const std::string &filename) const;
+
+    // Allocates new blocks until the id of `block_id` (including the end).
     // If file of `block_id.Filename()` does not exist, this function creates a
     // new file and resize it to the `block_id.BlockIndex()`. If file of
     // `block_id.Filename()` exists, resize it.
