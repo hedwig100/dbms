@@ -102,10 +102,14 @@ class DiskManager {
     // Returns the block size of this manager.
     inline int BlockSize() const { return block_size_; }
 
-    // Reads the bytes of `block_id` into `block`.
+    // Reads the bytes of `block_id` into `block`. `block.BlockSize()` and
+    // `this.BlockSize()` must be the same to run this function without any
+    // unintentional behavior.
     Result Read(const BlockID &block_id, Block &block) const;
 
-    // Writes the bytes `block` to the place of `block_id`.
+    // Writes the bytes `block` to the place of `block_id`. `block.BlockSize()`
+    // and `this.BlockSize()` must be the same to run this function without any
+    // unintentional behavior.
     Result Write(const BlockID &block_id, const Block &block) const;
 
     // Flushes the writes of `directory_path`/`filename` to the disk.
