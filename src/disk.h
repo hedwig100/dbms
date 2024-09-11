@@ -44,6 +44,10 @@ class Block {
     // If `content` is smaller than `block_size`, the trailing bytes are empty.
     Block(const int block_size, const char *content);
 
+    // Initialize the block with `block_size` and `content`.
+    // If `content` is smaller than `block_size`, the trailing bytes are empty.
+    Block(const int block_size, const std::vector<uint8_t> &content);
+
     // Blocksize of this block
     inline size_t BlockSize() const { return content_.size(); }
 
