@@ -83,6 +83,32 @@ TEST(Error, CorrectlyReturnsErrorWhenValueAndErrorTypeIsSame) {
     EXPECT_EQ(err.Error(), 3);
 }
 
+TEST(Error, CorrectlyMergeErrors) {
+    result::ResultV<int> err1 = result::Error("aaa"),
+                         err2 = result::Error("bbb");
+
+    err1 = err1 + err2;
+    EXPECT_TRUE(err1.IsError());
+    EXPECT_EQ(err1.Error(), "aaa\nbbb");
+}
+
+TEST(Error, CorrectlyMergeErrorsOfString) {
+    result::ResultV<std::string> err1 = result::Error("aaa"),
+                                 err2 = result::Error("bbb");
+
+    err1 = err1 + err2;
+    EXPECT_TRUE(err1.IsError());
+    EXPECT_EQ(err1.Error(), "aaa\nbbb");
+}
+
+TEST(Error, CorrectlyMergeErrorsWithErrorValue) {
+    result::ResultV<int> err1 = result::Error("aaa");
+
+    err1 = err1 + result::Error("bbb");
+    EXPECT_TRUE(err1.IsError());
+    EXPECT_EQ(err1.Error(), "aaa\nbbb");
+}
+
 result::ResultVE<int, std::string> test0(int a) {
     if (a == 0) return result::Error("a should not be zero");
     return result::Ok(a);
