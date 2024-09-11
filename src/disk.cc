@@ -41,13 +41,13 @@ Block::Block(const int block_size, const std::vector<uint8_t> &content) {
 
 ResultV<uint8_t> Block::ReadByte(const int offset) const {
     if (offset < 0 || offset >= content_.size())
-        return Error("offset should be fit the size");
+        return Error("disk::Block::ReadByte() offset should be fit the size.");
     return Ok(content_[offset]);
 }
 
 Result Block::WriteByte(const int offset, const uint8_t value) {
     if (offset < 0 || offset >= content_.size())
-        return Error("offset should be fit the size");
+        return Error("disk::Block::WriteByte() offset should be fit the size.");
     content_[offset] = value;
     return Ok();
 }
@@ -55,7 +55,7 @@ Result Block::WriteByte(const int offset, const uint8_t value) {
 Result Block::ReadBytes(const int offset, const size_t length,
                         std::vector<uint8_t> &bytes) const {
     if (offset < 0 || offset + length > content_.size())
-        return Error("offset should be fit the size");
+        return Error("disk::Block::ReadBytes() offset should be fit the size.");
     bytes.resize(length);
     std::copy(content_.begin() + offset, content_.begin() + offset + length,
               bytes.begin());
@@ -65,9 +65,11 @@ Result Block::ReadBytes(const int offset, const size_t length,
 Result Block::WriteBytes(const int offset, const size_t length,
                          const std::vector<uint8_t> &value) {
     if (offset < 0 || offset + length > content_.size())
-        return Error("offset should be fit the size");
+        return Error(
+            "disk::Block::WriteBytes() offset should be fit the size.");
     if (value.size() < length)
-        return Error("value should be longer than length");
+        return Error(
+            "disk::Block::WriteBytes() value should be longer than length.");
     std::copy(value.begin(), value.begin() + length, content_.begin() + offset);
     return Ok();
 }
@@ -113,19 +115,20 @@ DiskManager::DiskManager(const std::string &directory_path,
 
 Result DiskManager::Read(const BlockID &block_id, Block &block) const {
     std::ifstream file(directory_path_ + block_id.Filename(), std::ios::binary);
-    if (!file.is_open()) return Error("failed to open a file");
+    if (!file.is_open())
+        return Error("disk::DiskManager::Read() failed to open a file.");
 
     file.seekg(block_id.BlockIndex() * block_size_, std::ios::beg);
     if (file.fail()) {
         file.close();
-        return Error("failed to seek a file");
+        return Error("disk::DiskManager::Read() failed to seek a file.");
     }
 
     std::vector<uint8_t> block_content(block_size_);
     file.read((char *)&block_content[0], block_size_);
     if (file.fail()) {
         file.close();
-        return Error("failed to read a file");
+        return Error("disk::DiskManager::Read() failed to read a file.");
     }
 
     block = Block(block_size_, block_content);
@@ -135,19 +138,20 @@ Result DiskManager::Read(const BlockID &block_id, Block &block) const {
 
 Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
     std::ofstream file(directory_path_ + block_id.Filename(), std::ios::binary);
-    if (!file.is_open()) return Error("failed to open a file");
+    if (!file.is_open())
+        return Error("disk::DiskManager::Write() failed to open a file.");
 
     file.seekp(block_id.BlockIndex() * block_size_, std::ios::beg);
     if (file.fail()) {
         file.close();
-        return Error("failed to seek a file");
+        return Error("disk::DiskManager::Write() failed to seek a file.");
     }
 
     const auto &content_vector = block.Content();
     file.write((char *)&content_vector[0], block_size_);
     if (file.fail()) {
         file.close();
-        return Error("failed to write to a file");
+        return Error("disk::DiskManager::Write() failed to write to a file.");
     }
 
     file.close();
@@ -156,11 +160,12 @@ Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
 
 Result DiskManager::Flush(const std::string &filename) const {
     int fd = open((directory_path_ + filename).c_str(), O_FSYNC);
-    if (fd < 0) return Error("failed to open a file");
+    if (fd < 0)
+        return Error("disk::DiskManager::Flush() failed to open a file.");
 
     if (fsync(fd) < 0) {
         close(fd);
-        return Error("failed to fsync");
+        return Error("disk::DiskManager::Flush() failed to fsync.");
     }
 
     close(fd);
@@ -173,7 +178,7 @@ ResultV<size_t> DiskManager::Size(const std::string &filename) const {
             std::filesystem::file_size(directory_path_ + filename);
         return Ok((filesize / block_size_));
     } catch (std::filesystem::filesystem_error) {
-        return Error("failed to compute file size");
+        return Error("disk::DiskManager::Size() failed to compute file size.");
     }
 }
 
@@ -186,7 +191,9 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
 
         // Uses std::ofstream to create the file.
         std::ofstream file(filepath);
-        if (!file.is_open()) return Error("failed to create a new file");
+        if (!file.is_open())
+            return Error("disk::DiskManager::AllocatedNewBlocks() failed to "
+                         "create a new file.");
         file.close();
     }
 
@@ -195,7 +202,8 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
                                      (block_id.BlockIndex() + 1) * block_size_);
         return Ok();
     } catch (std::filesystem::filesystem_error) {
-        return Error("failed to allocate new blocks");
+        return Error("disk::DiskManager::AllocatedNewBlocks() failed to "
+                     "allocate new blocks.");
     }
 }
 
