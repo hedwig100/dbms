@@ -349,3 +349,21 @@ TEST_F(NonExistentFileTest, DiskManagerAllocateNewFileSucceedsWithoutFile) {
         std::filesystem::file_size(directory_path + non_existent_filename),
         (block_index + 1) * block_size);
 }
+
+TEST_F(
+    TempFileTest,
+    DiskManagerCorrectlyReadAndWriteBytesIncludingNullCharacterAndTrailingSpace) {
+    const size_t block_size = 32;
+    disk::DiskManager manager(/*directory_path=*/directory_path,
+                              /*block_size=*/block_size);
+    ASSERT_TRUE(manager.AllocateNewBlocks(disk::BlockID(filename, 64)).IsOk());
+
+    disk::BlockID block_id(filename, 1);
+    disk::Block block(block_size, "abc ");
+    block.WriteByte(/*offset=*/1, '\0');
+    auto original_content = block.Content();
+    ASSERT_TRUE(manager.Write(block_id, block).IsOk());
+    ASSERT_TRUE(manager.Read(block_id, block).IsOk());
+
+    EXPECT_EQ(block.Content(), original_content);
+}

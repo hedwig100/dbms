@@ -32,6 +32,13 @@ Block::Block(const int block_size, const char *content) {
     std::copy(content, content + copiable_size, content_.begin());
 }
 
+Block::Block(const int block_size, const std::vector<uint8_t> &content) {
+    content_.resize(block_size);
+    const int copiable_size = std::min(block_size, int(content.size()));
+    std::copy(content.begin(), content.begin() + copiable_size,
+              content_.begin());
+}
+
 ResultV<uint8_t> Block::ReadByte(const int offset) const {
     if (offset < 0 || offset >= content_.size())
         return Error("offset should be fit the size");
@@ -114,8 +121,8 @@ Result DiskManager::Read(const BlockID &block_id, Block &block) const {
         return Error("failed to seek a file");
     }
 
-    char block_content[block_size_];
-    file.read(block_content, block_size_);
+    std::vector<uint8_t> block_content(block_size_);
+    file.read((char *)&block_content[0], block_size_);
     if (file.fail()) {
         file.close();
         return Error("failed to read a file");
@@ -137,9 +144,7 @@ Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
     }
 
     const auto &content_vector = block.Content();
-    char content_char[block_size_];
-    std::copy(content_vector.begin(), content_vector.end(), content_char);
-    file.write(content_char, block_size_);
+    file.write((char *)&content_vector[0], block_size_);
     if (file.fail()) {
         file.close();
         return Error("failed to write to a file");
