@@ -1,6 +1,8 @@
 #ifndef RESULT_H
 #define RESULT_H
 
+#include <exception>
+#include <stdexcept>
 #include <string>
 
 // The code in this file is partially from the following blog.
@@ -116,14 +118,15 @@ template <typename T> class ResultVE<T, T> {
     T error_;
 };
 
-// Has either the expected value or an error. The error is represented as
-// a std::string.
-// Usually, you should use result::Ok() or result::Error() below to instantiate
-// this class. One of the typical use case is below;
+// Has either the expected value or an error. The error
+// is represented as a std::string. Usually, you should
+// use result::Ok() or result::Error() below to
+// instantiate this class. One of the typical use case is
+// below;
 //
 // result::ResultV<std::string> FetchUsername(int id) {
-//   if (id < 0) return result::Error("id should not be zero.");
-//   return result::Ok(GetUsername(id));
+//   if (id < 0) return result::Error("id should not be
+//   zero."); return result::Ok(GetUsername(id));
 // }
 //
 template <typename T> using ResultV = ResultVE<T, std::string>;
@@ -203,6 +206,33 @@ template <typename E> class ErrorValue {
 // Returns ErrorValue<E>, which can be transformed to ResultVE<T, E>.
 template <typename E> inline ErrorValue<E> Error(E error) {
     return ErrorValue<E>(error);
+}
+
+// Merge errors. If either `lhs` or `rhs` is the Ok value, the function throws
+// an exception.
+template <typename T1, typename T2>
+ErrorValue<std::string> operator+(const ResultVE<T1, std::string> &lhs,
+                                  const ResultVE<T2, std::string> &rhs) {
+    if (lhs.IsOk() || rhs.IsOk())
+        throw std::runtime_error("Ok values cannot be merged in operator+ of "
+                                 "ResultVE<T,std::string>");
+    return Error(lhs.Error() + '\n' + rhs.Error());
+}
+
+// Merge ResultVE and ErrorValue<std::string>. When `lhs` is Ok value, the
+// function throws an exception.
+template <typename T1>
+ErrorValue<std::string> operator+(const ResultVE<T1, std::string> &lhs,
+                                  const ErrorValue<std::string> &rhs) {
+    return lhs + ResultVE<T1, std ::string>(rhs);
+}
+
+// Merge ResultVE and ErrorValue<const char*>. When `lhs` is Ok value, the
+// function throws an exception.
+template <typename T1>
+ErrorValue<std::string> operator+(const ResultVE<T1, std::string> &lhs,
+                                  const ErrorValue<const char *> &rhs) {
+    return lhs + ResultVE<T1, std ::string>(rhs);
 }
 
 } // namespace result

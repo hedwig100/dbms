@@ -7,7 +7,7 @@ namespace data {
 ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
                                 const int offset, const int length) {
     if (offset < 0 || offset + length > bytes.size())
-        return Error("offset should be fit the size");
+        return Error("data::ReadString() offset should be fit the size.");
     std::string read_value;
     read_value.resize(length);
     std::memcpy(&read_value[0], &bytes[offset], length);
@@ -17,9 +17,10 @@ ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
 Result WriteString(std::vector<uint8_t> &bytes, const int offset,
                    const int length, const std::string &value) {
     if (offset < 0 || offset + length > bytes.size())
-        return Error("offset should be fit the size");
+        return Error("data::WriteString() offset should be fit the size.");
     if (value.size() > length)
-        return Error("value should be smaller than length");
+        return Error(
+            "data::WriteString() value should be smaller than length.");
     std::memcpy(&bytes[offset], &value[0], value.size());
     return Ok();
 }

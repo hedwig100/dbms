@@ -30,7 +30,9 @@ Result BufferManager::Read(const disk::BlockID &block_id, disk::Block &block) {
         return Ok();
     }
     auto result = disk_manager_.Read(block_id, block);
-    if (result.IsError()) { return result; }
+    if (result.IsError()) {
+        return result + Error("buffer::BufferManager::Read() fail to read.");
+    }
     return AddNewBuffer(Buffer(block_id, block));
 }
 
@@ -49,7 +51,9 @@ Result BufferManager::Flush(const disk::BlockID &block_id) {
     if (buffer_result.IsOk()) {
         auto write_result =
             disk_manager_.Write(block_id, buffer_result.Get()->Block());
-        if (write_result.IsError()) return write_result;
+        if (write_result.IsError())
+            return write_result +
+                   Error("buffer::BufferManager::Flush() failed to write.");
     }
     return disk_manager_.Flush(block_id.Filename());
 }
@@ -61,7 +65,8 @@ BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
     for (auto &buffer : buffer_pool_) {
         if (buffer.BlockID() == block_id) { return Ok(&buffer); }
     }
-    return Error("no buffer with the block_id");
+    return Error("buffer::BufferManager::FindBufferWithBlockID() no buffer "
+                 "with the block_id.");
 }
 
 Result BufferManager::AddNewBuffer(const Buffer &buffer) {
