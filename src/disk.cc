@@ -207,4 +207,67 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
     }
 }
 
+// Moves the `block` to the next block of `block_id`.
+Result MoveToNextBlock(disk::BlockID &block_id, disk::Block &block,
+                       const disk::DiskManager &disk_manager) {
+    disk::BlockID next_block_id(block_id.Filename(), block_id.BlockIndex() + 1);
+    Result read_result = disk_manager.Read(next_block_id, block);
+    if (read_result.IsError())
+        return read_result +
+               Error("disk:MoveToNextBlock() failed to read the next block.");
+    block_id = next_block_id;
+    return Ok();
+}
+
+Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
+                             disk::Block &block, int length,
+                             std::vector<uint8_t> &read_bytes,
+                             const disk::DiskManager &disk_manager) {
+    if (offset < 0 || offset >= disk_manager.BlockSize())
+        return Error(
+            "disk::ReadBytesAcrossBlocks() offset should be in the block.");
+
+    int length_of_first_block = (offset + length <= disk_manager.BlockSize()
+                                     ? length
+                                     : disk_manager.BlockSize() - offset);
+    Result read_result =
+        block.ReadBytes(offset, length_of_first_block, read_bytes);
+    if (read_result.IsError())
+        return read_result + Error("disk::ReadBytesAcrossBlocks() failed to "
+                                   "read the first block.");
+    length -= length_of_first_block;
+
+    // We expect the length is not large enouth to lie across block in many
+    // cases. Therefore, retrun here to avoid unnecessary allocation in heap
+    // memory.
+    if (length == 0) return Ok();
+
+    const disk::BlockID rollback_block_id = block_id;
+    const disk::Block rollback_block      = block;
+
+    while (length > 0) {
+        Result move_result = MoveToNextBlock(block_id, block, disk_manager);
+        if (move_result.IsError()) {
+            block_id = rollback_block_id;
+            block    = rollback_block;
+            return move_result + Error("disk::ReadBytesAcrossBlocks() failed "
+                                       "to move to the next block.");
+        }
+
+        if (length >= disk_manager.BlockSize()) {
+            std::copy(block.Content().begin(), block.Content().end(),
+                      std::back_inserter(read_bytes));
+            length -= disk_manager.BlockSize();
+        } else {
+            std::vector<uint8_t> tmp_bytes(length);
+            block.ReadBytes(0, length, tmp_bytes);
+            std::copy(tmp_bytes.begin(), tmp_bytes.end(),
+                      std::back_inserter(read_bytes));
+            length = 0;
+        }
+    }
+
+    return Ok();
+}
+
 } // namespace disk
