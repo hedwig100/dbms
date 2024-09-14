@@ -3,8 +3,6 @@
 
 namespace data {
 
-const static int kIntBytesize = 4;
-
 ResultV<int> ReadInt(const std::vector<uint8_t> &bytes, const int offset) {
     if (offset < 0 || offset + kIntBytesize > bytes.size())
         return Error("data::ReadInt() offset should be fit the size.");
