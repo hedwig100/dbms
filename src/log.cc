@@ -64,6 +64,8 @@ std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record) {
     data::WriteUint32NoFail(log_body_with_header, 0, ComputeChecksum(log_body));
     data::WriteUint32NoFail(log_body_with_header, 4, log_body.size());
     log_record->AppendLogBody(log_body_with_header);
+    data::WriteUint32NoFail(log_body_with_header, log_body_with_header.size(),
+                            log_body.size());
     return log_body_with_header;
 }
 
