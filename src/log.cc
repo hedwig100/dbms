@@ -1,5 +1,7 @@
 #include "log.h"
+#include "data/int.h"
 #include "data/uint32.h"
+#include <iostream>
 
 namespace dblog {
 
@@ -51,27 +53,32 @@ void LogBlock::UpdateOffset(int new_offset) {
 
 // Read bytes which can lie across multiple log blocks. `position` specifies the
 // start position to read the bytes. The `position` needs to be located outside
-// the offset region of the block. `block` is the block in which `position` is
-// located. `length` is the length of the bytes to read. The bytes are written
-// to `bytes`.
+// the offset region of the block (outside the first `kDefaultOffset` bytes of
+// the block). `block` is the block in which `position` is located. `length` is
+// the length of the bytes to read. The bytes are written to `bytes`.
 Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
                              const LogBlock &block,
                              const disk::DiskPosition &position, int length,
                              std::vector<uint8_t> &bytes) {
-    if (position.Offset() < kDefaultOffset) return Error("fail");
+    if (position.Offset() < kDefaultOffset)
+        return Error("dblog::internal::ReadBytesAcrossBlocks() position must "
+                     "not be first kDefaultOffset bytes of the block.");
 
-    const int log_block_size = disk_manager.BlockSize() - kDefaultOffset;
+    int length_of_first_block =
+        (position.Offset() + length <= disk_manager.BlockSize()
+             ? length
+             : disk_manager.BlockSize() - position.Offset());
 
-    int length_of_first_block = (position.Offset() + length <= log_block_size
-                                     ? length
-                                     : log_block_size - position.Offset());
-    Result read_result        = block.RawBlock().ReadBytes(
+    Result read_result = block.RawBlock().ReadBytes(
         position.Offset(), length_of_first_block, bytes);
-    if (read_result.IsError()) return read_result + Error("fail");
+    if (read_result.IsError())
+        return read_result + Error("dblog::internal::ReadBytesAcrossBlocks() "
+                                   "failed to read the first block.");
     length -= length_of_first_block;
 
     if (length == 0) return Ok();
 
+    const int log_block_size       = disk_manager.BlockSize() - kDefaultOffset;
     disk::BlockID current_block_id = position.BlockID();
     LogBlock current_block         = block;
 
@@ -79,7 +86,9 @@ Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
         current_block_id += 1;
         Result read_result =
             current_block.ReadLogBlock(disk_manager, current_block_id);
-        if (read_result.IsError()) return read_result + Error("fail");
+        if (read_result.IsError())
+            return read_result + Error("dblog::internal::ReadBytesAcrossBlocks("
+                                       ") failed to read the blocks");
 
         if (length >= log_block_size) {
             std::copy(current_block.RawBlock().Content().begin() +
@@ -100,16 +109,27 @@ Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
     return Ok();
 }
 
+// Read uint32_t which can lie across multiple log blocks. `position` specifies
+// the start position to read the bytes. The `position` needs to be located
+// outside the offset region of the block (outside the first `kDefaultOffset`
+// bytes of the block). `block` is the block in which `position` is located.
 ResultV<uint32_t> ReadUint32AcrossBlocks(const disk::DiskManager &disk_manager,
                                          const LogBlock &block,
                                          const disk::DiskPosition &position) {
     std::vector<uint8_t> uint32_bytes(data::kUint32Bytesize);
     auto read_result = ReadBytesAcrossBlocks(
         disk_manager, block, position, data::kUint32Bytesize, uint32_bytes);
-    if (read_result.IsError()) { return read_result + Error("fail"); }
+    if (read_result.IsError()) {
+        return read_result +
+               Error("dblog::internal::ReadUint32AcrossBlocks() failed to read "
+                     "bytes corresponding to uint32_t.");
+    }
     return data::ReadUint32(uint32_bytes, 0);
 }
 
+// Moves `position` for the amount of `displacement` in the log block, which
+// means we ignore the offset regsion (first `kDefaultOffset` bytes) of the log
+// block. `displacement` can be negative.
 disk::DiskPosition MoveInLogBlock(const disk::DiskPosition &position,
                                   const int displacement,
                                   const int block_size) {
@@ -139,18 +159,29 @@ Result ReadBytesAcrossBlocksWithOffset(const disk::DiskManager &disk_manager,
     LogBlock start_block;
     auto read_result =
         start_block.ReadLogBlock(disk_manager, start_position.BlockID());
-    if (read_result.IsError()) return read_result + Error("fail");
+    if (read_result.IsError())
+        return read_result +
+               Error("dblog::internal::ReadBytesAcrossBlocksWithOffset() "
+                     "failed to read the start block.");
     return ReadBytesAcrossBlocks(disk_manager, start_block, start_position,
                                  length, bytes);
 }
 
+// Read int which can lie across multiple log blocks.
+// `position.`.Move(`offset`) specifies the start position to read the bytes.
+// The `position` needs to be located outside the offset region of the block.
+// `block` is the block in which `position` is located.
 ResultV<int> ReadIntAcrossBlocksWithOffset(
     const disk::DiskManager &disk_manager, const LogBlock &block,
     const disk::DiskPosition &position, const int offset) {
     std::vector<uint8_t> int_bytes(data::kIntBytesize);
     auto read_result = ReadBytesAcrossBlocksWithOffset(
         disk_manager, block, position, offset, data::kIntBytesize, int_bytes);
-    if (read_result.IsError()) { return read_result + Error("fail"); }
+    if (read_result.IsError()) {
+        return read_result +
+               Error("dblog::internal::ReadIntAcrossBlocksWithOffset() failed "
+                     "to read bytes corresponding to int.");
+    }
     return data::ReadInt(int_bytes, 0);
 }
 
@@ -161,17 +192,159 @@ uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes) { return 0; }
 
 // Length of the log header in bytes. The header consists of "checksum (4bytes)
 // + length of the log body (4bytes)".
-constexpr size_t kLogHeaderLength = 8;
+constexpr size_t kLogHeaderLength = data::kUint32Bytesize + data::kIntBytesize;
 
 std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record) {
     std::vector<uint8_t> log_body_with_header(kLogHeaderLength);
     const std::vector<uint8_t> &log_body = log_record->LogBody();
     data::WriteUint32NoFail(log_body_with_header, 0, ComputeChecksum(log_body));
-    data::WriteUint32NoFail(log_body_with_header, 4, log_body.size());
+    data::WriteIntNoFail(log_body_with_header, 4, log_body.size());
     log_record->AppendLogBody(log_body_with_header);
-    data::WriteUint32NoFail(log_body_with_header, log_body_with_header.size(),
-                            log_body.size());
+    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
+                         log_body.size());
     return log_body_with_header;
+}
+
+// Read the previous log of the log which starts from `log_start`. The `block`
+// is the block that `log_start` is located.
+ResultV<LogIterator> ReadPreviousLog(const disk::DiskManager &disk_manager,
+                                     const disk::DiskPosition &log_start,
+                                     const internal::LogBlock &block) {
+
+    ResultV<int> log_body_length_result =
+        internal::ReadIntAcrossBlocksWithOffset(disk_manager, block, log_start,
+                                                -data::kIntBytesize);
+    if (log_body_length_result.IsError()) {
+        return log_body_length_result +
+               Error("dblog::ReadPreviousLog() failed to read log body length "
+                     "in tail.");
+    }
+
+    disk::DiskPosition previous_log_start = internal::MoveInLogBlock(
+        log_start,
+        -(kLogHeaderLength + log_body_length_result.Get() + data::kIntBytesize),
+        disk_manager.BlockSize());
+
+    return Ok(LogIterator(disk_manager, previous_log_start,
+                          log_body_length_result.Get()));
+}
+
+LogIterator::LogIterator(const disk::DiskManager &disk_manager,
+                         const disk::DiskPosition &log_start,
+                         int log_body_length)
+    : disk_manager_(disk_manager), log_start_(log_start),
+      log_body_length_(log_body_length) {}
+
+LogIterator::LogIterator(const LogIterator &other)
+    : disk_manager_(other.disk_manager_), log_start_(other.log_start_),
+      log_body_length_(other.log_body_length_) {
+    if (other.log_start_block_) {
+        log_start_block_ = std::unique_ptr<internal::LogBlock>(
+            new internal::LogBlock(*other.log_start_block_));
+    }
+}
+
+LogIterator &LogIterator::operator=(const LogIterator &other) {
+    log_start_       = other.log_start_;
+    log_body_length_ = other.log_body_length_;
+    if (other.log_start_block_) {
+        log_start_block_ = std::unique_ptr<internal::LogBlock>(
+            new internal::LogBlock(*other.log_start_block_));
+    }
+    return *this;
+}
+
+ResultV<std::vector<uint8_t>> LogIterator::LogBody() {
+    auto block_result = LogStartBlock();
+    if (block_result.IsError()) {
+        return block_result + Error("dblog::LogIterator::LogBody() failed to "
+                                    "read log start block.");
+    }
+
+    auto checksum_result = internal::ReadUint32AcrossBlocks(
+        disk_manager_, block_result.Get(), log_start_);
+    if (checksum_result.IsError())
+        return checksum_result +
+               Error("dblog::LogIterator::LogBody() failed to read checksum.");
+
+    std::vector<uint8_t> log_body;
+    auto read_result = ReadBytesAcrossBlocksWithOffset(
+        disk_manager_, block_result.Get(), log_start_, kLogHeaderLength,
+        log_body_length_, log_body);
+    if (read_result.IsError()) {
+        return read_result +
+               Error("dblog::LogIterator::LogBody() failed to read log body.");
+    }
+
+    if (ComputeChecksum(log_body) != checksum_result.Get())
+        return kCompleteLogNotWrittenToDisk;
+
+    return Ok(log_body);
+}
+
+Result LogIterator::Next() {
+    auto block_result = LogStartBlock();
+    if (block_result.IsError()) {
+        return block_result + Error("dblog::LogIterator::Next() failed to "
+                                    "read log start block.");
+    }
+
+    const int log_record_length =
+        kLogHeaderLength + log_body_length_ + data::kIntBytesize;
+    ResultV<int> next_log_body_length_result = ReadIntAcrossBlocksWithOffset(
+        disk_manager_, block_result.Get(), log_start_,
+        log_record_length + data::kUint32Bytesize);
+    if (next_log_body_length_result.IsError()) {
+        return next_log_body_length_result +
+               Error("dblog::LogIterator::Next() failed to read the next log "
+                     "length.");
+    }
+
+    disk::DiskPosition next_log_start = internal::MoveInLogBlock(
+        log_start_, log_record_length, disk_manager_.BlockSize());
+
+    if (next_log_start.BlockID() != log_start_.BlockID()) {
+        this->log_start_block_.reset();
+    }
+    this->log_start_       = next_log_start;
+    this->log_body_length_ = next_log_body_length_result.Get();
+
+    return Ok();
+}
+
+Result LogIterator::Previous() {
+    auto block_result = LogStartBlock();
+    if (block_result.IsError()) {
+        return block_result + Error("dblog::LogIterator::Previsou() failed to "
+                                    "read log start block.");
+    }
+
+    auto previous_log_result =
+        ReadPreviousLog(disk_manager_, log_start_, block_result.Get());
+    if (previous_log_result.IsError())
+        return previous_log_result + Error("dblog::LogIterator::Previous() "
+                                           "failed to read previous log.");
+
+    if (previous_log_result.Get().log_start_.BlockID() !=
+        log_start_.BlockID()) {
+        this->log_start_block_.reset();
+    }
+    this->log_start_       = previous_log_result.Get().log_start_;
+    this->log_body_length_ = previous_log_result.Get().log_body_length_;
+    return Ok();
+}
+
+ResultV<internal::LogBlock> LogIterator::LogStartBlock() {
+    if (log_start_block_) { return Ok(*log_start_block_.get()); }
+
+    log_start_block_ = std::make_unique<internal::LogBlock>();
+    auto read_result =
+        log_start_block_->ReadLogBlock(disk_manager_, log_start_.BlockID());
+    if (read_result.IsError()) {
+        return read_result + Error("dblog::LogIterator::LogStartBlock() failed "
+                                   "to read log start block.");
+    }
+    return Ok(*log_start_block_.get());
 }
 
 LogManager::LogManager(const std::string &log_filename,
@@ -210,6 +383,13 @@ Result LogManager::Init() {
             "dblog::LogManager::Init() the last block cannot be read.");
     }
     return Ok();
+}
+
+ResultV<LogIterator> LogManager::LastLog() const {
+    return ReadPreviousLog(
+        disk_manager_,
+        disk::DiskPosition(current_block_id_, current_block_.Offset()),
+        current_block_);
 }
 
 ResultV<LogSequenceNumber> LogManager::WriteLog(const LogRecord *log_record) {

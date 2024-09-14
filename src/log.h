@@ -4,6 +4,7 @@
 #include "disk.h"
 #include "log_record.h"
 #include "result.h"
+#include <memory>
 #include <string>
 
 namespace dblog {
@@ -62,6 +63,49 @@ uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes);
 // atomic write of logs). NOTE: log length must be smaller than 2^32-1.
 std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record);
 
+// The error that implies the complete log record is not written to the disk.
+const ResultV<std::vector<uint8_t>> kCompleteLogNotWrittenToDisk =
+    Error("dblog::LogIterator::LogBody() the complete log body is not "
+          "written to the disk.");
+
+// Has one log record as a byte sequence. This class can advance itself in the
+// log file and go to the previous log record if exists.
+//
+// Log Format (detailed format is in the documents):
+// | log header (8bytes) | log body | log length (4bytes) |
+//
+// `log_body_length` is length of log body, not length of the whole log record.
+// `log_start` is the position that log header starts.
+class LogIterator {
+  public:
+    LogIterator(const disk::DiskManager &disk_manager,
+                const disk::DiskPosition &log_start, int log_body_length);
+
+    LogIterator(const LogIterator &other);
+
+    LogIterator &operator=(const LogIterator &other);
+
+    // Returns the log body without headers like checksum.
+    ResultV<std::vector<uint8_t>> LogBody();
+
+    // Move to the next log record if exists. If the next log record does not
+    // exist, it returns the failure.
+    Result Next();
+
+    // Move to the previous log record if exists. If the previous log record
+    // does not exist, it returns the failure.
+    Result Previous();
+
+  private:
+    // Returns the block at which `log_start_` is located.
+    ResultV<internal::LogBlock> LogStartBlock();
+
+    const disk::DiskManager &disk_manager_;
+    disk::DiskPosition log_start_;
+    int log_body_length_;
+    std::unique_ptr<internal::LogBlock> log_start_block_;
+};
+
 // LogManager manages a log file. This class has a current (most recent) log
 // block of the log file, and append log records to the log file.
 class LogManager {
@@ -80,6 +124,9 @@ class LogManager {
     // length of log record in bytes and hash of the log record (to achieve
     // atomic write of logs). NOTE: log length must be smaller than 2^32-1.
     ResultV<LogSequenceNumber> WriteLog(const LogRecord *log_record);
+
+    // Returns the most recent log iterator.
+    ResultV<LogIterator> LastLog() const;
 
     // Flushes log records until logs with log sequence number of
     // `number_to_flush` (including the end).
