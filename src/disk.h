@@ -133,6 +133,16 @@ class DiskManager {
     const int block_size_;
 };
 
+// Read bytes which can lie across multiple blocks. `block_id` and `offset`
+// indicates the start of the bytes to read. `block` is the block and `length`
+// is the length of the bytes to read. The bytes are written to `read_bytes`.
+// `block_id`, `offset` and `block` are modified to indicate the block after the
+// bytes.
+Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
+                             disk::Block &block, int length,
+                             std::vector<uint8_t> &read_bytes,
+                             const disk::DiskManager &disk_manager);
+
 } // namespace disk
 
 #endif // DISK_H
