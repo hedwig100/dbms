@@ -53,6 +53,23 @@ TEST(ResultVE, ErrorWhenValueAndErrorTypeIsSame) {
     EXPECT_EQ(ok.Error(), 3);
 }
 
+class WithReference {
+  public:
+    WithReference(const int &integer) : integer_(integer) {}
+
+    const int &integer_;
+};
+
+TEST(ResultVE, HoldClassWithReferenceValue) {
+    int four = 4;
+    WithReference x(four);
+
+    result::ResultV<WithReference> ok(x), err(std::string("error"));
+
+    EXPECT_EQ(ok.Get().integer_, 4);
+    EXPECT_EQ(err.Error(), "error");
+}
+
 TEST(Ok, CorrectlyReturnsOk) {
     const result::ResultVE<int, std::string> ok = result::Ok(3);
     EXPECT_TRUE(ok.IsOk());
