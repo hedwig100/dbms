@@ -251,6 +251,16 @@ ErrorValue<std::string> operator+(const ResultVE<T1, std::string> &lhs,
     return lhs + ResultVE<T1, std ::string>(rhs);
 }
 
+// If `result_value` is the error value, returns the result +
+// Error(`additional_error_message`). Otherwise (result_value is Ok value), does
+// not return. The `result_value` must be ResultV<T>.
+#define RETURN_RESULT_IF_ERROR(result_name, result_value,                      \
+                               additional_error_message)                       \
+                                                                               \
+    auto result_name = result_value;                                           \
+    if (result_name.IsError())                                                 \
+        return result_name + Error(additional_error_message);
+
 } // namespace result
 
 #endif // RESULT_H
