@@ -23,9 +23,10 @@ namespace result {
 //
 template <typename T, typename E> class ResultVE {
   public:
-    explicit ResultVE(T const &ok) : tag_(Tag::Ok) { ok_ = ok; }
-    explicit ResultVE(E const &error) : tag_(Tag::Error) { error_ = error; }
-    ResultVE(ResultVE const &result) : tag_(result.tag_) {
+    explicit ResultVE(const T &ok) : tag_(Tag::Ok), ok_(ok) {}
+    explicit ResultVE(const E &error) : tag_(Tag::Error), error_(error) {}
+
+    ResultVE(const ResultVE &result) : tag_(result.tag_) {
         switch (tag_) {
         case Tag::Ok:
             ok_ = result.ok_;
@@ -35,6 +36,30 @@ template <typename T, typename E> class ResultVE {
             break;
         }
     }
+
+    ResultVE &operator=(const ResultVE &result) {
+        tag_ = result.tag_;
+        switch (tag_) {
+        case Tag::Ok:
+            ok_ = result.ok_;
+            break;
+        case Tag::Error:
+            error_ = result.error_;
+            break;
+        }
+        return *this;
+    }
+
+    ~ResultVE() {
+        switch (tag_) {
+        case Tag::Ok:
+            ok_.~T();
+            break;
+        case Tag::Error:
+            error_.~E();
+            break;
+        }
+    };
 
     // Returns true when this result represents ok.
     bool IsOk() const { return tag_ == Tag::Ok; }
@@ -57,8 +82,10 @@ template <typename T, typename E> class ResultVE {
   private:
     enum class Tag { Ok, Error };
     Tag tag_;
-    T ok_;
-    E error_;
+    union {
+        T ok_;
+        E error_;
+    };
 };
 
 // Has either the expected value or an error.
@@ -73,25 +100,15 @@ template <typename T, typename E> class ResultVE {
 //
 template <typename T> class ResultVE<T, T> {
   public:
-    ResultVE(T const &ok_or_error, bool is_ok) {
-        if (is_ok) {
+    ResultVE(const T &ok_or_error, bool is_ok) : ok_or_error_(ok_or_error) {
+        if (is_ok)
             tag_ = Tag::Ok;
-            ok_  = ok_or_error;
-        } else {
-            tag_   = Tag::Error;
-            error_ = ok_or_error;
-        }
+        else
+            tag_ = Tag::Error;
     }
-    ResultVE(ResultVE const &result) : tag_(result.tag_) {
-        switch (tag_) {
-        case Tag::Ok:
-            ok_ = result.ok_;
-            break;
-        case Tag::Error:
-            error_ = result.error_;
-            break;
-        }
-    }
+
+    ResultVE(const ResultVE &result)
+        : tag_(result.tag_), ok_or_error_(result.ok_or_error_) {}
 
     // Returns true when this result represents ok.
     bool IsOk() const { return tag_ == Tag::Ok; }
@@ -102,20 +119,19 @@ template <typename T> class ResultVE<T, T> {
     // Returns the meaningful value.
     T const &Get() const {
         if (tag_ != Tag::Ok) { throw "Invalid Get operation"; }
-        return ok_;
+        return ok_or_error_;
     }
 
     // Returns error value.
     T const &Error() const {
         if (tag_ != Tag::Error) { throw "Invalid Error operation"; }
-        return error_;
+        return ok_or_error_;
     }
 
   private:
     enum class Tag { Ok, Error };
     Tag tag_;
-    T ok_;
-    T error_;
+    T ok_or_error_;
 };
 
 // Has either the expected value or an error. The error
