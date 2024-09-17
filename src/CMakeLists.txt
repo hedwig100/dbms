@@ -38,6 +38,7 @@ add_library(disk
 target_link_libraries(disk
   char
   int
+  uint32
 )
 target_include_directories(disk
   PUBLIC ${PROJECT_SOURCE_DIR}/src
