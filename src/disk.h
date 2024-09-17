@@ -27,6 +27,8 @@ class BlockID {
 
     BlockID operator+(int block_index_to_advance) const;
 
+    BlockID &operator+=(int block_index_to_advance);
+
     BlockID operator-(int block_index_to_advance) const;
 
     bool operator==(const BlockID &other_block) const;
