@@ -25,6 +25,10 @@ class BlockID {
     // Returns the block index.
     const int BlockIndex() const;
 
+    BlockID operator+(int block_index_to_advance) const;
+
+    BlockID operator-(int block_index_to_advance) const;
+
     bool operator==(const BlockID &other_block) const;
 
   private:

@@ -17,6 +17,18 @@ TEST(BlockID, ReturnsCorrectBlockIndex) {
     EXPECT_EQ(block_id.BlockIndex(), 0);
 }
 
+TEST(BlockID, CorrectlyAdvanceBlockID) {
+    disk::BlockID block_id0("filename", 3);
+
+    auto block_id1 = block_id0 + 3;
+    EXPECT_EQ(block_id1.Filename(), "filename");
+    EXPECT_EQ(block_id1.BlockIndex(), 6);
+
+    block_id1 = block_id0 - 3;
+    EXPECT_EQ(block_id1.Filename(), "filename");
+    EXPECT_EQ(block_id1.BlockIndex(), 0);
+}
+
 TEST(BlockID, CorrectlyCompare) {
     const disk::BlockID block_id0("file0.tbl", 0), block_id1("file0.tbl", 0),
         block_id2("file1.tbl", 0), block_id3("file0.tbl", 1),
