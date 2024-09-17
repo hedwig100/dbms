@@ -27,9 +27,15 @@ class BlockID {
 
     BlockID operator+(int block_index_to_advance) const;
 
-    BlockID operator-(int block_index_to_advance) const;
+    BlockID &operator+=(int block_index_to_advance);
+
+    BlockID operator-(int block_index_to_back) const;
+
+    BlockID &operator-=(int block_index_to_back);
 
     bool operator==(const BlockID &other_block) const;
+
+    bool operator!=(const BlockID &other_block) const;
 
   private:
     std::string filename_;

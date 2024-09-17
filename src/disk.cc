@@ -24,13 +24,27 @@ BlockID BlockID::operator+(int block_index_to_advance) const {
     return BlockID(filename_, block_index_ + block_index_to_advance);
 }
 
-BlockID BlockID::operator-(int block_index_to_advance) const {
-    return BlockID(filename_, block_index_ - block_index_to_advance);
+BlockID &BlockID::operator+=(int block_index_to_advance) {
+    block_index_ += block_index_to_advance;
+    return *this;
+}
+
+BlockID BlockID::operator-(int block_index_to_back) const {
+    return BlockID(filename_, block_index_ - block_index_to_back);
+}
+
+BlockID &BlockID::operator-=(int block_index_to_back) {
+    block_index_ -= block_index_to_back;
+    return *this;
 }
 
 bool BlockID::operator==(const BlockID &other_block) const {
     return (filename_ == other_block.filename_) &&
            (block_index_ == other_block.block_index_);
+}
+
+bool BlockID::operator!=(const BlockID &other_block) const {
+    return !(*this == other_block);
 }
 
 /** Block */
