@@ -42,6 +42,28 @@ class BlockID {
     int block_index_;
 };
 
+// Specify position in the disk by BlockID and offset in the block.
+class DiskPosition {
+  public:
+    // `offset` must be non-negative integer smaller than block size.
+    DiskPosition(const BlockID &block_id, const int offset)
+        : block_id_(block_id), offset_(offset) {}
+
+    // Block id of the position
+    inline const disk::BlockID BlockID() const { return block_id_; }
+
+    // Offset of the position in the block
+    inline int Offset() const { return offset_; }
+
+    // Move this position with `displacement`. `displacement` can be negative
+    // integer.
+    DiskPosition Move(const int displacement, const int block_size) const;
+
+  private:
+    disk::BlockID block_id_;
+    int offset_;
+};
+
 // The unit of data exchanged with disk.
 class Block {
   public:

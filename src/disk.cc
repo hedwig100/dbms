@@ -47,6 +47,17 @@ bool BlockID::operator!=(const BlockID &other_block) const {
     return !(*this == other_block);
 }
 
+DiskPosition DiskPosition::Move(const int displacement,
+                                const int block_size) const {
+    int block_index_displacement = (offset_ + displacement) / block_size;
+    int new_offset               = (offset_ + displacement) % block_size;
+    if (new_offset < 0) {
+        new_offset += block_size;
+        block_index_displacement -= 1;
+    }
+    return DiskPosition(block_id_ + block_index_displacement, new_offset);
+}
+
 /** Block */
 Block::Block(const int block_size, const char *content) {
     content_.resize(block_size);
@@ -90,8 +101,8 @@ Result Block::WriteBytes(const int offset, const size_t length,
         return Error(
             "disk::Block::WriteBytes() offset should be fit the size.");
     if (value.size() < length)
-        return Error(
-            "disk::Block::WriteBytes() value should be longer than length.");
+        return Error("disk::Block::WriteBytes() value should be longer "
+                     "than length.");
     std::copy(value.begin(), value.begin() + length, content_.begin() + offset);
     return Ok();
 }
