@@ -63,6 +63,52 @@ TEST(BlockID, CorrectlyTestNotEqual) {
     EXPECT_TRUE(block_id0 != block_id4);
 }
 
+TEST(DiskPosition, InstantiationSuccess) {
+    disk::DiskPosition position(disk::BlockID("filename", 1), 3);
+
+    EXPECT_EQ(position.BlockID().Filename(), "filename");
+    EXPECT_EQ(position.BlockID().BlockIndex(), 1);
+    EXPECT_EQ(position.Offset(), 3);
+}
+
+TEST(DiskPosition, MoveForward) {
+    disk::DiskPosition position(disk::BlockID("filename", 1), 3);
+
+    // Inside the block
+    auto moved_position = position.Move(/*displacement=*/1, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 1);
+    EXPECT_EQ(moved_position.Offset(), 4);
+
+    // Move next block
+    moved_position = position.Move(/*displacement=*/5, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 2);
+    EXPECT_EQ(moved_position.Offset(), 3);
+
+    // Move next block with offset 0
+    moved_position = position.Move(/*displacement=*/7, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 3);
+    EXPECT_EQ(moved_position.Offset(), 0);
+}
+
+TEST(DiskPosition, MoveBackward) {
+    disk::DiskPosition position(disk::BlockID("filename", 2), 3);
+
+    // Inside the block
+    auto moved_position = position.Move(/*displacement=*/-1, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 2);
+    EXPECT_EQ(moved_position.Offset(), 2);
+
+    // Move next block
+    moved_position = position.Move(/*displacement=*/-6, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 1);
+    EXPECT_EQ(moved_position.Offset(), 2);
+
+    // Move next block with offset 0
+    moved_position = position.Move(/*displacement=*/-13, /*block_size=*/5);
+    EXPECT_EQ(moved_position.BlockID().BlockIndex(), 0);
+    EXPECT_EQ(moved_position.Offset(), 0);
+}
+
 TEST(Block, InstanciationAndReadByte) {
     char hello[] = "hello";
     const disk::Block block(5, hello);
