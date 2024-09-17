@@ -24,9 +24,21 @@ TEST(BlockID, CorrectlyAdvanceBlockID) {
     EXPECT_EQ(block_id1.Filename(), "filename");
     EXPECT_EQ(block_id1.BlockIndex(), 6);
 
-    block_id1 = block_id0 - 3;
+    block_id1 += 5;
     EXPECT_EQ(block_id1.Filename(), "filename");
-    EXPECT_EQ(block_id1.BlockIndex(), 0);
+    EXPECT_EQ(block_id1.BlockIndex(), 11);
+}
+
+TEST(BlockID, CorrectlyStepBackwardBlockID) {
+    disk::BlockID block_id0("filename", 9);
+
+    auto block_id1 = block_id0 - 3;
+    EXPECT_EQ(block_id1.Filename(), "filename");
+    EXPECT_EQ(block_id1.BlockIndex(), 6);
+
+    block_id1 -= 3;
+    EXPECT_EQ(block_id1.Filename(), "filename");
+    EXPECT_EQ(block_id1.BlockIndex(), 3);
 }
 
 TEST(BlockID, CorrectlyCompare) {
@@ -38,6 +50,17 @@ TEST(BlockID, CorrectlyCompare) {
     EXPECT_FALSE(block_id0 == block_id2);
     EXPECT_FALSE(block_id0 == block_id3);
     EXPECT_FALSE(block_id0 == block_id4);
+}
+
+TEST(BlockID, CorrectlyTestNotEqual) {
+    const disk::BlockID block_id0("file0.tbl", 0), block_id1("file0.tbl", 0),
+        block_id2("file1.tbl", 0), block_id3("file0.tbl", 1),
+        block_id4("file1.tbl", 1);
+
+    EXPECT_FALSE(block_id0 != block_id1);
+    EXPECT_TRUE(block_id0 != block_id2);
+    EXPECT_TRUE(block_id0 != block_id3);
+    EXPECT_TRUE(block_id0 != block_id4);
 }
 
 TEST(Block, InstanciationAndReadByte) {
