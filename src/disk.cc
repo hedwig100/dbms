@@ -313,4 +313,52 @@ DiskManager::ReadUint32AcrossBlocks(const DiskPosition &position,
     return data::ReadUint32(uint32_bytes, 0);
 }
 
+Result DiskManager::ReadBytesAcrossBlocksWithOffset(
+    const DiskPosition &position, const int offset, const disk::Block &block,
+    int length, std::vector<uint8_t> &bytes) const {
+    DiskPosition start_position = position.Move(offset, block_size_);
+    if (start_position.BlockID() == position.BlockID()) {
+        return ReadBytesAcrossBlocks(start_position, block, length, bytes);
+    }
+
+    Block start_block;
+    auto read_result = Read(start_position.BlockID(), start_block);
+    if (read_result.IsError()) {
+        return read_result +
+               Error("disk::DiskManager::ReadBytesAcrossBlocksWithOffset() "
+                     "failed to read the start block.");
+    }
+    return ReadBytesAcrossBlocks(start_position, start_block, length, bytes);
+}
+
+ResultV<int>
+DiskManager::ReadIntAcrossBlocksWithOffset(const DiskPosition &position,
+                                           const int offset,
+                                           const disk::Block &block) const {
+    std::vector<uint8_t> int_bytes(data::kIntBytesize);
+    auto read_result = ReadBytesAcrossBlocksWithOffset(
+        position, offset, block, data::kIntBytesize, int_bytes);
+    if (read_result.IsError()) {
+        return read_result +
+               Error("disk::DiskManager::ReadIntAcrossBlocksWithOffset() "
+                     "failed to read bytes corresponding to int.");
+    }
+    return data::ReadInt(int_bytes, 0);
+}
+
+ResultV<uint32_t>
+DiskManager::ReadUint32AcrossBlocksWithOffset(const DiskPosition &position,
+                                              const int offset,
+                                              const disk::Block &block) const {
+    std::vector<uint8_t> uint32_bytes(data::kUint32Bytesize);
+    auto read_result = ReadBytesAcrossBlocksWithOffset(
+        position, offset, block, data::kUint32Bytesize, uint32_bytes);
+    if (read_result.IsError()) {
+        return read_result +
+               Error("disk::DiskManager::ReadUint32AcrossBlocksWithOffset() "
+                     "failed to read bytes corresponding to uint32.");
+    }
+    return data::ReadUint32(uint32_bytes, 0);
+}
+
 } // namespace disk
