@@ -9,6 +9,9 @@ namespace data {
 
 using namespace result;
 
+// Bytes size of uint32
+constexpr int kUint32Bytesize = 4;
+
 // Reads uint32_t with the `offset`. The value is read as little-endian.
 ResultV<uint32_t> ReadUint32(const std::vector<uint8_t> &bytes,
                              const int offset);

@@ -42,6 +42,28 @@ class BlockID {
     int block_index_;
 };
 
+// Specify position in the disk by BlockID and offset in the block.
+class DiskPosition {
+  public:
+    // `offset` must be non-negative integer smaller than block size.
+    DiskPosition(const BlockID &block_id, const int offset)
+        : block_id_(block_id), offset_(offset) {}
+
+    // Block id of the position
+    inline const disk::BlockID BlockID() const { return block_id_; }
+
+    // Offset of the position in the block
+    inline int Offset() const { return offset_; }
+
+    // Move this position with `displacement`. `displacement` can be negative
+    // integer.
+    DiskPosition Move(const int displacement, const int block_size) const;
+
+  private:
+    disk::BlockID block_id_;
+    int offset_;
+};
+
 // The unit of data exchanged with disk.
 class Block {
   public:
@@ -138,20 +160,57 @@ class DiskManager {
     // `block_id.Filename()` exists, resize it.
     Result AllocateNewBlocks(const BlockID &block_id) const;
 
+    // Read bytes which can lie across multiple blocks. `position` specifies the
+    // start position to read the bytes. `block` is the block in which
+    // `position` is located. `length` is the length of the bytes to read.
+    // The bytes are written to `bytes`.
+    Result ReadBytesAcrossBlocks(const DiskPosition &position,
+                                 const disk::Block &block, int length,
+                                 std::vector<uint8_t> &bytes) const;
+
+    // Read int which can lie across multiple blocks. `position` specifies the
+    // start position to read the bytes. `block` is the block in which
+    // `position` is located.
+    ResultV<int> ReadIntAcrossBlocks(const DiskPosition &position,
+                                     const disk::Block &block) const;
+
+    // Read uint32_t which can lie across multiple blocks. `position` specifies
+    // the start position to read the bytes. `block` is the block in which
+    // `position` is located.
+    ResultV<uint32_t> ReadUint32AcrossBlocks(const DiskPosition &position,
+                                             const disk::Block &block) const;
+
+    // Read bytes which can lie across multiple blocks.
+    // `position`.Move(`offset`) is the start position to read the bytes. The
+    // `offset` can be negative value. `block` is the block in which `position`
+    // is located. `length` is the length of the bytes to read. The bytes are
+    // written to `bytes`.
+    Result ReadBytesAcrossBlocksWithOffset(const DiskPosition &position,
+                                           const int offset,
+                                           const disk::Block &block, int length,
+                                           std::vector<uint8_t> &bytes) const;
+
+    // Read int which can lie across multiple blocks.
+    // `position`.Move(`offset`) is the start position to read the bytes. The
+    // `offset` can be negative value. `block` is the block in which `position`
+    // is located.
+    ResultV<int> ReadIntAcrossBlocksWithOffset(const DiskPosition &position,
+                                               const int offset,
+                                               const disk::Block &block) const;
+
+    // Read iint32_t which can lie across multiple blocks.
+    // `position`.Move(`offset`) is the start position to read the bytes. The
+    // `offset` can be negative value. `block` is the block in which `position`
+    // is located.
+    ResultV<uint32_t>
+    ReadUint32AcrossBlocksWithOffset(const DiskPosition &position,
+                                     const int offset,
+                                     const disk::Block &block) const;
+
   private:
     const std::string directory_path_;
     const int block_size_;
 };
-
-// Read bytes which can lie across multiple blocks. `block_id` and `offset`
-// indicates the start of the bytes to read. `block` is the block and `length`
-// is the length of the bytes to read. The bytes are written to `read_bytes`.
-// `block_id`, `offset` and `block` are modified to indicate the block after the
-// bytes.
-Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
-                             disk::Block &block, int length,
-                             std::vector<uint8_t> &read_bytes,
-                             const disk::DiskManager &disk_manager);
 
 } // namespace disk
 

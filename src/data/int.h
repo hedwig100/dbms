@@ -9,6 +9,8 @@ namespace data {
 
 using namespace result;
 
+constexpr int kIntBytesize = 4;
+
 // Int: 32-bit integer
 class Int : public DataItem {
   public:

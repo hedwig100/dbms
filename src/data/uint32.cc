@@ -3,8 +3,6 @@
 
 namespace data {
 
-constexpr int kUint32Bytesize = 4;
-
 ResultV<uint32_t> ReadUint32(const std::vector<uint8_t> &bytes,
                              const int offset) {
     if (offset < 0 || offset + kUint32Bytesize > bytes.size())
