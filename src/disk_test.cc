@@ -529,3 +529,78 @@ TEST_F(IntFileTest, DiskManagerReadUint32AcrossBlocksSuccess) {
     EXPECT_TRUE(uint32_result.IsOk()) << uint32_result.Error() << '\n';
     EXPECT_EQ(uint32_result.Get(), kInt1111);
 }
+
+TEST_F(LongFileTest, DiskManagerReadBytesAcrossBlocksWithOffsetInBlockSuccess) {
+    const size_t block_size = 5;
+    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskPosition position(disk::BlockID(filename, 1), /*offset=*/2);
+    disk::Block block;
+
+    auto result = manager.Read(position.BlockID(), block);
+    ASSERT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    std::vector<uint8_t> bytes;
+    result = manager.ReadBytesAcrossBlocksWithOffset(
+        position, /*offset=*/2, block, /*length=*/34, bytes);
+    EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    EXPECT_EQ(bytes.size(), 34);
+    const std::string expect_content = "bcccccdddddeeeeefffffggggghhhhhiii";
+    const std::vector<uint8_t> expect_bytes(expect_content.begin(),
+                                            expect_content.end());
+    EXPECT_EQ(bytes, expect_bytes);
+}
+
+TEST_F(LongFileTest,
+       DiskManagerReadBytesAcrossBlocksWithOffsetNextBlockSuccess) {
+    const size_t block_size = 5;
+    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskPosition position(disk::BlockID(filename, 1), /*offset=*/2);
+    disk::Block block;
+
+    auto result = manager.Read(position.BlockID(), block);
+    ASSERT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    std::vector<uint8_t> bytes;
+    result = manager.ReadBytesAcrossBlocksWithOffset(
+        position, /*offset=*/7, block, /*length=*/34, bytes);
+    EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    EXPECT_EQ(bytes.size(), 34);
+    const std::string expect_content = "cdddddeeeeefffffggggghhhhhiiiiijjj";
+    const std::vector<uint8_t> expect_bytes(expect_content.begin(),
+                                            expect_content.end());
+    EXPECT_EQ(bytes, expect_bytes);
+}
+
+TEST_F(IntFileTest, DiskManagerReadIntAcrossBlocksWithOffsetSuccess) {
+    const size_t block_size = 4;
+    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskPosition position(disk::BlockID(filename, 0), /*offset=*/1);
+    disk::Block block;
+
+    auto result = manager.Read(position.BlockID(), block);
+    ASSERT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    std::vector<uint8_t> bytes;
+    auto int_result =
+        manager.ReadIntAcrossBlocksWithOffset(position, /*offset=*/1, block);
+    EXPECT_TRUE(int_result.IsOk()) << int_result.Error() << '\n';
+    EXPECT_EQ(int_result.Get(), kInt1111);
+}
+
+TEST_F(IntFileTest, DiskManagerReadUint32AcrossBlocksWithOffsetSuccess) {
+    const size_t block_size = 4;
+    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskPosition position(disk::BlockID(filename, 0), /*offset=*/0);
+    disk::Block block;
+
+    auto result = manager.Read(position.BlockID(), block);
+    ASSERT_TRUE(result.IsOk()) << result.Error() << '\n';
+
+    std::vector<uint8_t> bytes;
+    auto uint32_result =
+        manager.ReadUint32AcrossBlocksWithOffset(position, /*offset=*/2, block);
+    EXPECT_TRUE(uint32_result.IsOk()) << uint32_result.Error() << '\n';
+    EXPECT_EQ(uint32_result.Get(), kInt1111);
+}
