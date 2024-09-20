@@ -102,12 +102,9 @@ TEST_F(LogFileExistentLogManager, WriteLogSuccess) {
                                   /*log_directory_name=*/directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    data::Int x(4);
-    dblog::LogOperation log_record(
-        /*transaction_id=*/0, dblog::ManiplationType::kInsert,
-        /*offset=*/disk::BlockID(filename, 0), /*previous_item=*/nullptr,
-        /*new_item=*/&x);
-    auto write_result = log_manager.WriteLog(&log_record);
+
+    std::vector<uint8_t> bytes = {'a', 'b', 'c', 'd'};
+    auto write_result          = log_manager.WriteLog(bytes);
     EXPECT_TRUE(write_result.IsOk()) << write_result.Error() << '\n';
 }
 
@@ -116,9 +113,9 @@ TEST_F(LogFileExistentLogManager, FlushSuccess) {
                                   /*log_directory_name=*/directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    dblog::LogTransactionEnd log_record(/*transaction_id=*/0,
-                                        dblog::TransactionEndType::kCommit);
-    auto write_result = log_manager.WriteLog(&log_record);
+
+    std::vector<uint8_t> bytes = {'a', 'b', 'c', 'd'};
+    auto write_result          = log_manager.WriteLog(bytes);
     ASSERT_TRUE(write_result.IsOk()) << write_result.Error() << '\n';
     dblog::LogSequenceNumber lsn = write_result.Get();
     auto flush_result            = log_manager.Flush(lsn);

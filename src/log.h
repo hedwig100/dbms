@@ -120,10 +120,9 @@ class LogManager {
     // This function should be called before starting using the instance.
     Result Init();
 
-    // Writes `log_record` to the log file with the header. The header has
-    // length of log record in bytes and hash of the log record (to achieve
-    // atomic write of logs). NOTE: log length must be smaller than 2^32-1.
-    ResultV<LogSequenceNumber> WriteLog(const LogRecord *log_record);
+    // Writes bytes to log file.
+    ResultV<LogSequenceNumber>
+    WriteLog(const std::vector<uint8_t> &log_record_bytes);
 
     // Returns the most recent log iterator.
     ResultV<LogIterator> LastLog() const;

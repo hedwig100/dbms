@@ -392,14 +392,14 @@ ResultV<LogIterator> LogManager::LastLog() const {
         current_block_);
 }
 
-ResultV<LogSequenceNumber> LogManager::WriteLog(const LogRecord *log_record) {
-    std::vector<uint8_t> log_body_with_header = LogRecordWithHeader(log_record);
+ResultV<LogSequenceNumber>
+LogManager::WriteLog(const std::vector<uint8_t> &log_record_bytes) {
 
     const disk::BlockID rollback_block_id   = current_block_id_;
     const internal::LogBlock rollback_block = current_block_;
 
     ResultE<size_t> append_result =
-        current_block_.Append(log_body_with_header, /*bytes_offset=*/0);
+        current_block_.Append(log_record_bytes, /*bytes_offset=*/0);
     while (append_result.IsError()) {
         size_t next_offset = append_result.Error();
         Result move_result = MoveToNextBlock();
@@ -410,8 +410,7 @@ ResultV<LogSequenceNumber> LogManager::WriteLog(const LogRecord *log_record) {
                    Error("dblog::LogManager::WriteLog() failed to save the "
                          "current block or allocate a next block.");
         }
-        append_result =
-            current_block_.Append(log_body_with_header, next_offset);
+        append_result = current_block_.Append(log_record_bytes, next_offset);
     }
 
     return Ok(current_number_++);
