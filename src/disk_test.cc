@@ -347,29 +347,29 @@ TEST_F(TempFileTest, DiskManagerCorrectlyWrites) {
     const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
 
     char goodbye[] = "goodbye";
-    disk::Block block_write(3, goodbye), block_read;
+    disk::Block block_write(3, goodbye), block_read0, block_read1;
 
     EXPECT_TRUE(
         disk_manager.Write(disk::BlockID(filename, 0), block_write).IsOk());
     EXPECT_TRUE(
-        disk_manager.Read(disk::BlockID(filename, 0), block_read).IsOk());
+        disk_manager.Write(disk::BlockID(filename, 1), block_write).IsOk());
+
+    EXPECT_TRUE(
+        disk_manager.Read(disk::BlockID(filename, 0), block_read0).IsOk());
+    EXPECT_TRUE(
+        disk_manager.Read(disk::BlockID(filename, 1), block_read1).IsOk());
 
     // block_read must be "goo"
-    EXPECT_EQ(block_read.ReadByte(0).Get(), 'g');
-    EXPECT_EQ(block_read.ReadByte(1).Get(), 'o');
-    EXPECT_EQ(block_read.ReadByte(2).Get(), 'o');
-    EXPECT_TRUE(block_read.ReadByte(3).IsError());
-
-    EXPECT_TRUE(
-        disk_manager.Write(disk::BlockID(filename, 1), block_write).IsOk());
-    EXPECT_TRUE(
-        disk_manager.Read(disk::BlockID(filename, 1), block_read).IsOk());
+    EXPECT_EQ(block_read0.ReadByte(0).Get(), 'g');
+    EXPECT_EQ(block_read0.ReadByte(1).Get(), 'o');
+    EXPECT_EQ(block_read0.ReadByte(2).Get(), 'o');
+    EXPECT_TRUE(block_read0.ReadByte(3).IsError());
 
     // block must be "goo"
-    EXPECT_EQ(block_read.ReadByte(0).Get(), 'g');
-    EXPECT_EQ(block_read.ReadByte(1).Get(), 'o');
-    EXPECT_EQ(block_read.ReadByte(2).Get(), 'o');
-    EXPECT_TRUE(block_read.ReadByte(3).IsError());
+    EXPECT_EQ(block_read1.ReadByte(0).Get(), 'g');
+    EXPECT_EQ(block_read1.ReadByte(1).Get(), 'o');
+    EXPECT_EQ(block_read1.ReadByte(2).Get(), 'o');
+    EXPECT_TRUE(block_read1.ReadByte(3).IsError());
 }
 
 TEST_F(NonExistentFileTest, DiskManagerWriteFail) {

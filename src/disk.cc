@@ -148,7 +148,8 @@ DiskManager::DiskManager(const std::string &directory_path,
     : directory_path_(directory_path), block_size_(block_size) {}
 
 Result DiskManager::Read(const BlockID &block_id, Block &block) const {
-    std::ifstream file(directory_path_ + block_id.Filename(), std::ios::binary);
+    std::ifstream file(directory_path_ + block_id.Filename(),
+                       std::ios::ate | std::ios::binary);
     if (!file.is_open())
         return Error("disk::DiskManager::Read() failed to open a file.");
 
@@ -171,7 +172,8 @@ Result DiskManager::Read(const BlockID &block_id, Block &block) const {
 }
 
 Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
-    std::ofstream file(directory_path_ + block_id.Filename(), std::ios::binary);
+    std::ofstream file(directory_path_ + block_id.Filename(),
+                       std::ios::ate | std::ios::binary | std::ios::in);
     if (!file.is_open())
         return Error("disk::DiskManager::Write() failed to open a file.");
 
