@@ -49,6 +49,111 @@ void LogBlock::UpdateOffset(int new_offset) {
     block_.WriteInt(/*offset=*/kOffsetPositionInLogBlock, /*value=*/offset_);
 }
 
+// Read bytes which can lie across multiple log blocks. `position` specifies the
+// start position to read the bytes. The `position` needs to be located outside
+// the offset region of the block. `block` is the block in which `position` is
+// located. `length` is the length of the bytes to read. The bytes are written
+// to `bytes`.
+Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
+                             const LogBlock &block,
+                             const disk::DiskPosition &position, int length,
+                             std::vector<uint8_t> &bytes) {
+    if (position.Offset() < kDefaultOffset) return Error("fail");
+
+    const int log_block_size = disk_manager.BlockSize() - kDefaultOffset;
+
+    int length_of_first_block = (position.Offset() + length <= log_block_size
+                                     ? length
+                                     : log_block_size - position.Offset());
+    Result read_result        = block.RawBlock().ReadBytes(
+        position.Offset(), length_of_first_block, bytes);
+    if (read_result.IsError()) return read_result + Error("fail");
+    length -= length_of_first_block;
+
+    if (length == 0) return Ok();
+
+    disk::BlockID current_block_id = position.BlockID();
+    LogBlock current_block         = block;
+
+    while (length > 0) {
+        current_block_id += 1;
+        Result read_result =
+            current_block.ReadLogBlock(disk_manager, current_block_id);
+        if (read_result.IsError()) return read_result + Error("fail");
+
+        if (length >= log_block_size) {
+            std::copy(current_block.RawBlock().Content().begin() +
+                          kDefaultOffset,
+                      current_block.RawBlock().Content().end(),
+                      std::back_inserter(bytes));
+            length -= log_block_size;
+        } else {
+            std::vector<uint8_t> tmp_bytes(length);
+            current_block.RawBlock().ReadBytes(kDefaultOffset, length,
+                                               tmp_bytes);
+            std::copy(tmp_bytes.begin(), tmp_bytes.end(),
+                      std::back_inserter(bytes));
+            length = 0;
+        }
+    }
+
+    return Ok();
+}
+
+ResultV<uint32_t> ReadUint32AcrossBlocks(const disk::DiskManager &disk_manager,
+                                         const LogBlock &block,
+                                         const disk::DiskPosition &position) {
+    std::vector<uint8_t> uint32_bytes(data::kUint32Bytesize);
+    auto read_result = ReadBytesAcrossBlocks(
+        disk_manager, block, position, data::kUint32Bytesize, uint32_bytes);
+    if (read_result.IsError()) { return read_result + Error("fail"); }
+    return data::ReadUint32(uint32_bytes, 0);
+}
+
+disk::DiskPosition MoveInLogBlock(const disk::DiskPosition &position,
+                                  const int displacement,
+                                  const int block_size) {
+    disk::DiskPosition log_position =
+        position.Move(-kDefaultOffset, block_size);
+    log_position = log_position.Move(displacement, block_size - kDefaultOffset);
+    return log_position.Move(kDefaultOffset, block_size);
+}
+
+// Read bytes which can lie across multiple log blocks.
+// `position.`.Move(`offset`) specifies the start position to read the bytes.
+// The `position` needs to be located outside the offset region of the block.
+// `block` is the block in which `position` is located. `length` is the length
+// of the bytes to read. The bytes are written to `bytes`.
+Result ReadBytesAcrossBlocksWithOffset(const disk::DiskManager &disk_manager,
+                                       const LogBlock &block,
+                                       const disk::DiskPosition &position,
+                                       const int offset, int length,
+                                       std::vector<uint8_t> &bytes) {
+    disk::DiskPosition start_position =
+        MoveInLogBlock(position, offset, disk_manager.BlockSize());
+    if (start_position.BlockID() == position.BlockID()) {
+        return ReadBytesAcrossBlocks(disk_manager, block, start_position,
+                                     length, bytes);
+    }
+
+    LogBlock start_block;
+    auto read_result =
+        start_block.ReadLogBlock(disk_manager, start_position.BlockID());
+    if (read_result.IsError()) return read_result + Error("fail");
+    return ReadBytesAcrossBlocks(disk_manager, start_block, start_position,
+                                 length, bytes);
+}
+
+ResultV<int> ReadIntAcrossBlocksWithOffset(
+    const disk::DiskManager &disk_manager, const LogBlock &block,
+    const disk::DiskPosition &position, const int offset) {
+    std::vector<uint8_t> int_bytes(data::kIntBytesize);
+    auto read_result = ReadBytesAcrossBlocksWithOffset(
+        disk_manager, block, position, offset, data::kIntBytesize, int_bytes);
+    if (read_result.IsError()) { return read_result + Error("fail"); }
+    return data::ReadInt(int_bytes, 0);
+}
+
 } // namespace internal
 
 // TODO: compute check sum
