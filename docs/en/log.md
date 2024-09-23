@@ -22,11 +22,10 @@ Log data is written by a data item (such as an integer, string).
 
 The detailed log format is the following. 
 A checksum and length of the log is written at the head of each log,
-and the log body is written after that. The length of a log is written 
-in bytes.
+and the log body is written after that. The length of a log is the length of the log body without checksum of other headers, written in bytes. The length is written at the tail of the log record so that the log file can be read from the bottom.
 
 ```
-| Checksum | log length | log body |
+| Checksum | log length | log body | log length |
 ```
 
 Length of loggings for each kind (log length, log body) is the following.
