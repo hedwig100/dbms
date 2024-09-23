@@ -16,4 +16,5 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-DMYDB_DEBUG")
 add_subdirectory(src)
