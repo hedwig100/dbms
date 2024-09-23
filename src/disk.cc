@@ -2,7 +2,6 @@
 
 #include "data/char.h"
 #include "data/int.h"
-#include "data/uint32.h"
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>
@@ -243,76 +242,67 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
     }
 }
 
-Result DiskManager::ReadBytesAcrossBlocks(const DiskPosition &position,
-                                          const disk::Block &block, int length,
-                                          std::vector<uint8_t> &bytes) const {
-
-    int length_of_first_block = (position.Offset() + length <= block_size_
-                                     ? length
-                                     : block_size_ - position.Offset());
-    Result read_result =
-        block.ReadBytes(position.Offset(), length_of_first_block, bytes);
+// Moves the `block` to the next block of `block_id`.
+Result MoveToNextBlock(disk::BlockID &block_id, disk::Block &block,
+                       const disk::DiskManager &disk_manager) {
+    disk::BlockID next_block_id(block_id.Filename(), block_id.BlockIndex() + 1);
+    Result read_result = disk_manager.Read(next_block_id, block);
     if (read_result.IsError())
-        return read_result + Error("disk::DiskManager::ReadBytesAcrossBlocks() "
-                                   "failed to read the first block.");
+        return read_result +
+               Error("disk:MoveToNextBlock() failed to read the next block.");
+    block_id = next_block_id;
+    return Ok();
+}
+
+Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
+                             disk::Block &block, int length,
+                             std::vector<uint8_t> &read_bytes,
+                             const disk::DiskManager &disk_manager) {
+    if (offset < 0 || offset >= disk_manager.BlockSize())
+        return Error(
+            "disk::ReadBytesAcrossBlocks() offset should be in the block.");
+
+    int length_of_first_block = (offset + length <= disk_manager.BlockSize()
+                                     ? length
+                                     : disk_manager.BlockSize() - offset);
+    Result read_result =
+        block.ReadBytes(offset, length_of_first_block, read_bytes);
+    if (read_result.IsError())
+        return read_result + Error("disk::ReadBytesAcrossBlocks() failed to "
+                                   "read the first block.");
     length -= length_of_first_block;
 
+    // We expect the length is not large enouth to lie across block in many
+    // cases. Therefore, retrun here to avoid unnecessary allocation in heap
+    // memory.
     if (length == 0) return Ok();
 
-    BlockID current_block_id = position.BlockID();
-    Block current_block      = block;
+    const disk::BlockID rollback_block_id = block_id;
+    const disk::Block rollback_block      = block;
 
     while (length > 0) {
-        current_block_id += 1;
-        Result read_result = Read(current_block_id, current_block);
-        if (read_result.IsError()) {
-            return read_result +
-                   Error("disk::DiskManager::ReadBytesAcrossBlocks() failed to "
-                         "move to the next block.");
+        Result move_result = MoveToNextBlock(block_id, block, disk_manager);
+        if (move_result.IsError()) {
+            block_id = rollback_block_id;
+            block    = rollback_block;
+            return move_result + Error("disk::ReadBytesAcrossBlocks() failed "
+                                       "to move to the next block.");
         }
 
-        if (length >= block_size_) {
-            std::copy(current_block.Content().begin(),
-                      current_block.Content().end(), std::back_inserter(bytes));
-            length -= block_size_;
+        if (length >= disk_manager.BlockSize()) {
+            std::copy(block.Content().begin(), block.Content().end(),
+                      std::back_inserter(read_bytes));
+            length -= disk_manager.BlockSize();
         } else {
             std::vector<uint8_t> tmp_bytes(length);
-            current_block.ReadBytes(0, length, tmp_bytes);
+            block.ReadBytes(0, length, tmp_bytes);
             std::copy(tmp_bytes.begin(), tmp_bytes.end(),
-                      std::back_inserter(bytes));
+                      std::back_inserter(read_bytes));
             length = 0;
         }
     }
 
     return Ok();
-}
-
-ResultV<int> DiskManager::ReadIntAcrossBlocks(const DiskPosition &position,
-                                              const disk::Block &block) const {
-    std::vector<uint8_t> int_bytes(data::kIntBytesize);
-    auto read_result =
-        ReadBytesAcrossBlocks(position, block, data::kIntBytesize, int_bytes);
-    if (read_result.IsError()) {
-        return read_result +
-               Error("disk::DiskManager::ReadIntAcrossBlocks() failed to read "
-                     "bytes corresponding to int.");
-    }
-    return data::ReadInt(int_bytes, 0);
-}
-
-ResultV<uint32_t>
-DiskManager::ReadUint32AcrossBlocks(const DiskPosition &position,
-                                    const disk::Block &block) const {
-    std::vector<uint8_t> uint32_bytes(data::kUint32Bytesize);
-    auto read_result = ReadBytesAcrossBlocks(
-        position, block, data::kUint32Bytesize, uint32_bytes);
-    if (read_result.IsError()) {
-        return read_result +
-               Error(
-                   "disk::DiskManager::ReadUint32AcrossBlocks() failed to read "
-                   "bytes corresponding to uint32.");
-    }
-    return data::ReadUint32(uint32_bytes, 0);
 }
 
 } // namespace disk
