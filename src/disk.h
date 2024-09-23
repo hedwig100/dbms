@@ -180,33 +180,6 @@ class DiskManager {
     ResultV<uint32_t> ReadUint32AcrossBlocks(const DiskPosition &position,
                                              const disk::Block &block) const;
 
-    // Read bytes which can lie across multiple blocks.
-    // `position`.Move(`offset`) is the start position to read the bytes. The
-    // `offset` can be negative value. `block` is the block in which `position`
-    // is located. `length` is the length of the bytes to read. The bytes are
-    // written to `bytes`.
-    Result ReadBytesAcrossBlocksWithOffset(const DiskPosition &position,
-                                           const int offset,
-                                           const disk::Block &block, int length,
-                                           std::vector<uint8_t> &bytes) const;
-
-    // Read int which can lie across multiple blocks.
-    // `position`.Move(`offset`) is the start position to read the bytes. The
-    // `offset` can be negative value. `block` is the block in which `position`
-    // is located.
-    ResultV<int> ReadIntAcrossBlocksWithOffset(const DiskPosition &position,
-                                               const int offset,
-                                               const disk::Block &block) const;
-
-    // Read iint32_t which can lie across multiple blocks.
-    // `position`.Move(`offset`) is the start position to read the bytes. The
-    // `offset` can be negative value. `block` is the block in which `position`
-    // is located.
-    ResultV<uint32_t>
-    ReadUint32AcrossBlocksWithOffset(const DiskPosition &position,
-                                     const int offset,
-                                     const disk::Block &block) const;
-
   private:
     const std::string directory_path_;
     const int block_size_;
