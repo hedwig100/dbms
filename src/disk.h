@@ -37,6 +37,8 @@ class BlockID {
 
     bool operator!=(const BlockID &other_block) const;
 
+    bool operator<(const BlockID &other_block) const;
+
   private:
     std::string filename_;
     int block_index_;

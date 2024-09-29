@@ -47,6 +47,12 @@ bool BlockID::operator!=(const BlockID &other_block) const {
     return !(*this == other_block);
 }
 
+bool BlockID::operator<(const BlockID &other_block) const {
+    int compare_filename = filename_.compare(other_block.Filename());
+    if (compare_filename != 0) { return compare_filename < 0; }
+    return block_index_ < other_block.BlockIndex();
+}
+
 DiskPosition DiskPosition::Move(const int displacement,
                                 const int block_size) const {
     int block_index_displacement = (offset_ + displacement) / block_size;
