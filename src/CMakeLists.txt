@@ -31,6 +31,29 @@ target_link_libraries(buffer_test
 )
 gtest_discover_tests(buffer_test)
 
+## concurrency
+add_library(concurrency
+  concurrency.cc
+)
+target_link_libraries(concurrency
+  disk
+)
+target_include_directories(concurrency
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(concurrency_test
+  concurrency_test.cc
+)
+target_include_directories(concurrency_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(concurrency_test
+  concurrency
+  GTest::gtest_main
+)
+gtest_discover_tests(concurrency_test)
+
 ## disk
 add_library(disk
   disk.cc
