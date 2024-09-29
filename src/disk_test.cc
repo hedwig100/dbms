@@ -63,6 +63,16 @@ TEST(BlockID, CorrectlyTestNotEqual) {
     EXPECT_TRUE(block_id0 != block_id4);
 }
 
+TEST(BlockID, CompareOrder) {
+    const disk::BlockID block_id0("f.tbl", 0), block_id1("f.tbl", 1),
+        block_id2("g.tbl", 0), block_id3("g.tbl", 4);
+
+    EXPECT_FALSE(block_id0 < block_id0);
+    EXPECT_TRUE(block_id0 < block_id1);
+    EXPECT_TRUE(block_id0 < block_id2);
+    EXPECT_TRUE(block_id0 < block_id3);
+}
+
 TEST(DiskPosition, InstantiationSuccess) {
     disk::DiskPosition position(disk::BlockID("filename", 1), 3);
 

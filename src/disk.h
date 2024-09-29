@@ -37,10 +37,19 @@ class BlockID {
 
     bool operator!=(const BlockID &other_block) const;
 
+    bool operator<(const BlockID &other_block) const;
+
   private:
     std::string filename_;
     int block_index_;
 };
+
+// Returns end of file marker of the `filename`. This block is used to assure
+// that conflict does not occur when file size changes. To assure that the
+// conflict does not occur, the end of file is locked.
+inline BlockID EndOfFileBlockID(const std::string &filename) {
+    return BlockID(filename, -1);
+}
 
 // Specify position in the disk by BlockID and offset in the block.
 class DiskPosition {
