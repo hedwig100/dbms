@@ -107,3 +107,55 @@ TEST(ConcurrencyLockTable, DetectDeadLock) {
     thread0.join();
     thread1.join();
 }
+
+TEST(ConcurrencyLockTable, AcquireWriteLockWhenOwningReadLock) {
+    Result result = lock_table.ReadLock(block0);
+    EXPECT_TRUE(result.IsOk());
+
+    result = lock_table.WriteLockWhenOwningReadLock(block0);
+    EXPECT_TRUE(result.IsOk());
+    lock_table.Release(block0);
+}
+
+void ReadWriteLock0() {
+    dbconcurrency::ConcurrentManager manager(lock_table);
+    Result result = manager.ReadLock(block0);
+    EXPECT_TRUE(result.IsOk());
+
+    result = manager.WriteLock(block1);
+    EXPECT_TRUE(result.IsOk());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    manager.Release();
+}
+
+void ReadWriteLock1() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    dbconcurrency::ConcurrentManager manager(lock_table);
+    Result result = manager.ReadLock(block1);
+    EXPECT_TRUE(result.IsOk());
+
+    result = manager.ReadLock(block0);
+    EXPECT_TRUE(result.IsOk());
+
+    manager.Release();
+}
+
+TEST(ConcurrencyManager, ConcurrencyManagerReadWriteLock) {
+    std::thread thread0(ReadWriteLock0);
+    std::thread thread1(ReadWriteLock1);
+    thread0.join();
+    thread1.join();
+}
+
+TEST(ConcurrencyManager, ConcurrencyManagerWriteLockWhileHavingReadLock) {
+    dbconcurrency::ConcurrentManager manager(lock_table);
+
+    Result result = manager.ReadLock(block1);
+    EXPECT_TRUE(result.IsOk());
+
+    result = manager.WriteLock(block1);
+    EXPECT_TRUE(result.IsOk());
+
+    manager.Release();
+}
