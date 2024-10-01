@@ -37,10 +37,13 @@ Char::Char(const std::string &value, uint8_t length) : length_(length) {
     if (value_.size() < length) value_.resize(length, ' ');
 }
 
+constexpr uint8_t kDataCharFlag = 0b00000001;
+
 void Char::WriteTypeParameter(std::vector<uint8_t> &bytes,
                               const size_t offset) const {
-    if (offset + 1 > bytes.size()) bytes.resize(offset + 1);
-    bytes[offset] = length_;
+    if (offset + 2 > bytes.size()) bytes.resize(offset + 2);
+    bytes[offset]     = kDataCharFlag;
+    bytes[offset + 1] = length_;
 }
 
 void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {

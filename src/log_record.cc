@@ -89,6 +89,8 @@ LogOperation::LogOperation(TransactionID transaction_id,
     log_body_.push_back(
         LogOperationMask(maniplation_type, nonnull_item->Type()));
     data::WriteUint32NoFail(log_body_, log_body_.size(), transaction_id);
+    data::WriteUint32NoFail(log_body_, log_body_.size(),
+                            offset.Filename().size());
     data::WriteStringNoFail(log_body_, log_body_.size(), offset.Filename());
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.BlockIndex());
     nonnull_item->WriteTypeParameter(log_body_, log_body_.size());

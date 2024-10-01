@@ -18,8 +18,8 @@ class Int : public DataItem {
 
     inline DataType Type() const { return DataType::kInt; }
 
-    inline void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                                   const size_t offset) const {}
+    void WriteTypeParameter(std::vector<uint8_t> &bytes,
+                            const size_t offset) const;
 
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 

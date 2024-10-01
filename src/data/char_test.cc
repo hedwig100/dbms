@@ -30,8 +30,8 @@ TEST(DataChar, DataItemCharWriteTypeParameter) {
     std::vector<uint8_t> bytes;
 
     hello.WriteTypeParameter(bytes, 0);
-    EXPECT_TRUE(bytes.size() >= 1);
-    EXPECT_EQ(bytes[0], 5);
+    EXPECT_TRUE(bytes.size() >= 2);
+    EXPECT_EQ(bytes[1], 5);
 }
 
 TEST(DataChar, DataItemCharWriteOfSmallBytes) {
