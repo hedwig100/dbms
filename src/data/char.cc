@@ -1,6 +1,7 @@
 #include "char.h"
 #include "uint32.h"
 #include <cstring>
+#include <memory>
 
 namespace data {
 
@@ -48,4 +49,18 @@ void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
     WriteStringNoFail(bytes, offset, value_);
 }
 
+ResultV<std::unique_ptr<DataItem>>
+ReadDataChar(const std::vector<uint8_t> &datatype_bytes, int datatype_offset,
+             const std::vector<uint8_t> &data_bytes, int data_offset) {
+    if (datatype_offset + 2 > datatype_bytes.size())
+        return Error("data::ReadDataChar() data type parameter is too short.");
+    uint8_t length = datatype_bytes[datatype_offset + 1];
+    ResultV<std::string> char_result =
+        ReadString(data_bytes, data_offset, length);
+    if (char_result.IsError())
+        return char_result +
+               Error("data::ReadDataChar() failed to read string from bytes.");
+    return ResultV<std::unique_ptr<DataItem>>(
+        std::move(std::make_unique<Char>(char_result.Get(), length)));
+}
 } // namespace data

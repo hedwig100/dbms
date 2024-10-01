@@ -21,6 +21,30 @@ target_link_libraries(char_test
 )
 gtest_discover_tests(char_test)
 
+## data_read
+add_library(data_read
+  data_read.cc
+)
+target_include_directories(data_read
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(data_read
+  char 
+  int
+)
+
+add_executable(data_read_test
+  data_read_test.cc
+)
+target_include_directories(data_read_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
+)
+target_link_libraries(data_read_test
+  data_read
+  GTest::gtest_main
+)
+gtest_discover_tests(data_read_test)
+
 ## int
 add_library(int
   int.cc
