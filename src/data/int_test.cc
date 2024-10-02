@@ -13,7 +13,7 @@ TEST(DataInt, DataItemIntWriteTypeParameter) {
     std::vector<uint8_t> bytes;
 
     two.WriteTypeParameter(bytes, 0);
-    EXPECT_EQ(bytes.size(), 0);
+    EXPECT_EQ(bytes.size(), 1);
 }
 
 TEST(DataInt, DataItemIntWriteOfSmallBytes) {

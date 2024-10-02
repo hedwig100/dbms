@@ -26,6 +26,14 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteInt(bytes, offset, value);
 }
 
+constexpr uint8_t kDataIntFlag = 0b00000000;
+
+void Int::WriteTypeParameter(std::vector<uint8_t> &bytes,
+                             const size_t offset) const {
+    if (offset + 1 > bytes.size()) bytes.resize(offset + 1);
+    bytes[offset] = kDataIntFlag;
+}
+
 void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
     if (offset + kIntBytesize > bytes.size())
         bytes.resize(offset + kIntBytesize);
