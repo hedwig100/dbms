@@ -1,5 +1,6 @@
 #include "result.h"
 #include <gtest/gtest.h>
+#include <memory>
 
 TEST(ResultVE, IsOk) {
     const result::ResultVE<int, std::string> ok(4);
@@ -68,6 +69,13 @@ TEST(ResultVE, HoldClassWithReferenceValue) {
 
     EXPECT_EQ(ok.Get().integer_, 4);
     EXPECT_EQ(err.Error(), "error");
+}
+
+TEST(ResultVE, UniquePtrInstance) {
+    std::unique_ptr<int> x = std::make_unique<int>(5);
+    result::ResultV<std::unique_ptr<int>> result(std::move(x));
+    std::unique_ptr<int> moved_x = result.MoveValue();
+    EXPECT_EQ(*moved_x, 5);
 }
 
 TEST(Ok, CorrectlyReturnsOk) {
