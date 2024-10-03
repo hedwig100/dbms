@@ -108,3 +108,25 @@ TEST(DataChar, WriteStringNoFailWithOutsideIndexSuccess) {
     ASSERT_TRUE(expect_str.IsOk());
     EXPECT_EQ(expect_str.Get(), "abc");
 }
+
+TEST(DataChar, ReadDataCharSuccess) {
+    std::vector<uint8_t> datatype_bytes = {0, 6};
+    std::vector<uint8_t> data_bytes     = {'a', 'b', 'c', 'd', 'e', 'f'};
+
+    auto datachar_result = data::ReadDataChar(datatype_bytes, 0, data_bytes, 0);
+    EXPECT_TRUE(datachar_result.IsOk());
+    auto char_ptr = datachar_result.MoveValue();
+    EXPECT_EQ(char_ptr->Type(), data::DataType::kChar);
+
+    std::vector<uint8_t> read_bytes;
+    char_ptr->Write(read_bytes, 0);
+    EXPECT_EQ(read_bytes, data_bytes);
+}
+
+TEST(DataChar, ReadDataCharShortFail) {
+    std::vector<uint8_t> datatype_bytes = {0, 8};
+    std::vector<uint8_t> data_bytes     = {'a', 'b', 'c', 'd', 'e', 'f'};
+
+    auto datachar_result = data::ReadDataChar(datatype_bytes, 0, data_bytes, 0);
+    EXPECT_TRUE(datachar_result.IsError());
+}
