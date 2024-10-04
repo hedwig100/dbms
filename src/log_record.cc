@@ -18,39 +18,20 @@ constexpr uint8_t kInsertFlag = 0b00000000;
 constexpr uint8_t kUpdateFlag = 0b00010000;
 constexpr uint8_t kDeleteFlag = 0b00100000;
 
-constexpr uint8_t kIntFlag  = 0b00000000;
-constexpr uint8_t kCharFlag = 0b00000001;
-
 constexpr uint8_t kCommitFlag   = 0b00000000;
 constexpr uint8_t kRollbackFlag = 0b00100000;
 
 // Returns mask bits of a operation log.
-uint8_t LogOperationMask(ManiplationType maniplation_type,
-                         data::DataType data_type) {
-    uint8_t mask = kLogOperationMask;
-
+uint8_t LogOperationMask(ManiplationType maniplation_type) {
     switch (maniplation_type) {
     case ManiplationType::kInsert:
-        mask |= kInsertFlag;
-        break;
+        return kLogOperationMask | kInsertFlag;
     case ManiplationType::kUpdate:
-        mask |= kUpdateFlag;
-        break;
+        return kLogOperationMask | kUpdateFlag;
     case ManiplationType::kDelete:
-        mask |= kDeleteFlag;
-        break;
+        return kLogOperationMask | kDeleteFlag;
     }
-
-    switch (data_type) {
-    case data::DataType::kInt:
-        mask |= kIntFlag;
-        break;
-    case data::DataType::kChar:
-        mask |= kCharFlag;
-        break;
-    }
-
-    return mask;
+    return 0;
 }
 
 // Returns mask bits of a transaction-end log.
@@ -86,8 +67,7 @@ LogOperation::LogOperation(TransactionID transaction_id,
 
     log_body_.reserve(kEstimatedAverageLogSize);
 
-    log_body_.push_back(
-        LogOperationMask(maniplation_type, nonnull_item->Type()));
+    log_body_.push_back(LogOperationMask(maniplation_type));
     data::WriteUint32NoFail(log_body_, log_body_.size(), transaction_id);
     data::WriteUint32NoFail(log_body_, log_body_.size(),
                             offset.Filename().size());
