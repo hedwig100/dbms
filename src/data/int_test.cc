@@ -93,3 +93,23 @@ TEST(DataInt, WriteIntNoFailSuccessWithOutsideIndex) {
     ASSERT_TRUE(expect_int.IsOk());
     EXPECT_EQ(expect_int.Get(), -3);
 }
+
+TEST(DataInt, ReadDataIntSuccess) {
+    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
+
+    auto dataint_result = data::ReadDataInt(data_bytes, 0);
+    EXPECT_TRUE(dataint_result.IsOk());
+    auto int_ptr = dataint_result.MoveValue();
+    EXPECT_EQ(int_ptr->Type(), data::DataType::kInt);
+
+    std::vector<uint8_t> read_bytes;
+    int_ptr->Write(read_bytes, 0);
+    EXPECT_EQ(read_bytes, data_bytes);
+}
+
+TEST(DataInt, ReadDataIntShortFail) {
+    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
+
+    auto dataint_result = data::ReadDataInt(data_bytes, 2);
+    EXPECT_TRUE(dataint_result.IsError());
+}

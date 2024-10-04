@@ -17,6 +17,9 @@ enum class DataType {
     kChar = 1,
 };
 
+constexpr uint8_t kTypeParameterInt  = 0b00000000;
+constexpr uint8_t kTypeParameterChar = 0b00000001;
+
 // DataItem represents one data item such as a integer, a char.
 class DataItem {
   public:

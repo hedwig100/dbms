@@ -26,18 +26,27 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteInt(bytes, offset, value);
 }
 
-constexpr uint8_t kDataIntFlag = 0b00000000;
-
 void Int::WriteTypeParameter(std::vector<uint8_t> &bytes,
                              const size_t offset) const {
     if (offset + 1 > bytes.size()) bytes.resize(offset + 1);
-    bytes[offset] = kDataIntFlag;
+    bytes[offset] = kTypeParameterInt;
 }
 
 void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
     if (offset + kIntBytesize > bytes.size())
         bytes.resize(offset + kIntBytesize);
     WriteInt(bytes, offset, value_);
+}
+
+ResultV<std::unique_ptr<DataItem>>
+ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset) {
+    ResultV<int> int_result = ReadInt(data_bytes, data_offset);
+    if (int_result.IsError()) {
+        return int_result +
+               Error("data::ReadDataInt() failed to read int data.");
+    }
+    return ResultV<std::unique_ptr<DataItem>>(
+        std::move(std::make_unique<Int>(int_result.Get())));
 }
 
 } // namespace data

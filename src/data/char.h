@@ -3,6 +3,7 @@
 
 #include "data/data.h"
 #include "result.h"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,11 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 // this functions extends `bytes` when `value` does not fit `bytes`.
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
+
+// Read Char type value from `datatype_bytes` and `data_bytes`.
+ResultV<std::unique_ptr<DataItem>>
+ReadDataChar(const std::vector<uint8_t> &datatype_bytes, int datatype_offset,
+             const std::vector<uint8_t> &data_bytes, int data_offset);
 
 } // namespace data
 

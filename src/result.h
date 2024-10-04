@@ -24,6 +24,7 @@ namespace result {
 template <typename T, typename E> class ResultVE {
   public:
     explicit ResultVE(const T &ok) : tag_(Tag::Ok), ok_(ok) {}
+    explicit ResultVE(T &&ok) : tag_(Tag::Ok), ok_(std::move(ok)) {}
     explicit ResultVE(const E &error) : tag_(Tag::Error), error_(error) {}
 
     ResultVE(const ResultVE &result) : tag_(result.tag_) {
@@ -72,6 +73,13 @@ template <typename T, typename E> class ResultVE {
         if (tag_ != Tag::Ok) { throw "Invalid Get operation"; }
         return ok_;
     }
+
+    // When the type T does not implement copy constructor e.g.
+    // std::unique_ptr<T>, `Get()` method cannot be executed. This method
+    // provides the way to move the `ok_` value. After calling this method, the
+    // `Get()` method cannot return the correct value as the value is already
+    // moved.
+    T &&MoveValue() { return std::move(ok_); }
 
     // Returns error value.
     E const &Error() const {
@@ -195,6 +203,8 @@ template <typename T> class OkValue {
 };
 
 // Returns OkValue<T>, which can be transformed to ResultVE<T, E>.
+// This function cannot be used when T does not implement copy constructor. You
+// should use the move constructor of ResultVE in this case.
 template <typename T> inline OkValue<T> Ok(T t) { return OkValue<T>(t); }
 
 // Returns OkValue<T>, which can be transformed to ResultVE<T, E>.

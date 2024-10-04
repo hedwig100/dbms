@@ -3,6 +3,7 @@
 
 #include "data/data.h"
 #include "result.h"
+#include <memory>
 #include <vector>
 
 namespace data {
@@ -43,6 +44,11 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 // does not fit `bytes`.
 void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                     const int value);
+
+// Read Int from `datatype_bytes` and `data_bytes`.
+ResultV<std::unique_ptr<DataItem>>
+ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset);
+
 } // namespace data
 
 #endif // _DATA_INT_H
