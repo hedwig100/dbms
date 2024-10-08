@@ -22,6 +22,10 @@ class Char : public DataItem {
 
     inline DataType Type() const { return DataType::kChar; }
 
+    inline int TypeParameterValueLength() const {
+        return /*header size*/ 1 + /*length size*/ 1 + length_;
+    }
+
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
     // Returns a string owned.

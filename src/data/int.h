@@ -19,6 +19,10 @@ class Int : public DataItem {
 
     inline DataType Type() const { return DataType::kInt; }
 
+    inline int TypeParameterValueLength() const {
+        return /*header size*/ 1 + kIntBytesize;
+    }
+
     void WriteTypeParameter(std::vector<uint8_t> &bytes,
                             const size_t offset) const;
 
