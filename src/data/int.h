@@ -45,7 +45,9 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                     const int value);
 
-// Read Int from `datatype_bytes` and `data_bytes`.
+// Read Int from `data_bytes`. The bytes have type paremeter and the data itself
+// in continuous domain.
+// | kTypeParameterInt(1byte) | int value(4bytes) |
 ResultV<std::unique_ptr<DataItem>>
 ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset);
 

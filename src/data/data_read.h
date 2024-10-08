@@ -7,10 +7,10 @@
 
 namespace data {
 
-// Read data from `datatype_bytes` and `data_bytes`.
+// Read data from `data_bytes`. The bytes have type paremeter and the data
+// itself in continuous domain.
 ResultV<std::unique_ptr<DataItem>>
-ReadData(const std::vector<uint8_t> &datatype_bytes, int datatype_offset,
-         const std::vector<uint8_t> &data_bytes, int data_offset);
+ReadData(const std::vector<uint8_t> &data_bytes, const int data_offset);
 
 } // namespace data
 
