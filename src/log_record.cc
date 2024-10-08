@@ -93,12 +93,15 @@ LogOperation::LogOperation(TransactionID transaction_id,
                             offset.Filename().size());
     data::WriteStringNoFail(log_body_, log_body_.size(), offset.Filename());
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.BlockIndex());
-    nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
 
-    if (previous_item != nullptr)
+    if (previous_item != nullptr) {
+        nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
         previous_item->Write(log_body_, log_body_.size());
-    if (current_item != nullptr)
+    }
+    if (current_item != nullptr) {
+        nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
         current_item->Write(log_body_, log_body_.size());
+    }
 }
 
 LogTransactionEnd::LogTransactionEnd(TransactionID transaction_id,

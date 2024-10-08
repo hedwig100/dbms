@@ -26,6 +26,9 @@ class DataItem {
     // Type of the item such as integer, char...
     virtual DataType Type() const = 0;
 
+    // Byte length of type parameters and values in continuous domain.
+    virtual int TypeParameterValueLength() const = 0;
+
     // Write a byte sequence that represents type parameters to `bytes` with
     // `offset`. For example, type parameters are length in the case of Char.
     virtual void WriteTypeParameter(std::vector<uint8_t> &bytes,

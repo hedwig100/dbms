@@ -22,6 +22,10 @@ class Char : public DataItem {
 
     inline DataType Type() const { return DataType::kChar; }
 
+    inline int TypeParameterValueLength() const {
+        return /*header size*/ 1 + /*length size*/ 1 + length_;
+    }
+
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
     // Returns a string owned.
@@ -49,10 +53,11 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
 
-// Read Char type value from `datatype_bytes` and `data_bytes`.
+// Read Char type value from `data_bytes`. The bytes have type parameter and the
+// data itself in continuous domain.
+// | kTypeParameterChar(1byte) | length(1byte) | char value(N byte) |
 ResultV<std::unique_ptr<DataItem>>
-ReadDataChar(const std::vector<uint8_t> &datatype_bytes, int datatype_offset,
-             const std::vector<uint8_t> &data_bytes, int data_offset);
+ReadDataChar(const std::vector<uint8_t> &data_bytes, int data_offset);
 
 } // namespace data
 

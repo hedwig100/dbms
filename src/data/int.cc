@@ -40,7 +40,7 @@ void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
 
 ResultV<std::unique_ptr<DataItem>>
 ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset) {
-    ResultV<int> int_result = ReadInt(data_bytes, data_offset);
+    ResultV<int> int_result = ReadInt(data_bytes, data_offset + 1);
     if (int_result.IsError()) {
         return int_result +
                Error("data::ReadDataInt() failed to read int data.");
