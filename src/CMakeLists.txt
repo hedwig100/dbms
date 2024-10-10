@@ -108,6 +108,7 @@ add_library(log_record
 )
 target_link_libraries(log_record
   char
+  data_read
   disk
   int 
   uint32
