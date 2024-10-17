@@ -63,7 +63,8 @@ ReadLogTransactionBegin(const std::vector<uint8_t> &log_body_bytes) {
     ResultV<uint32_t> transaction_id_result =
         data::ReadUint32(log_body_bytes, 1);
     if (transaction_id_result.IsError()) {
-        return transaction_id_result + Error("fail");
+        return transaction_id_result + Error("dblog::ReadLogTransactionBegin() "
+                                             "failed to read transaction id.");
     }
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogTransactionBegin>(transaction_id_result.Get())));
@@ -74,7 +75,10 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationInsert(
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
         data::ReadData(log_body_bytes, bytes_offset);
-    if (data_result.IsError()) return data_result + Error("fail");
+    if (data_result.IsError())
+        return data_result +
+               Error(
+                   "dblog::ReadLogOperationInsert() failed to read the data.");
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kInsert,
                                        block_id, nullptr,
@@ -86,12 +90,16 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
     const std::vector<uint8_t> &log_body_bytes, int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> prevdata_result =
         data::ReadData(log_body_bytes, bytes_offset);
-    if (prevdata_result.IsError()) return prevdata_result + Error("fail");
+    if (prevdata_result.IsError())
+        return prevdata_result + Error("dblog::ReadLogOperationUpdate() failed "
+                                       "to read previous data.");
     bytes_offset += prevdata_result.Get()->TypeParameterValueLength();
 
     ResultV<std::unique_ptr<data::DataItem>> newdata_result =
         data::ReadData(log_body_bytes, bytes_offset);
-    if (newdata_result.IsError()) return newdata_result + Error("fail");
+    if (newdata_result.IsError())
+        return newdata_result + Error("dblog::ReadLogOperationUpdate() failed "
+                                      "to read the new data.");
 
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kUpdate,
@@ -105,7 +113,9 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
         data::ReadData(log_body_bytes, bytes_offset);
-    if (data_result.IsError()) return data_result + Error("fail");
+    if (data_result.IsError())
+        return data_result +
+               Error("dblog::ReadLogOperationDelete() failed to read data.");
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kDelete,
                                        block_id, nullptr,
@@ -119,14 +129,17 @@ ReadLogOperation(const std::vector<uint8_t> &log_body_bytes) {
     ResultV<uint32_t> transaction_id_result =
         data::ReadUint32(log_body_bytes, offset);
     if (transaction_id_result.IsError()) {
-        return transaction_id_result + Error("fail");
+        return transaction_id_result +
+               Error(
+                   "dblog::ReadLogOperation() failed to read transaction id.");
     }
     offset += data::kUint32Bytesize;
 
     ResultV<uint32_t> filename_length_result =
         data::ReadUint32(log_body_bytes, offset);
     if (filename_length_result.IsError()) {
-        return filename_length_result + Error("fail");
+        return filename_length_result +
+               Error("dblog::ReadLogOperation() failed to read filename.");
     }
     offset += data::kUint32Bytesize;
     const uint32_t filename_length = filename_length_result.Get();
@@ -134,12 +147,16 @@ ReadLogOperation(const std::vector<uint8_t> &log_body_bytes) {
     ResultV<std::string> filename_result =
         data::ReadString(log_body_bytes, offset,
                          /*length=*/filename_length);
-    if (filename_result.IsError()) { return filename_result + Error("fail"); }
+    if (filename_result.IsError()) {
+        return filename_result +
+               Error("dblog::ReadLogOperation() failed to read filename.");
+    }
     offset += filename_length;
 
     ResultV<int> blockindex_result = data::ReadInt(log_body_bytes, offset);
     if (blockindex_result.IsError()) {
-        return blockindex_result + Error("fail");
+        return blockindex_result +
+               Error("dblog::ReadLogOperation() failed to read block_index.");
     }
     offset += data::kIntBytesize;
 
@@ -167,7 +184,8 @@ ReadLogTransactionEnd(const std::vector<uint8_t> &log_body_bytes) {
     ResultV<uint32_t> transaction_id_result =
         data::ReadUint32(log_body_bytes, 1);
     if (transaction_id_result.IsError()) {
-        return transaction_id_result + Error("fail");
+        return transaction_id_result + Error("dblog::ReadLogTransactionEnd() "
+                                             "failed to read transaction_id.");
     }
 
     TransactionEndType transaction_end_type;
@@ -176,7 +194,8 @@ ReadLogTransactionEnd(const std::vector<uint8_t> &log_body_bytes) {
     else if (IsRollback(log_body_bytes[0]))
         transaction_end_type = TransactionEndType::kRollback;
     else
-        return Error("fail");
+        return Error("dblog::ReadLogTransactionEnd() transaction type should "
+                     "be either Commit or Rollback.");
 
     return ResultV<std::unique_ptr<LogRecord>>(
         std::move(std::make_unique<LogTransactionEnd>(
