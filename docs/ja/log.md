@@ -40,11 +40,10 @@ DBMSはコミットされたトランザクションの永続化のため, ロ�
 
 ログ本体は以下のようである.
 ```
-| 0b01{MANIP_TYPE(2bit)}{TYPE(4bit)} | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* |new_content* | 
+| 0b01{MANIP_TYPE(2bit)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* | new_content* | 
 ```
 
 - MANIP_TYPEは追加, 更新, 削除のいずれかを2bitであらわす.
-- TYPEは整数, 固定長文字列などのデータアイテムの型を表す.
 - filename lengthはfilenameのバイト単位での長さを表す.
 - filename, offsetはこのデータアイテムが書かれていた場所を指す.
 - type_parameterは型と型に付随する値をあらわす.

@@ -4,6 +4,7 @@
 #include "data/data.h"
 #include "disk.h"
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace dblog {
@@ -38,6 +39,10 @@ class LogRecord {
         std::copy(log_body.begin(), log_body.end(), std::back_inserter(bytes));
     }
 };
+
+// Read LogRecord from `log_body_bytes`.
+ResultV<std::unique_ptr<LogRecord>>
+ReadLogRecord(const std::vector<uint8_t> &log_body_bytes);
 
 // TransactionID is represented as an unsigned 32-bit integer.
 using TransactionID = uint32_t;

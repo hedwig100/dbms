@@ -41,11 +41,10 @@ Has the following log body.
 
 Has the following log body.
 ```
-| 0b01{MANIP_TYPE(2bits)}{TYPE(4bits)} | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* | new_content* | 
+| 0b01{MANIP_TYPE(2bits)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* | new_content* | 
 ```
 
 - MANIP_TYPE represents insert, update, or delete in 2bits.
-- TYPE represents type of a data item like an integer, char.
 - filenam length is length of the filename in bytes.
 - filename, offset is the place where the data item is written.
 - type_parameter is the type and any values equipped with the type.
