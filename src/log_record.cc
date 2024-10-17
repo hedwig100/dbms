@@ -297,6 +297,31 @@ LogOperation::LogOperation(TransactionID transaction_id,
     }
 }
 
+Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
+    switch (maniplation_type_) {
+    case ManiplationType::kInsert:
+        return Ok();
+    case ManiplationType::kUpdate:
+    case ManiplationType::kDelete:
+        disk::Block block;
+        Result result = disk_manager.Read(offset_.BlockID(), block);
+        if (result.IsError())
+            return result +
+                   Error("dblog::LogOperation::Undo() failed read data block.");
+        result = block.Write(offset_.Offset(), *previous_item_);
+        if (result.IsError())
+            return result +
+                   Error(
+                       "dblog::LogOperation::Undo() failed to write to block.");
+        result = disk_manager.Write(offset_.BlockID(), block);
+        if (result.IsError())
+            return result + Error("dblog::LogOperation::Undo() failed to "
+                                  "write block to disk.");
+        return Ok();
+    }
+    return Error("dblog::LogOperation::Undo() unknown ManiplationType.");
+}
+
 LogTransactionEnd::LogTransactionEnd(TransactionID transaction_id,
                                      TransactionEndType transaction_end_type)
     : transaction_id_(transaction_id),

@@ -33,6 +33,9 @@ class LogRecord {
     // The log body which is written to the log file with a header
     virtual const std::vector<uint8_t> &LogBody() const = 0;
 
+    // Put the state back to the state bfore the operation
+    virtual Result UnDo(const disk::DiskManager &disk_manager) const = 0;
+
     // Appends the log body to `bytes`.
     void AppendLogBody(std::vector<uint8_t> &bytes) const {
         const std::vector<uint8_t> &log_body = this->LogBody();
@@ -53,6 +56,9 @@ class LogTransactionBegin : public LogRecord {
     explicit LogTransactionBegin(const TransactionID transaction_id);
     inline LogType Type() const { return LogType::kTransactionBegin; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
+    inline Result UnDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
 
   private:
     TransactionID transaction_id_;
@@ -83,6 +89,7 @@ class LogOperation : public LogRecord {
                  std::unique_ptr<data::DataItem> new_item);
     inline LogType Type() const { return LogType::kOperation; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
+    Result UnDo(const disk::DiskManager &disk_manager) const;
 
   private:
     TransactionID transaction_id_;
@@ -109,6 +116,9 @@ class LogTransactionEnd : public LogRecord {
                       TransactionEndType transaction_end_type);
     inline LogType Type() const { return LogType::kTransactionEnd; }
     const std::vector<uint8_t> &LogBody() const { return log_body_; }
+    inline Result UnDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
 
   private:
     TransactionID transaction_id_;
@@ -122,6 +132,9 @@ class LogCheckpointing : public LogRecord {
     LogCheckpointing();
     inline LogType Type() const { return LogType::kCheckpointing; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
+    inline Result UnDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
 
   private:
     std::vector<uint8_t> log_body_;
