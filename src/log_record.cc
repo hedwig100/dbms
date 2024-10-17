@@ -265,6 +265,8 @@ LogOperation::LogOperation(TransactionID transaction_id,
     }
 }
 
+Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {}
+
 LogTransactionEnd::LogTransactionEnd(TransactionID transaction_id,
                                      TransactionEndType transaction_end_type)
     : transaction_id_(transaction_id),
