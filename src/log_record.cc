@@ -82,7 +82,7 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationInsert(
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kInsert,
                                        offset, nullptr,
-                                       data_result.MoveValue().get())));
+                                       data_result.MoveValue())));
 }
 
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
@@ -103,9 +103,8 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
 
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kUpdate,
-                                       offset,
-                                       prevdata_result.MoveValue().get(),
-                                       newdata_result.MoveValue().get())));
+                                       offset, prevdata_result.MoveValue(),
+                                       newdata_result.MoveValue())));
 }
 
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
@@ -119,7 +118,7 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kDelete,
                                        offset, nullptr,
-                                       data_result.MoveValue().get())));
+                                       data_result.MoveValue())));
 }
 
 ResultV<std::unique_ptr<LogRecord>>
@@ -271,13 +270,11 @@ constexpr size_t kEstimatedAverageLogSize = 24;
 LogOperation::LogOperation(TransactionID transaction_id,
                            ManiplationType maniplation_type,
                            const disk::DiskPosition &offset,
-                           const data::DataItem *previous_item,
-                           const data::DataItem *current_item)
+                           std::unique_ptr<data::DataItem> previous_item,
+                           std::unique_ptr<data::DataItem> new_item)
     : transaction_id_(transaction_id), maniplation_type_(maniplation_type),
-      offset_(offset) {
-    const data::DataItem *nonnull_item =
-        previous_item != nullptr ? previous_item : current_item;
-
+      offset_(offset), previous_item_(std::move(previous_item)),
+      new_item_(std::move(new_item)) {
     log_body_.reserve(kEstimatedAverageLogSize);
 
     log_body_.push_back(LogOperationMask(maniplation_type));
@@ -290,13 +287,13 @@ LogOperation::LogOperation(TransactionID transaction_id,
                          offset.BlockID().BlockIndex());
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
 
-    if (previous_item != nullptr) {
-        nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
-        previous_item->Write(log_body_, log_body_.size());
+    if (previous_item_) {
+        previous_item_->WriteTypeParameter(log_body_, log_body_.size());
+        previous_item_->Write(log_body_, log_body_.size());
     }
-    if (current_item != nullptr) {
-        nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
-        current_item->Write(log_body_, log_body_.size());
+    if (new_item_) {
+        new_item_->WriteTypeParameter(log_body_, log_body_.size());
+        new_item_->Write(log_body_, log_body_.size());
     }
 }
 

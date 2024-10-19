@@ -79,8 +79,8 @@ class LogOperation : public LogRecord {
     // must be non-null pointer.
     LogOperation(TransactionID transaction_id, ManiplationType maniplation_type,
                  const disk::DiskPosition &offset,
-                 const data::DataItem *previous_item,
-                 const data::DataItem *new_item);
+                 std::unique_ptr<data::DataItem> previous_item,
+                 std::unique_ptr<data::DataItem> new_item);
     inline LogType Type() const { return LogType::kOperation; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
 
@@ -88,6 +88,8 @@ class LogOperation : public LogRecord {
     TransactionID transaction_id_;
     ManiplationType maniplation_type_;
     disk::DiskPosition offset_;
+    std::unique_ptr<data::DataItem> previous_item_;
+    std::unique_ptr<data::DataItem> new_item_;
     std::vector<uint8_t> log_body_;
 };
 

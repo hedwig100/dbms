@@ -17,8 +17,8 @@ TEST(LogRecordLogOperation, InstantiationSuccess) {
     const disk::BlockID block_id("file.txt", 3);
     const data::Int int_value(4);
     dblog::LogOperation log_op(id, dblog::ManiplationType::kInsert,
-                               disk::DiskPosition(block_id, 4), &int_value,
-                               nullptr);
+                               disk::DiskPosition(block_id, 4),
+                               std::make_unique<data::Int>(int_value), nullptr);
 
     EXPECT_EQ(log_op.Type(), dblog::LogType::kOperation);
     auto log_body = log_op.LogBody();
@@ -64,7 +64,7 @@ TEST(LogRecordOperation, InsertWriteReadCorrectly) {
     dblog::LogOperation log_record(
         /*transaction_id=*/6, dblog::ManiplationType::kInsert,
         disk::DiskPosition(disk::BlockID("xxx.txt", 4), 2), nullptr,
-        &int_value);
+        std::make_unique<data::Int>(int_value));
 
     auto log_body = log_record.LogBody();
     ResultV<std::unique_ptr<dblog::LogRecord>> log_record_ptr_result =
@@ -81,8 +81,9 @@ TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
     const data::Int previous_value(4), new_value(6);
     dblog::LogOperation log_record(
         /*transaction_id=*/6, dblog::ManiplationType::kUpdate,
-        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3), &previous_value,
-        &new_value);
+        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3),
+        std::make_unique<data::Int>(previous_value),
+        std::make_unique<data::Int>(new_value));
 
     auto log_body = log_record.LogBody();
     ResultV<std::unique_ptr<dblog::LogRecord>> log_record_ptr_result =
