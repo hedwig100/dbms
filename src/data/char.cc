@@ -49,6 +49,11 @@ void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
     WriteStringNoFail(bytes, offset, value_);
 }
 
+Result Char::WriteWithFail(std::vector<uint8_t> &bytes,
+                           const size_t offset) const {
+    return WriteString(bytes, offset, length_, value_);
+}
+
 ResultV<std::unique_ptr<DataItem>>
 ReadDataChar(const std::vector<uint8_t> &data_bytes, const int data_offset) {
     if (data_offset + 2 > data_bytes.size())

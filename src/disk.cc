@@ -144,6 +144,10 @@ Result Block::WriteString(const int offset, const std::string &value) {
     return data::WriteString(content_, offset, value.size(), value);
 }
 
+Result Block::Write(const int offset, const data::DataItem &data_item) {
+    return data_item.WriteWithFail(content_, offset);
+}
+
 const std::vector<uint8_t> &Block::Content() const { return content_; }
 
 /** DiskManager */

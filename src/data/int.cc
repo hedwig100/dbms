@@ -33,9 +33,12 @@ void Int::WriteTypeParameter(std::vector<uint8_t> &bytes,
 }
 
 void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    if (offset + kIntBytesize > bytes.size())
-        bytes.resize(offset + kIntBytesize);
-    WriteInt(bytes, offset, value_);
+    return WriteIntNoFail(bytes, offset, value_);
+}
+
+Result Int::WriteWithFail(std::vector<uint8_t> &bytes,
+                          const size_t offset) const {
+    return WriteInt(bytes, offset, value_);
 }
 
 ResultV<std::unique_ptr<DataItem>>

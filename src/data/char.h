@@ -28,6 +28,9 @@ class Char : public DataItem {
 
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
+    Result WriteWithFail(std::vector<uint8_t> &bytes,
+                         const size_t offset) const;
+
     // Returns a string owned.
     inline std::string Value() const { return value_; }
 

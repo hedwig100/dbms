@@ -2,6 +2,7 @@
 #define DISK_H
 
 #include <cstdint>
+#include <data/data.h>
 #include <string>
 #include <vector>
 
@@ -126,6 +127,9 @@ class Block {
 
     // Writes the string `value` with the `offset`.
     Result WriteString(const int offset, const std::string &value);
+
+    // Writes the `data_item` with the `offset`.
+    Result Write(const int offset, const data::DataItem &data_item);
 
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;
