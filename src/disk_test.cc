@@ -2,6 +2,7 @@
 #include "macro_test.h"
 #include <cstdio>
 #include <cstring>
+#include <data/int.h>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -317,6 +318,24 @@ TEST(Block, WriteStringWithOutsideIndex) {
 
     EXPECT_TRUE(block.WriteString(/*offset=*/-1, "").IsError());
     EXPECT_TRUE(block.WriteString(/*offset=*/9, "aaaaaaaaaaaa").IsError());
+}
+
+TEST(Block, CorrectlyWriteDataItem) {
+    disk::Block block(20);
+    data::Int x(4);
+
+    EXPECT_TRUE(block.Write(/*offset=*/3, x).IsOk());
+
+    ResultV<int> int_result = block.ReadInt(3);
+    EXPECT_TRUE(int_result.IsOk());
+    EXPECT_EQ(int_result.Get(), 4);
+}
+
+TEST(Block, WriteDataItemWithOutsideIndex) {
+    disk::Block block(20);
+    data::Int x(4);
+
+    EXPECT_TRUE(block.Write(/*offset=*/18, x).IsError());
 }
 
 FILE_EXISTENT_TEST(TempFileTest, "hello ");
