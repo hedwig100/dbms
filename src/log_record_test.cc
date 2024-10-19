@@ -1,6 +1,10 @@
 #include "data/int.h"
 #include "log_record.h"
+#include "macro_test.h"
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
+#include <iostream>
 
 TEST(LogRecordLogTransactionBegin, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
@@ -123,4 +127,54 @@ TEST(LogRecordCheckpointing, WriteReadCorrectly) {
         log_record_ptr_result.MoveValue();
     EXPECT_EQ(log_record_ptr->Type(), dblog::LogType::kCheckpointing);
     EXPECT_EQ(log_record_ptr->LogBody(), log_body);
+}
+
+FILE_EXISTENT_TEST(LogRecordTransactionBeginWithFile, "");
+
+TEST_F(LogRecordTransactionBeginWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogTransactionBegin log_record(4);
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+}
+
+FILE_EXISTENT_TEST(LogRecordOperationWithFile, "");
+
+TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    const int int_value = 4;
+    const int offset    = 7;
+
+    dblog::LogOperation log_record(
+        /*transaction_id=*/4, dblog::ManiplationType::kDelete,
+        disk::DiskPosition(disk::BlockID(filename, 0), offset),
+        std::make_unique<data::Int>(int_value), nullptr);
+
+    ASSERT_TRUE(
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename, 2)).IsOk());
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+    ASSERT_TRUE(disk_manager.Flush(filename).IsOk());
+
+    disk::Block block;
+    Result read_result = disk_manager.Read(disk::BlockID(filename, 0), block);
+    EXPECT_TRUE(read_result.IsOk());
+
+    ResultV<int> int_result = block.ReadInt(offset);
+    EXPECT_TRUE(int_result.IsOk());
+    EXPECT_EQ(int_result.Get(), int_value);
+}
+
+FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "");
+
+TEST_F(LogRecordTransactionEndWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+}
+
+FILE_EXISTENT_TEST(LogRecordCheckpointingWithFile, "");
+
+TEST_F(LogRecordCheckpointingWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogCheckpointing log_record;
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
 }
