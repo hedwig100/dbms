@@ -308,6 +308,9 @@ Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
         if (result.IsError())
             return result +
                    Error("dblog::LogOperation::Undo() failed read data block.");
+        if (!previous_item_)
+            return Error("dblog::LogOperation::UnDo() previous_item must not "
+                         "be nullptr for Update, Delete type LogOperation.");
         result = block.Write(offset_.Offset(), *previous_item_);
         if (result.IsError())
             return result +
