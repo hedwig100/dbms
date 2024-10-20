@@ -308,6 +308,9 @@ Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
         if (result.IsError())
             return result +
                    Error("dblog::LogOperation::Undo() failed read data block.");
+        if (!previous_item_)
+            return Error("dblog::LogOperation::UnDo() previous_item must not "
+                         "be nullptr for Update, Delete type LogOperation.");
         result = block.Write(offset_.Offset(), *previous_item_);
         if (result.IsError())
             return result +
@@ -320,6 +323,35 @@ Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
     }
     return Error("dblog::LogOperation::Undo() unknown ManiplationType.");
+}
+
+Result LogOperation::ReDo(const disk::DiskManager &disk_manager) const {
+    switch (maniplation_type_) {
+    case ManiplationType::kInsert:
+    case ManiplationType::kUpdate: {
+        disk::Block block;
+        Result result = disk_manager.Read(offset_.BlockID(), block);
+        if (result.IsError())
+            return result +
+                   Error("dblog::LogOperation::Redo() failed read data block.");
+        if (!new_item_)
+            return Error("dblog::LogOperation::ReDo() new_item must not be "
+                         "nullptr for Insert, Update type LogOperation.");
+        result = block.Write(offset_.Offset(), *new_item_);
+        if (result.IsError())
+            return result +
+                   Error(
+                       "dblog::LogOperation::Redo() failed to write to block.");
+        result = disk_manager.Write(offset_.BlockID(), block);
+        if (result.IsError())
+            return result + Error("dblog::LogOperation::Redo() failed to "
+                                  "write block to disk.");
+        return Ok();
+    }
+    case ManiplationType::kDelete:
+        return Ok();
+    }
+    return Error("dblog::LogOperation::Redo() unknown ManiplationType.");
 }
 
 LogTransactionEnd::LogTransactionEnd(TransactionID transaction_id,

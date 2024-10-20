@@ -36,6 +36,9 @@ class LogRecord {
     // Put the state back to the state bfore the operation
     virtual Result UnDo(const disk::DiskManager &disk_manager) const = 0;
 
+    // Put the state after the operation
+    virtual Result ReDo(const disk::DiskManager &disk_manager) const = 0;
+
     // Appends the log body to `bytes`.
     void AppendLogBody(std::vector<uint8_t> &bytes) const {
         const std::vector<uint8_t> &log_body = this->LogBody();
@@ -57,6 +60,9 @@ class LogTransactionBegin : public LogRecord {
     inline LogType Type() const { return LogType::kTransactionBegin; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
+    inline Result ReDo(const disk::DiskManager &disk_manager) const {
         return Ok();
     }
 
@@ -90,6 +96,7 @@ class LogOperation : public LogRecord {
     inline LogType Type() const { return LogType::kOperation; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     Result UnDo(const disk::DiskManager &disk_manager) const;
+    Result ReDo(const disk::DiskManager &disk_manager) const;
 
   private:
     TransactionID transaction_id_;
@@ -119,6 +126,9 @@ class LogTransactionEnd : public LogRecord {
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
     }
+    inline Result ReDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
 
   private:
     TransactionID transaction_id_;
@@ -133,6 +143,9 @@ class LogCheckpointing : public LogRecord {
     inline LogType Type() const { return LogType::kCheckpointing; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
+        return Ok();
+    }
+    inline Result ReDo(const disk::DiskManager &disk_manager) const {
         return Ok();
     }
 
