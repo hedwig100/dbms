@@ -71,7 +71,7 @@ ReadLogTransactionBegin(const std::vector<uint8_t> &log_body_bytes) {
 }
 
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationInsert(
-    TransactionID transaction_id, const disk::BlockID &block_id,
+    TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
         data::ReadData(log_body_bytes, bytes_offset);
@@ -81,12 +81,12 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationInsert(
                    "dblog::ReadLogOperationInsert() failed to read the data.");
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kInsert,
-                                       block_id, nullptr,
+                                       offset, nullptr,
                                        data_result.MoveValue().get())));
 }
 
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
-    TransactionID transaction_id, const disk::BlockID &block_id,
+    TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> prevdata_result =
         data::ReadData(log_body_bytes, bytes_offset);
@@ -103,13 +103,13 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
 
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kUpdate,
-                                       block_id,
+                                       offset,
                                        prevdata_result.MoveValue().get(),
                                        newdata_result.MoveValue().get())));
 }
 
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
-    TransactionID transaction_id, const disk::BlockID &block_id,
+    TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
         data::ReadData(log_body_bytes, bytes_offset);
@@ -118,7 +118,7 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
                Error("dblog::ReadLogOperationDelete() failed to read data.");
     return ResultV<std::unique_ptr<LogRecord>>(std::move(
         std::make_unique<LogOperation>(transaction_id, ManiplationType::kDelete,
-                                       block_id, nullptr,
+                                       offset, nullptr,
                                        data_result.MoveValue().get())));
 }
 
@@ -160,23 +160,36 @@ ReadLogOperation(const std::vector<uint8_t> &log_body_bytes) {
     }
     offset += data::kIntBytesize;
 
+    ResultV<int> offset_result = data::ReadInt(log_body_bytes, offset);
+    if (offset_result.IsError()) {
+        return offset_result + Error("dblog::ReadLogOperation() failed to read "
+                                     "offset of the block.");
+    }
+    offset += data::kIntBytesize;
+
     if (IsInsert(log_body_bytes[0])) {
         return ReadLogOperationInsert(
             transaction_id_result.Get(),
-            disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+            disk::DiskPosition(
+                disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+                offset_result.Get()),
             log_body_bytes, offset);
     } else if (IsUpdate(log_body_bytes[0])) {
         return ReadLogOperationUpdate(
             transaction_id_result.Get(),
-            disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+            disk::DiskPosition(
+                disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+                offset_result.Get()),
             log_body_bytes, offset);
     } else if (IsDelete(log_body_bytes[0])) {
         return ReadLogOperationDelete(
             transaction_id_result.Get(),
-            disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+            disk::DiskPosition(
+                disk::BlockID(filename_result.Get(), blockindex_result.Get()),
+                offset_result.Get()),
             log_body_bytes, offset);
     }
-    return Error("fail");
+    return Error("dblog::ReadLogOperation() unknown type of log operation.");
 }
 
 ResultV<std::unique_ptr<LogRecord>>
@@ -257,7 +270,7 @@ constexpr size_t kEstimatedAverageLogSize = 24;
 
 LogOperation::LogOperation(TransactionID transaction_id,
                            ManiplationType maniplation_type,
-                           const disk::BlockID &offset,
+                           const disk::DiskPosition &offset,
                            const data::DataItem *previous_item,
                            const data::DataItem *current_item)
     : transaction_id_(transaction_id), maniplation_type_(maniplation_type),
@@ -270,9 +283,12 @@ LogOperation::LogOperation(TransactionID transaction_id,
     log_body_.push_back(LogOperationMask(maniplation_type));
     data::WriteUint32NoFail(log_body_, log_body_.size(), transaction_id);
     data::WriteUint32NoFail(log_body_, log_body_.size(),
-                            offset.Filename().size());
-    data::WriteStringNoFail(log_body_, log_body_.size(), offset.Filename());
-    data::WriteIntNoFail(log_body_, log_body_.size(), offset.BlockIndex());
+                            offset.BlockID().Filename().size());
+    data::WriteStringNoFail(log_body_, log_body_.size(),
+                            offset.BlockID().Filename());
+    data::WriteIntNoFail(log_body_, log_body_.size(),
+                         offset.BlockID().BlockIndex());
+    data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
 
     if (previous_item != nullptr) {
         nonnull_item->WriteTypeParameter(log_body_, log_body_.size());
