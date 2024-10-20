@@ -28,6 +28,9 @@ class Int : public DataItem {
 
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
+    Result WriteWithFail(std::vector<uint8_t> &bytes,
+                         const size_t offset) const;
+
     // Returns an owned integer.
     inline int Value() const { return value_; }
 

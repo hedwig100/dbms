@@ -1,6 +1,10 @@
 #include "data/int.h"
 #include "log_record.h"
+#include "macro_test.h"
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
+#include <iostream>
 
 TEST(LogRecordLogTransactionBegin, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
@@ -17,8 +21,8 @@ TEST(LogRecordLogOperation, InstantiationSuccess) {
     const disk::BlockID block_id("file.txt", 3);
     const data::Int int_value(4);
     dblog::LogOperation log_op(id, dblog::ManiplationType::kInsert,
-                               disk::DiskPosition(block_id, 4), &int_value,
-                               nullptr);
+                               disk::DiskPosition(block_id, 4),
+                               std::make_unique<data::Int>(int_value), nullptr);
 
     EXPECT_EQ(log_op.Type(), dblog::LogType::kOperation);
     auto log_body = log_op.LogBody();
@@ -64,7 +68,7 @@ TEST(LogRecordOperation, InsertWriteReadCorrectly) {
     dblog::LogOperation log_record(
         /*transaction_id=*/6, dblog::ManiplationType::kInsert,
         disk::DiskPosition(disk::BlockID("xxx.txt", 4), 2), nullptr,
-        &int_value);
+        std::make_unique<data::Int>(int_value));
 
     auto log_body = log_record.LogBody();
     ResultV<std::unique_ptr<dblog::LogRecord>> log_record_ptr_result =
@@ -81,8 +85,9 @@ TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
     const data::Int previous_value(4), new_value(6);
     dblog::LogOperation log_record(
         /*transaction_id=*/6, dblog::ManiplationType::kUpdate,
-        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3), &previous_value,
-        &new_value);
+        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3),
+        std::make_unique<data::Int>(previous_value),
+        std::make_unique<data::Int>(new_value));
 
     auto log_body = log_record.LogBody();
     ResultV<std::unique_ptr<dblog::LogRecord>> log_record_ptr_result =
@@ -122,4 +127,54 @@ TEST(LogRecordCheckpointing, WriteReadCorrectly) {
         log_record_ptr_result.MoveValue();
     EXPECT_EQ(log_record_ptr->Type(), dblog::LogType::kCheckpointing);
     EXPECT_EQ(log_record_ptr->LogBody(), log_body);
+}
+
+FILE_EXISTENT_TEST(LogRecordTransactionBeginWithFile, "");
+
+TEST_F(LogRecordTransactionBeginWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogTransactionBegin log_record(4);
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+}
+
+FILE_EXISTENT_TEST(LogRecordOperationWithFile, "");
+
+TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    const int int_value = 4;
+    const int offset    = 7;
+
+    dblog::LogOperation log_record(
+        /*transaction_id=*/4, dblog::ManiplationType::kDelete,
+        disk::DiskPosition(disk::BlockID(filename, 0), offset),
+        std::make_unique<data::Int>(int_value), nullptr);
+
+    ASSERT_TRUE(
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename, 2)).IsOk());
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+    ASSERT_TRUE(disk_manager.Flush(filename).IsOk());
+
+    disk::Block block;
+    Result read_result = disk_manager.Read(disk::BlockID(filename, 0), block);
+    EXPECT_TRUE(read_result.IsOk());
+
+    ResultV<int> int_result = block.ReadInt(offset);
+    EXPECT_TRUE(int_result.IsOk());
+    EXPECT_EQ(int_result.Get(), int_value);
+}
+
+FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "");
+
+TEST_F(LogRecordTransactionEndWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+}
+
+FILE_EXISTENT_TEST(LogRecordCheckpointingWithFile, "");
+
+TEST_F(LogRecordCheckpointingWithFile, UnDoCorrectly) {
+    const disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogCheckpointing log_record;
+    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
 }
