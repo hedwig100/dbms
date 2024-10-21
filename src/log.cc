@@ -288,6 +288,11 @@ ResultV<std::vector<uint8_t>> LogIterator::LogBody() {
     return Ok(log_body);
 }
 
+ResultV<bool> LogIterator::HasNext() {
+    // TODO: implement this method.
+    return Ok(true);
+}
+
 Result LogIterator::Next() {
     auto block_result = LogStartBlock();
     if (block_result.IsError()) {
@@ -316,6 +321,12 @@ Result LogIterator::Next() {
     this->log_body_length_ = next_log_body_length_result.Get();
 
     return Ok();
+}
+
+bool LogIterator::HasPrevious() {
+    if (log_start_.BlockID().BlockIndex() == 0 && log_start_.Offset() == 0)
+        return false;
+    return true;
 }
 
 Result LogIterator::Previous() {
