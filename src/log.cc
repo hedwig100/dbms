@@ -194,12 +194,12 @@ uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes) { return 0; }
 // + length of the log body (4bytes)".
 constexpr size_t kLogHeaderLength = data::kUint32Bytesize + data::kIntBytesize;
 
-std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record) {
+std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record) {
     std::vector<uint8_t> log_body_with_header(kLogHeaderLength);
-    const std::vector<uint8_t> &log_body = log_record->LogBody();
+    const std::vector<uint8_t> &log_body = log_record.LogBody();
     data::WriteUint32NoFail(log_body_with_header, 0, ComputeChecksum(log_body));
     data::WriteIntNoFail(log_body_with_header, 4, log_body.size());
-    log_record->AppendLogBody(log_body_with_header);
+    log_record.AppendLogBody(log_body_with_header);
     data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
                          log_body.size());
     return log_body_with_header;
