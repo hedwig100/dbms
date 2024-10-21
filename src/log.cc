@@ -190,15 +190,25 @@ ResultV<int> ReadIntAcrossBlocksWithOffset(
 // TODO: compute check sum
 uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes) { return 0; }
 
+constexpr int kChecksumBytesize = data::kUint32Bytesize;
+
+constexpr int kLogLengthBytesize = data::kIntBytesize;
+
 // Length of the log header in bytes. The header consists of "checksum (4bytes)
 // + length of the log body (4bytes)".
-constexpr size_t kLogHeaderLength = data::kUint32Bytesize + data::kIntBytesize;
+constexpr size_t kLogHeaderLength = kChecksumBytesize + kLogLengthBytesize;
+
+constexpr size_t kApproximateLogRecordLength =
+    kLogHeaderLength + 40 + kLogLengthBytesize;
 
 std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record) {
-    std::vector<uint8_t> log_body_with_header(kLogHeaderLength);
+    std::vector<uint8_t> log_body_with_header;
+    log_body_with_header.reserve(kApproximateLogRecordLength);
     const std::vector<uint8_t> &log_body = log_record.LogBody();
-    data::WriteUint32NoFail(log_body_with_header, 0, ComputeChecksum(log_body));
-    data::WriteIntNoFail(log_body_with_header, 4, log_body.size());
+    data::WriteUint32NoFail(log_body_with_header, log_body_with_header.size(),
+                            ComputeChecksum(log_body));
+    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
+                         log_body.size());
     log_record.AppendLogBody(log_body_with_header);
     data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
                          log_body.size());
@@ -213,7 +223,7 @@ ResultV<LogIterator> ReadPreviousLog(const disk::DiskManager &disk_manager,
 
     ResultV<int> log_body_length_result =
         internal::ReadIntAcrossBlocksWithOffset(disk_manager, block, log_start,
-                                                -data::kIntBytesize);
+                                                -kLogLengthBytesize);
     if (log_body_length_result.IsError()) {
         return log_body_length_result +
                Error("dblog::ReadPreviousLog() failed to read log body length "
@@ -222,7 +232,7 @@ ResultV<LogIterator> ReadPreviousLog(const disk::DiskManager &disk_manager,
 
     disk::DiskPosition previous_log_start = internal::MoveInLogBlock(
         log_start,
-        -(kLogHeaderLength + log_body_length_result.Get() + data::kIntBytesize),
+        -(kLogHeaderLength + log_body_length_result.Get() + kLogLengthBytesize),
         disk_manager.BlockSize());
 
     return Ok(LogIterator(disk_manager, previous_log_start,
@@ -290,10 +300,10 @@ Result LogIterator::Next() {
     }
 
     const int log_record_length =
-        kLogHeaderLength + log_body_length_ + data::kIntBytesize;
+        kLogHeaderLength + log_body_length_ + kLogLengthBytesize;
     ResultV<int> next_log_body_length_result = ReadIntAcrossBlocksWithOffset(
         disk_manager_, block_result.Get(), log_start_,
-        log_record_length + data::kUint32Bytesize);
+        log_record_length + kChecksumBytesize);
     if (next_log_body_length_result.IsError()) {
         return next_log_body_length_result +
                Error("dblog::LogIterator::Next() failed to read the next log "
