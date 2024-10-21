@@ -260,6 +260,7 @@ TEST_F(LogFileInitialized, LogIteratorPrevious) {
     auto log = last_log_result.Get();
 
     // log_record 2
+    EXPECT_TRUE(log.HasPrevious());
     result = log.Previous();
     EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
     auto log_body = log.LogBody();
@@ -268,6 +269,7 @@ TEST_F(LogFileInitialized, LogIteratorPrevious) {
     EXPECT_EQ(log_body.Get(), expect_log);
 
     // log_record 1
+    EXPECT_TRUE(log.HasPrevious());
     result = log.Previous();
     EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
     log_body = log.LogBody();
@@ -278,6 +280,7 @@ TEST_F(LogFileInitialized, LogIteratorPrevious) {
     EXPECT_EQ(log_body.Get(), expect_log);
 
     // No log record
+    EXPECT_FALSE(log.HasPrevious());
     result = log.Previous();
     EXPECT_TRUE(result.IsError());
 }
@@ -300,6 +303,9 @@ TEST_F(LogFileInitialized, LogIteratorNext) {
     EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
 
     // log record 2
+    ResultV<bool> has_next = log.HasNext();
+    EXPECT_TRUE(has_next.IsOk());
+    EXPECT_TRUE(has_next.Get());
     result = log.Next();
     EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
     auto log_body = log.LogBody();
@@ -308,6 +314,9 @@ TEST_F(LogFileInitialized, LogIteratorNext) {
     EXPECT_EQ(log_body.Get(), expect_log);
 
     // log record 3
+    has_next = log.HasNext();
+    EXPECT_TRUE(has_next.IsOk());
+    EXPECT_TRUE(has_next.Get());
     result = log.Next();
     EXPECT_TRUE(result.IsOk()) << result.Error() << '\n';
     log_body = log.LogBody();
@@ -315,4 +324,9 @@ TEST_F(LogFileInitialized, LogIteratorNext) {
     expect_log = {'a', 'b', 'c', 'd', 'e', 'f', 'g',
                   'h', 'i', 'j', 'k', 'l', 'm'};
     EXPECT_EQ(log_body.Get(), expect_log);
+
+    // No next log
+    has_next = log.HasNext();
+    EXPECT_TRUE(has_next.IsOk());
+    EXPECT_FALSE(has_next.Get());
 }

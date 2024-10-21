@@ -292,6 +292,32 @@ ResultV<std::vector<uint8_t>> LogIterator::LogBody() {
     return Ok(log_body);
 }
 
+ResultV<bool> LogIterator::HasNext() {
+    const int log_record_length =
+        kLogHeaderLength + log_body_length_ + kLogLengthBytesize;
+    disk::DiskPosition next_log_start = internal::MoveInLogBlock(
+        log_start_, log_record_length, disk_manager_.BlockSize());
+
+    if (next_log_start.BlockID() == log_start_.BlockID()) {
+        auto block_result = LogStartBlock();
+        if (block_result.IsError()) {
+            return block_result +
+                   Error("dblog::LogIterator::HasNext() failed to "
+                         "read log start block.");
+        }
+        return Ok(next_log_start.Offset() < block_result.Get().Offset());
+    }
+
+    internal::LogBlock next_log_block;
+    Result read_result =
+        next_log_block.ReadLogBlock(disk_manager_, next_log_start.BlockID());
+    if (read_result.IsError()) {
+        return read_result + Error("dblog::LogIterator::HasNext() failed to "
+                                   "read next log start block.");
+    }
+    return Ok(next_log_start.Offset() < next_log_block.Offset());
+}
+
 Result LogIterator::Next() {
     auto block_result = LogStartBlock();
     if (block_result.IsError()) {
@@ -320,6 +346,13 @@ Result LogIterator::Next() {
     this->log_body_length_ = next_log_body_length_result.Get();
 
     return Ok();
+}
+
+bool LogIterator::HasPrevious() {
+    if (log_start_.BlockID().BlockIndex() == 0 &&
+        log_start_.Offset() == internal::kDefaultOffset)
+        return false;
+    return true;
 }
 
 Result LogIterator::Previous() {

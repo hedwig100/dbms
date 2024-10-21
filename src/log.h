@@ -88,9 +88,15 @@ class LogIterator {
     // Returns the log body without headers like checksum.
     ResultV<std::vector<uint8_t>> LogBody();
 
+    // Returns true if the log iterator has the next log iterator.
+    ResultV<bool> HasNext();
+
     // Move to the next log record if exists. If the next log record does not
     // exist, it returns the failure.
     Result Next();
+
+    // Returns true if the log iterator has the previous log iterator.
+    bool HasPrevious();
 
     // Move to the previous log record if exists. If the previous log record
     // does not exist, it returns the failure.
