@@ -126,6 +126,10 @@ class LogManager {
     // This function should be called before starting using the instance.
     Result Init();
 
+    inline const disk::DiskManager &DiskManager() const {
+        return disk_manager_;
+    }
+
     // Writes bytes to log file.
     ResultV<LogSequenceNumber>
     WriteLog(const std::vector<uint8_t> &log_record_bytes);
