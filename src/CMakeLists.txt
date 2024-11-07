@@ -137,6 +137,30 @@ target_include_directories(macro_test
   INTERFACE ${PROJECT_SOURCE_DIR}/src
 )
 
+## recovery
+add_library(recovery
+  recovery.cc
+)
+target_link_libraries(recovery
+  log
+  log_record
+)
+target_include_directories(recovery
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(recovery_test
+  recovery_test.cc
+)
+target_include_directories(recovery_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(recovery_test
+  recovery
+  GTest::gtest_main
+)
+gtest_discover_tests(recovery_test)
+
 ## result
 add_library(result
   INTERFACE result.h

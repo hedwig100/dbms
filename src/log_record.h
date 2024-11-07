@@ -24,11 +24,18 @@ enum class LogType {
     kCheckpointing = 3,
 };
 
+// TransactionID is represented as an unsigned 32-bit integer.
+using TransactionID = uint32_t;
+
 // The base class for all types of log records
 class LogRecord {
   public:
     // The log type
     virtual LogType Type() const = 0;
+
+    // Returns TransactionID of LogRecord. When the record type is
+    // checkpointing, always returns 0.
+    virtual TransactionID GetTransactionID() const = 0;
 
     // The log body which is written to the log file with a header
     virtual const std::vector<uint8_t> &LogBody() const = 0;
@@ -50,14 +57,12 @@ class LogRecord {
 ResultV<std::unique_ptr<LogRecord>>
 ReadLogRecord(const std::vector<uint8_t> &log_body_bytes);
 
-// TransactionID is represented as an unsigned 32-bit integer.
-using TransactionID = uint32_t;
-
 // Log record which indicates that a transaction begins.
 class LogTransactionBegin : public LogRecord {
   public:
     explicit LogTransactionBegin(const TransactionID transaction_id);
     inline LogType Type() const { return LogType::kTransactionBegin; }
+    inline TransactionID GetTransactionID() const { return transaction_id_; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
@@ -94,6 +99,7 @@ class LogOperation : public LogRecord {
                  std::unique_ptr<data::DataItem> previous_item,
                  std::unique_ptr<data::DataItem> new_item);
     inline LogType Type() const { return LogType::kOperation; }
+    inline TransactionID GetTransactionID() const { return transaction_id_; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     Result UnDo(const disk::DiskManager &disk_manager) const;
     Result ReDo(const disk::DiskManager &disk_manager) const;
@@ -122,6 +128,7 @@ class LogTransactionEnd : public LogRecord {
     LogTransactionEnd(TransactionID transaction_id,
                       TransactionEndType transaction_end_type);
     inline LogType Type() const { return LogType::kTransactionEnd; }
+    inline TransactionID GetTransactionID() const { return transaction_id_; }
     const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
@@ -141,6 +148,7 @@ class LogCheckpointing : public LogRecord {
   public:
     LogCheckpointing();
     inline LogType Type() const { return LogType::kCheckpointing; }
+    inline TransactionID GetTransactionID() const { return 0; }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();

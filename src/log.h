@@ -61,7 +61,7 @@ uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes);
 // Compute the log record with the header. The header has
 // length of log record in bytes and hash of the log record (to achieve
 // atomic write of logs). NOTE: log length must be smaller than 2^32-1.
-std::vector<uint8_t> LogRecordWithHeader(const LogRecord *log_record);
+std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record);
 
 // The error that implies the complete log record is not written to the disk.
 const ResultV<std::vector<uint8_t>> kCompleteLogNotWrittenToDisk =
@@ -88,9 +88,15 @@ class LogIterator {
     // Returns the log body without headers like checksum.
     ResultV<std::vector<uint8_t>> LogBody();
 
+    // Returns true if the log iterator has the next log iterator.
+    ResultV<bool> HasNext();
+
     // Move to the next log record if exists. If the next log record does not
     // exist, it returns the failure.
     Result Next();
+
+    // Returns true if the log iterator has the previous log iterator.
+    bool HasPrevious();
 
     // Move to the previous log record if exists. If the previous log record
     // does not exist, it returns the failure.
@@ -119,6 +125,10 @@ class LogManager {
 
     // This function should be called before starting using the instance.
     Result Init();
+
+    inline const disk::DiskManager &DiskManager() const {
+        return disk_manager_;
+    }
 
     // Writes bytes to log file.
     ResultV<LogSequenceNumber>
