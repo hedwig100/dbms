@@ -4,6 +4,7 @@
 #include "log.h"
 #include "log_record.h"
 #include "result.h"
+#include <set>
 
 namespace recovery {
 
@@ -31,9 +32,17 @@ class RecoveryManager {
                     const disk::DiskManager &data_disk_manager);
 
     // Recover records from logs.
-    Result Recover();
+    Result Recover(const disk::DiskManager &data_disk_manager) const;
 
   private:
+    Result UnDoStage(dblog::LogIterator &log_iter,
+                     std::set<dblog::TransactionID> &committed,
+                     std::set<dblog::TransactionID> &rollbacked,
+                     const disk::DiskManager &data_disk_manager) const;
+    Result ReDoStage(dblog::LogIterator &log_iter,
+                     std::set<dblog::TransactionID> &committed,
+                     std::set<dblog::TransactionID> &rollbacked,
+                     const disk::DiskManager &data_disk_manager) const;
     dblog::LogManager log_manager_;
 };
 
