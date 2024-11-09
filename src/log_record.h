@@ -27,6 +27,27 @@ enum class LogType {
 // TransactionID is represented as an unsigned 32-bit integer.
 using TransactionID = uint32_t;
 
+// Maniplation type to an item (like integer, char) in disk
+enum class ManiplationType {
+    // Inserts to a disk
+    kInsert = 0,
+
+    // Updates a disk
+    kUpdate = 1,
+
+    // Deletes a disk
+    kDelete = 2,
+};
+
+// Types of the end of transctions.
+enum class TransactionEndType {
+    // Indicates that the transaction successfully commits.
+    kCommit = 0,
+
+    // Indicates that the transaction fails and rollbacks.
+    kRollback = 1,
+};
+
 // The base class for all types of log records
 class LogRecord {
   public:
@@ -36,6 +57,14 @@ class LogRecord {
     // Returns TransactionID of LogRecord. When the record type is
     // checkpointing, always returns 0.
     virtual TransactionID GetTransactionID() const = 0;
+
+    // Retrurns maniplation type of LogOperation If the record is not
+    // LogOperation, returns meaningless value.
+    virtual ManiplationType GetManiplationType() const = 0;
+
+    // Retrurns transaction end type of LogTransactionEnd/ If the record is not
+    // LogTransactionEnd, returns meaningless value.
+    virtual TransactionEndType GetTransactionEndType() const = 0;
 
     // The log body which is written to the log file with a header
     virtual const std::vector<uint8_t> &LogBody() const = 0;
@@ -63,6 +92,12 @@ class LogTransactionBegin : public LogRecord {
     explicit LogTransactionBegin(const TransactionID transaction_id);
     inline LogType Type() const { return LogType::kTransactionBegin; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
+    inline ManiplationType GetManiplationType() const {
+        return ManiplationType::kInsert;
+    }
+    inline TransactionEndType GetTransactionEndType() const {
+        return TransactionEndType::kCommit;
+    }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
@@ -74,18 +109,6 @@ class LogTransactionBegin : public LogRecord {
   private:
     TransactionID transaction_id_;
     std::vector<uint8_t> log_body_;
-};
-
-// Maniplation type to an item (like integer, char) in disk
-enum class ManiplationType {
-    // Inserts to a disk
-    kInsert = 0,
-
-    // Updates a disk
-    kUpdate = 1,
-
-    // Deletes a disk
-    kDelete = 2,
 };
 
 // Log record which indicates that an item is inserted, updated or deleted in
@@ -100,6 +123,12 @@ class LogOperation : public LogRecord {
                  std::unique_ptr<data::DataItem> new_item);
     inline LogType Type() const { return LogType::kOperation; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
+    inline ManiplationType GetManiplationType() const {
+        return maniplation_type_;
+    }
+    inline TransactionEndType GetTransactionEndType() const {
+        return TransactionEndType::kCommit;
+    }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     Result UnDo(const disk::DiskManager &disk_manager) const;
     Result ReDo(const disk::DiskManager &disk_manager) const;
@@ -113,15 +142,6 @@ class LogOperation : public LogRecord {
     std::vector<uint8_t> log_body_;
 };
 
-// Types of the end of transctions.
-enum class TransactionEndType {
-    // Indicates that the transaction successfully commits.
-    kCommit = 0,
-
-    // Indicates that the transaction fails and rollbacks.
-    kRollback = 1,
-};
-
 // Log record which indicates that a transaction ends.
 class LogTransactionEnd : public LogRecord {
   public:
@@ -129,6 +149,12 @@ class LogTransactionEnd : public LogRecord {
                       TransactionEndType transaction_end_type);
     inline LogType Type() const { return LogType::kTransactionEnd; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
+    inline ManiplationType GetManiplationType() const {
+        return ManiplationType::kInsert;
+    }
+    inline TransactionEndType GetTransactionEndType() const {
+        return transaction_end_type_;
+    }
     const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
@@ -149,6 +175,12 @@ class LogCheckpointing : public LogRecord {
     LogCheckpointing();
     inline LogType Type() const { return LogType::kCheckpointing; }
     inline TransactionID GetTransactionID() const { return 0; }
+    inline ManiplationType GetManiplationType() const {
+        return ManiplationType::kInsert;
+    }
+    inline TransactionEndType GetTransactionEndType() const {
+        return TransactionEndType::kCommit;
+    }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
     inline Result UnDo(const disk::DiskManager &disk_manager) const {
         return Ok();
