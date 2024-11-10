@@ -85,9 +85,143 @@ Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
     return Ok();
 }
 
-Result RecoveryManager::Recover() {
-    // TODO: implement recovery algorithm.
+Result
+RecoveryManager::Recover(const disk::DiskManager &data_disk_manager) const {
+    ResultV<dblog::LogIterator> log_iter_result = log_manager_.LastLog();
+    if (log_iter_result.IsError()) {
+        return log_iter_result + Error("recovery::RecoveryManager::Recover() "
+                                       "failed to read the last log.");
+    }
+    dblog::LogIterator log_iter = log_iter_result.MoveValue();
+    std::set<dblog::TransactionID> committed, rollbacked;
+
+    Result undo_result =
+        UnDoStage(log_iter, committed, rollbacked, data_disk_manager);
+    if (undo_result.IsError()) {
+        return undo_result +
+               Error("recovery::RecoveryManager::Recover() failed to undo.");
+    }
+
+    Result redo_result =
+        ReDoStage(log_iter, committed, rollbacked, data_disk_manager);
+    if (redo_result.IsError()) {
+        return redo_result +
+               Error("recovery::RecoveryManager::Recover() failed to redo.");
+    }
+
     return Ok();
 }
 
+Result
+RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
+                           std::set<dblog::TransactionID> &committed,
+                           std::set<dblog::TransactionID> &rollbacked,
+                           const disk::DiskManager &data_disk_manager) const {
+
+    auto already_committed_or_rollbacked =
+        [&committed, &rollbacked](dblog::TransactionID transaction_id) -> bool {
+        return committed.count(transaction_id) ||
+               rollbacked.count(transaction_id);
+    };
+
+    while (true) {
+        ResultV<std::vector<uint8_t>> log_body_result = log_iter.LogBody();
+        if (log_body_result.IsError()) {
+            return log_body_result +
+                   Error("recovery::RecoveryManager::UnDoStage() "
+                         "failed to read the log body bytes.");
+        }
+        ResultV<std::unique_ptr<dblog::LogRecord>> log_record_result =
+            dblog::ReadLogRecord(log_body_result.Get());
+        if (log_record_result.IsError()) {
+            return log_record_result +
+                   Error("recovery::RecoveryManager::UnDoStage("
+                         ") failed to read the log record.");
+        }
+        std::unique_ptr<dblog::LogRecord> log_record =
+            log_record_result.MoveValue();
+
+        if (log_record->Type() == dblog::LogType::kTransactionEnd) {
+            switch (log_record->GetTransactionEndType()) {
+            case dblog::TransactionEndType::kCommit:
+                committed.insert(log_record->GetTransactionID());
+                break;
+            case dblog::TransactionEndType::kRollback:
+                rollbacked.insert(log_record->GetTransactionID());
+                break;
+            }
+        } else if (log_record->Type() == dblog::LogType::kOperation &&
+                   !already_committed_or_rollbacked(
+                       log_record->GetTransactionID())) {
+            switch (log_record->GetManiplationType()) {
+            case dblog::ManiplationType::kDelete:
+            case dblog::ManiplationType::kUpdate:
+                Result undo_result = log_record->UnDo(data_disk_manager);
+                if (undo_result.IsError()) {
+                    return undo_result + Error("recovery::RecoveryManager::"
+                                               "UnDoStage() failed to undo.");
+                }
+            }
+        }
+
+        if (!log_iter.HasPrevious()) break;
+        Result previous_result = log_iter.Previous();
+        if (previous_result.IsError()) {
+            return previous_result +
+                   Error("recovery::RecoveryManager::UnDoStage() "
+                         "failed to read the previous log.");
+        }
+    }
+
+    return Ok();
+}
+
+Result
+RecoveryManager::ReDoStage(dblog::LogIterator &log_iter,
+                           std::set<dblog::TransactionID> &committed,
+                           std::set<dblog::TransactionID> &rollbacked,
+                           const disk::DiskManager &data_disk_manager) const {
+    while (true) {
+        ResultV<std::vector<uint8_t>> log_body_result = log_iter.LogBody();
+        if (log_body_result.IsError()) {
+            return log_body_result +
+                   Error("recovery::RecoveryManager::ReDoStage() "
+                         "failed to read the log body bytes.");
+        }
+        ResultV<std::unique_ptr<dblog::LogRecord>> log_record_result =
+            dblog::ReadLogRecord(log_body_result.Get());
+        if (log_record_result.IsError()) {
+            return log_record_result +
+                   Error("recovery::RecoveryManager::ReDoStage("
+                         ") failed to read the log record.");
+        }
+        std::unique_ptr<dblog::LogRecord> log_record =
+            log_record_result.MoveValue();
+
+        if (log_record->Type() == dblog::LogType::kOperation &&
+            committed.count(log_record->GetTransactionID())) {
+            Result redo_result = log_record->ReDo(data_disk_manager);
+            if (redo_result.IsError()) {
+                return redo_result +
+                       Error("recovery::RecoveryManager::"
+                             "ReDoStage() failed to redo a record.");
+            }
+        }
+
+        ResultV<bool> has_next_result = log_iter.HasNext();
+        if (has_next_result.IsError()) {
+            return has_next_result + Error("recovery::RecoveryManager::"
+                                           "ReDoStage() failed to check if the "
+                                           "next record exists.");
+        }
+        if (!has_next_result.Get()) break;
+        Result next_result = log_iter.Next();
+        if (next_result.IsError()) {
+            return next_result + Error("recovery::RecoveryManager::ReDoStage() "
+                                       "failed to read the next log.");
+        }
+    }
+
+    return Ok();
+}
 } // namespace recovery
