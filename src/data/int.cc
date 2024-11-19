@@ -40,9 +40,15 @@ void Int::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
     return WriteIntNoFail(bytes, offset, value_);
 }
 
+ResultV<std::unique_ptr<DataType>>
+ReadTypeInt(const std::vector<uint8_t> &type_bytes, const int type_offset) {
+    return ResultV<std::unique_ptr<DataType>>(
+        std::move(std::make_unique<TypeInt>()));
+}
+
 ResultV<std::unique_ptr<DataItem>>
 ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset) {
-    ResultV<int> int_result = ReadInt(data_bytes, data_offset + 1);
+    ResultV<int> int_result = ReadInt(data_bytes, data_offset);
     if (int_result.IsError()) {
         return int_result +
                Error("data::ReadDataInt() failed to read int data.");

@@ -95,7 +95,7 @@ TEST(DataInt, WriteIntNoFailSuccessWithOutsideIndex) {
 }
 
 TEST(DataInt, ReadDataIntSuccess) {
-    std::vector<uint8_t> data_bytes = {0, '\x4', '\x7', 0, 0};
+    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
 
     auto dataint_result = data::ReadDataInt(data_bytes, 0);
     EXPECT_TRUE(dataint_result.IsOk());
@@ -109,7 +109,7 @@ TEST(DataInt, ReadDataIntSuccess) {
 }
 
 TEST(DataInt, ReadDataIntShortFail) {
-    std::vector<uint8_t> data_bytes = {0, '\x4', '\x7', 0, 0};
+    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
 
     auto dataint_result = data::ReadDataInt(data_bytes, 2);
     EXPECT_TRUE(dataint_result.IsError());

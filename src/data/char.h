@@ -68,11 +68,15 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
 
-// Read Char type value from `data_bytes`. The bytes have type parameter and the
-// data itself in continuous domain.
-// | kTypeParameterChar(1byte) | length(1byte) | char value(N byte) |
+// Reads Char type from `type_bytes`. The bytes have type parameter.
+ResultV<std::unique_ptr<DataType>>
+ReadTypeChar(const std::vector<uint8_t> &type_bytes, const int type_offset);
+
+// Read Char type value from `data_bytes`. The bytes have only the data.
+// | char value(N byte) |
 ResultV<std::unique_ptr<DataItem>>
-ReadDataChar(const std::vector<uint8_t> &data_bytes, int data_offset);
+ReadDataChar(const std::vector<uint8_t> &data_bytes, int data_offset,
+             const int length);
 
 } // namespace data
 

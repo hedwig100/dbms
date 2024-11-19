@@ -112,7 +112,7 @@ TEST(DataChar, WriteStringNoFailWithOutsideIndexSuccess) {
 TEST(DataChar, ReadDataCharSuccess) {
     std::vector<uint8_t> data_bytes = {1, 6, 'a', 'b', 'c', 'd', 'e', 'f'};
 
-    auto datachar_result = data::ReadDataChar(data_bytes, 0);
+    auto datachar_result = data::ReadDataChar(data_bytes, 2, 6);
     EXPECT_TRUE(datachar_result.IsOk());
     auto char_ptr = datachar_result.MoveValue();
     EXPECT_EQ(char_ptr->Type().BaseType(), data::BaseDataType::kChar);
@@ -127,6 +127,6 @@ TEST(DataChar, ReadDataCharSuccess) {
 TEST(DataChar, ReadDataCharShortFail) {
     std::vector<uint8_t> data_bytes = {1, 8, 'a', 'b', 'c', 'd', 'e', 'f'};
 
-    auto datachar_result = data::ReadDataChar(data_bytes, 0);
+    auto datachar_result = data::ReadDataChar(data_bytes, 2, 8);
     EXPECT_TRUE(datachar_result.IsError());
 }
