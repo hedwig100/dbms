@@ -33,16 +33,16 @@ void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteString(bytes, offset, value.size(), value);
 }
 
-Char::Char(const std::string &value, uint8_t length) : length_(length) {
-    value_ = value.substr(0, length);
-    if (value_.size() < length) value_.resize(length, ' ');
-}
-
-void Char::WriteTypeParameter(std::vector<uint8_t> &bytes,
-                              const size_t offset) const {
+void TypeChar::WriteTypeParameter(std::vector<uint8_t> &bytes,
+                                  const size_t offset) const {
     if (offset + 2 > bytes.size()) bytes.resize(offset + 2);
     bytes[offset]     = kTypeParameterChar;
     bytes[offset + 1] = length_;
+}
+
+Char::Char(const std::string &value, uint8_t length) : type_(length) {
+    value_ = value.substr(0, length);
+    if (value_.size() < length) value_.resize(length, ' ');
 }
 
 void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
@@ -51,7 +51,7 @@ void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
 
 Result Char::WriteWithFail(std::vector<uint8_t> &bytes,
                            const size_t offset) const {
-    return WriteString(bytes, offset, length_, value_);
+    return WriteString(bytes, offset, type_.Length(), value_);
 }
 
 ResultV<std::unique_ptr<DataItem>>

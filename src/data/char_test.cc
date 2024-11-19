@@ -4,32 +4,32 @@
 TEST(DataChar, DataItemCharTypeValueLength) {
     data::Char hello("hello", 5);
 
-    EXPECT_EQ(hello.Type(), data::DataType::kChar);
+    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
+    EXPECT_EQ(hello.Type().Length(), 5);
     EXPECT_EQ(hello.Value(), "hello");
-    EXPECT_EQ(hello.Length(), 5);
 }
 
 TEST(DataChar, DataItemLongCharTypeValueLength) {
     data::Char hello("hello world", 5);
 
-    EXPECT_EQ(hello.Type(), data::DataType::kChar);
+    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
+    EXPECT_EQ(hello.Type().Length(), 5);
     EXPECT_EQ(hello.Value(), "hello");
-    EXPECT_EQ(hello.Length(), 5);
 }
 
 TEST(DataChar, DataItemSmallCharTypeValueLength) {
     data::Char hello("hello", 6);
 
-    EXPECT_EQ(hello.Type(), data::DataType::kChar);
+    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
+    EXPECT_EQ(hello.Type().Length(), 6);
     EXPECT_EQ(hello.Value(), "hello ");
-    EXPECT_EQ(hello.Length(), 6);
 }
 
 TEST(DataChar, DataItemCharWriteTypeParameter) {
     data::Char hello("hello", 5);
     std::vector<uint8_t> bytes;
 
-    hello.WriteTypeParameter(bytes, 0);
+    hello.Type().WriteTypeParameter(bytes, 0);
     EXPECT_TRUE(bytes.size() >= 2);
     EXPECT_EQ(bytes[1], 5);
 }
@@ -115,7 +115,7 @@ TEST(DataChar, ReadDataCharSuccess) {
     auto datachar_result = data::ReadDataChar(data_bytes, 0);
     EXPECT_TRUE(datachar_result.IsOk());
     auto char_ptr = datachar_result.MoveValue();
-    EXPECT_EQ(char_ptr->Type(), data::DataType::kChar);
+    EXPECT_EQ(char_ptr->Type().BaseType(), data::BaseDataType::kChar);
 
     std::vector<uint8_t> read_bytes;
     char_ptr->Write(read_bytes, 0);

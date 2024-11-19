@@ -4,7 +4,7 @@
 TEST(DataInt, DataItemIntTypeValue) {
     data::Int two(2);
 
-    EXPECT_EQ(two.Type(), data::DataType::kInt);
+    EXPECT_EQ(two.Type().BaseType(), data::BaseDataType::kInt);
     EXPECT_EQ(two.Value(), 2);
 }
 
@@ -12,7 +12,7 @@ TEST(DataInt, DataItemIntWriteTypeParameter) {
     data::Int two(2);
     std::vector<uint8_t> bytes;
 
-    two.WriteTypeParameter(bytes, 0);
+    two.Type().WriteTypeParameter(bytes, 0);
     EXPECT_EQ(bytes.size(), 1);
 }
 
@@ -100,7 +100,7 @@ TEST(DataInt, ReadDataIntSuccess) {
     auto dataint_result = data::ReadDataInt(data_bytes, 0);
     EXPECT_TRUE(dataint_result.IsOk());
     auto int_ptr = dataint_result.MoveValue();
-    EXPECT_EQ(int_ptr->Type(), data::DataType::kInt);
+    EXPECT_EQ(int_ptr->Type().BaseType(), data::BaseDataType::kInt);
 
     std::vector<uint8_t> read_bytes;
     int_ptr->Write(read_bytes, 0);

@@ -12,12 +12,12 @@ using namespace result;
 
 constexpr int kIntBytesize = 4;
 
-// Int: 32-bit integer
-class Int : public DataItem {
+// TypeInt represents the type of Int.
+class TypeInt : public DataType {
   public:
-    explicit inline Int(int value) : value_(value) {}
+    inline TypeInt() {}
 
-    inline DataType Type() const { return DataType::kInt; }
+    inline BaseDataType BaseType() const { return BaseDataType::kInt; }
 
     inline int TypeParameterValueLength() const {
         return /*header size*/ 1 + kIntBytesize;
@@ -25,6 +25,16 @@ class Int : public DataItem {
 
     void WriteTypeParameter(std::vector<uint8_t> &bytes,
                             const size_t offset) const;
+};
+
+const TypeInt kTypeInt;
+
+// Int: 32-bit integer
+class Int : public DataItem {
+  public:
+    explicit inline Int(int value) : value_(value) {}
+
+    inline const TypeInt &Type() const { return kTypeInt; }
 
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 

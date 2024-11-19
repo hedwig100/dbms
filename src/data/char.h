@@ -11,20 +11,34 @@ namespace data {
 
 using namespace result;
 
+// TypeChar represents the type of Char. It has a length parameter.
+class TypeChar : public DataType {
+  public:
+    inline TypeChar(uint8_t length) : length_(length) {}
+
+    inline BaseDataType BaseType() const { return BaseDataType::kChar; }
+
+    inline int TypeParameterValueLength() const {
+        return /*header size*/ 1 + /*length size*/ 1 + length_;
+    }
+
+    void WriteTypeParameter(std::vector<uint8_t> &bytes,
+                            const size_t offset) const;
+
+    // Returns the length parameter.
+    inline uint8_t Length() const { return length_; }
+
+  private:
+    uint8_t length_;
+};
+
 // Char: fixed-length string. Its length is from 0 to 255 (represented as
 // an unsigned 8-bit integer).
 class Char : public DataItem {
   public:
     explicit Char(const std::string &value, uint8_t length);
 
-    void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                            const size_t offset) const;
-
-    inline DataType Type() const { return DataType::kChar; }
-
-    inline int TypeParameterValueLength() const {
-        return /*header size*/ 1 + /*length size*/ 1 + length_;
-    }
+    inline const TypeChar &Type() const { return type_; }
 
     void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
@@ -34,12 +48,9 @@ class Char : public DataItem {
     // Returns a string owned.
     inline std::string Value() const { return value_; }
 
-    // Returns the type parameter i.e. length.
-    inline uint8_t Length() const { return length_; }
-
   private:
     std::string value_;
-    uint8_t length_;
+    TypeChar type_;
 };
 
 // Reads the string of length `length` with the `offset` of `bytes`.
