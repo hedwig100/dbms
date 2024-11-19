@@ -18,9 +18,11 @@ class TypeChar : public DataType {
 
     inline BaseDataType BaseType() const { return BaseDataType::kChar; }
 
-    inline int TypeParameterValueLength() const {
-        return /*header size*/ 1 + /*length size*/ 1 + length_;
+    inline int TypeParameterLength() const {
+        return /*header size*/ 1 + /*length size*/ 1;
     }
+
+    inline int ValueLength() const { return length_; }
 
     void WriteTypeParameter(std::vector<uint8_t> &bytes,
                             const size_t offset) const;

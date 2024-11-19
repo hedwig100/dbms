@@ -19,9 +19,9 @@ class TypeInt : public DataType {
 
     inline BaseDataType BaseType() const { return BaseDataType::kInt; }
 
-    inline int TypeParameterValueLength() const {
-        return /*header size*/ 1 + kIntBytesize;
-    }
+    inline int TypeParameterLength() const { return /*header size*/ 1; }
+
+    inline int ValueLength() const { return kIntBytesize; }
 
     void WriteTypeParameter(std::vector<uint8_t> &bytes,
                             const size_t offset) const;
