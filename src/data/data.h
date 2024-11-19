@@ -43,14 +43,14 @@ class DataItem {
     virtual const DataType &Type() const = 0;
 
     // Writes the item to `bytes` with the `offset`. If the `bytes` is not large
-    // enough, the `bytes` is extended.
-    virtual void Write(std::vector<uint8_t> &bytes,
-                       const size_t offset) const = 0;
+    // enough, returns Error.
+    virtual Result Write(std::vector<uint8_t> &bytes,
+                         const size_t offset) const = 0;
 
     // Writes the item to `bytes` with the `offset`. If the `bytes` is not large
-    // enough, returns Error.
-    virtual Result WriteWithFail(std::vector<uint8_t> &bytes,
-                                 const size_t offset) const = 0;
+    // enough, the `bytes` is extended.
+    virtual void WriteNoFail(std::vector<uint8_t> &bytes,
+                             const size_t offset) const = 0;
 };
 
 } // namespace data

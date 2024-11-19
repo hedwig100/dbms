@@ -36,10 +36,9 @@ class Int : public DataItem {
 
     inline const TypeInt &Type() const { return kTypeInt; }
 
-    void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
+    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
-    Result WriteWithFail(std::vector<uint8_t> &bytes,
-                         const size_t offset) const;
+    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
 
     // Returns an owned integer.
     inline int Value() const { return value_; }

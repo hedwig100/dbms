@@ -145,7 +145,7 @@ Result Block::WriteString(const int offset, const std::string &value) {
 }
 
 Result Block::Write(const int offset, const data::DataItem &data_item) {
-    return data_item.WriteWithFail(content_, offset);
+    return data_item.Write(content_, offset);
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }

@@ -21,7 +21,7 @@ TEST(DataInt, DataItemIntWriteOfSmallBytes) {
     std::vector<uint8_t> bytes;
     const size_t offset = 3;
 
-    two.Write(bytes, offset);
+    two.WriteNoFail(bytes, offset);
 
     EXPECT_EQ(bytes.size(), offset + 4);
     auto expect_int = data::ReadInt(bytes, offset);
@@ -103,7 +103,7 @@ TEST(DataInt, ReadDataIntSuccess) {
     EXPECT_EQ(int_ptr->Type().BaseType(), data::BaseDataType::kInt);
 
     std::vector<uint8_t> read_bytes;
-    int_ptr->Write(read_bytes, 0);
+    int_ptr->WriteNoFail(read_bytes, 0);
     const std::vector<uint8_t> expect_read_bytes = {'\x4', '\x7', 0, 0};
     EXPECT_EQ(read_bytes, expect_read_bytes);
 }

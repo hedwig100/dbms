@@ -40,10 +40,9 @@ class Char : public DataItem {
 
     inline const TypeChar &Type() const { return type_; }
 
-    void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
+    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
-    Result WriteWithFail(std::vector<uint8_t> &bytes,
-                         const size_t offset) const;
+    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
 
     // Returns a string owned.
     inline std::string Value() const { return value_; }

@@ -32,13 +32,12 @@ void TypeInt::WriteTypeParameter(std::vector<uint8_t> &bytes,
     bytes[offset] = kTypeParameterInt;
 }
 
-void Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteIntNoFail(bytes, offset, value_);
+Result Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
+    return WriteInt(bytes, offset, value_);
 }
 
-Result Int::WriteWithFail(std::vector<uint8_t> &bytes,
-                          const size_t offset) const {
-    return WriteInt(bytes, offset, value_);
+void Int::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
+    return WriteIntNoFail(bytes, offset, value_);
 }
 
 ResultV<std::unique_ptr<DataItem>>

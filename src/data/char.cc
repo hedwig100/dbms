@@ -45,13 +45,12 @@ Char::Char(const std::string &value, uint8_t length) : type_(length) {
     if (value_.size() < length) value_.resize(length, ' ');
 }
 
-void Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    WriteStringNoFail(bytes, offset, value_);
+Result Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
+    return WriteString(bytes, offset, type_.Length(), value_);
 }
 
-Result Char::WriteWithFail(std::vector<uint8_t> &bytes,
-                           const size_t offset) const {
-    return WriteString(bytes, offset, type_.Length(), value_);
+void Char::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
+    WriteStringNoFail(bytes, offset, value_);
 }
 
 ResultV<std::unique_ptr<DataItem>>

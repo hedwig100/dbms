@@ -40,7 +40,7 @@ TEST(DataChar, DataItemCharWriteOfSmallBytes) {
     std::vector<uint8_t> bytes;
     const size_t offset = 3;
 
-    hello.Write(bytes, offset);
+    hello.WriteNoFail(bytes, offset);
 
     EXPECT_EQ(bytes.size(), offset + length);
     auto expect_char = data::ReadString(bytes, offset, length);
@@ -118,7 +118,7 @@ TEST(DataChar, ReadDataCharSuccess) {
     EXPECT_EQ(char_ptr->Type().BaseType(), data::BaseDataType::kChar);
 
     std::vector<uint8_t> read_bytes;
-    char_ptr->Write(read_bytes, 0);
+    char_ptr->WriteNoFail(read_bytes, 0);
     const std::vector<uint8_t> expect_read_bytes = {'a', 'b', 'c',
                                                     'd', 'e', 'f'};
     EXPECT_EQ(read_bytes, expect_read_bytes);
