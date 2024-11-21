@@ -289,14 +289,14 @@ LogOperation::LogOperation(TransactionID transaction_id,
 
     if (previous_item_) {
         previous_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
-        previous_item_->Write(log_body_, log_body_.size());
+        previous_item_->WriteNoFail(log_body_, log_body_.size());
     }
     if (new_item_) {
         if (previous_item_) {
-            new_item_->Write(log_body_, log_body_.size());
+            new_item_->WriteNoFail(log_body_, log_body_.size());
         } else {
             new_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
-            new_item_->Write(log_body_, log_body_.size());
+            new_item_->WriteNoFail(log_body_, log_body_.size());
         }
     }
 }
