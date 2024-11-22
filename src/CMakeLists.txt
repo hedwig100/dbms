@@ -60,6 +60,7 @@ add_library(disk
 )
 target_link_libraries(disk
   char
+  data_read
   int
 )
 target_include_directories(disk
