@@ -40,7 +40,7 @@ DBMSはコミットされたトランザクションの永続化のため, ロ�
 
 ログ本体は以下のようである.
 ```
-| 0b01{MANIP_TYPE(2bit)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* | new_content* | 
+| 0b01{MANIP_TYPE(2bit)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | new_content* | 
 ```
 
 - MANIP_TYPEは追加, 更新, 削除のいずれかを2bitであらわす.

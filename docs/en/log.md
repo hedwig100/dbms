@@ -41,7 +41,7 @@ Has the following log body.
 
 Has the following log body.
 ```
-| 0b01{MANIP_TYPE(2bits)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | type_parameter* | new_content* | 
+| 0b01{MANIP_TYPE(2bits)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | new_content* | 
 ```
 
 - MANIP_TYPE represents insert, update, or delete in 2bits.

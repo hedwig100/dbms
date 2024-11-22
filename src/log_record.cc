@@ -74,7 +74,7 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationInsert(
     TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
-        data::ReadData(log_body_bytes, bytes_offset);
+        data::ReadTypeData(log_body_bytes, bytes_offset);
     if (data_result.IsError())
         return data_result +
                Error(
@@ -89,14 +89,14 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
     TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> prevdata_result =
-        data::ReadData(log_body_bytes, bytes_offset);
+        data::ReadTypeData(log_body_bytes, bytes_offset);
     if (prevdata_result.IsError())
         return prevdata_result + Error("dblog::ReadLogOperationUpdate() failed "
                                        "to read previous data.");
-    bytes_offset += prevdata_result.Get()->TypeParameterValueLength();
+    bytes_offset += prevdata_result.Get()->Type().TypeParameterValueLength();
 
-    ResultV<std::unique_ptr<data::DataItem>> newdata_result =
-        data::ReadData(log_body_bytes, bytes_offset);
+    ResultV<std::unique_ptr<data::DataItem>> newdata_result = data::ReadData(
+        prevdata_result.Get()->Type(), log_body_bytes, bytes_offset);
     if (newdata_result.IsError())
         return newdata_result + Error("dblog::ReadLogOperationUpdate() failed "
                                       "to read the new data.");
@@ -111,7 +111,7 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationDelete(
     TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, const int bytes_offset) {
     ResultV<std::unique_ptr<data::DataItem>> data_result =
-        data::ReadData(log_body_bytes, bytes_offset);
+        data::ReadTypeData(log_body_bytes, bytes_offset);
     if (data_result.IsError())
         return data_result +
                Error("dblog::ReadLogOperationDelete() failed to read data.");
@@ -288,12 +288,16 @@ LogOperation::LogOperation(TransactionID transaction_id,
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
 
     if (previous_item_) {
-        previous_item_->WriteTypeParameter(log_body_, log_body_.size());
-        previous_item_->Write(log_body_, log_body_.size());
+        previous_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
+        previous_item_->WriteNoFail(log_body_, log_body_.size());
     }
     if (new_item_) {
-        new_item_->WriteTypeParameter(log_body_, log_body_.size());
-        new_item_->Write(log_body_, log_body_.size());
+        if (previous_item_) {
+            new_item_->WriteNoFail(log_body_, log_body_.size());
+        } else {
+            new_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
+            new_item_->WriteNoFail(log_body_, log_body_.size());
+        }
     }
 }
 

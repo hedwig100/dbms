@@ -12,24 +12,33 @@ using namespace result;
 
 constexpr int kIntBytesize = 4;
 
+// TypeInt represents the type of Int.
+class TypeInt : public DataType {
+  public:
+    inline TypeInt() {}
+
+    inline BaseDataType BaseType() const { return BaseDataType::kInt; }
+
+    inline int TypeParameterLength() const { return /*header size*/ 1; }
+
+    inline int ValueLength() const { return kIntBytesize; }
+
+    void WriteTypeParameter(std::vector<uint8_t> &bytes,
+                            const size_t offset) const;
+};
+
+const TypeInt kTypeInt;
+
 // Int: 32-bit integer
 class Int : public DataItem {
   public:
     explicit inline Int(int value) : value_(value) {}
 
-    inline DataType Type() const { return DataType::kInt; }
+    inline const TypeInt &Type() const { return kTypeInt; }
 
-    inline int TypeParameterValueLength() const {
-        return /*header size*/ 1 + kIntBytesize;
-    }
+    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
 
-    void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                            const size_t offset) const;
-
-    void Write(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    Result WriteWithFail(std::vector<uint8_t> &bytes,
-                         const size_t offset) const;
+    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
 
     // Returns an owned integer.
     inline int Value() const { return value_; }
@@ -52,9 +61,12 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                     const int value);
 
-// Read Int from `data_bytes`. The bytes have type paremeter and the data itself
-// in continuous domain.
-// | kTypeParameterInt(1byte) | int value(4bytes) |
+// Reads the type from `type_bytes`. The bytes have type paremeter.
+ResultV<std::unique_ptr<DataType>>
+ReadTypeInt(const std::vector<uint8_t> &type_bytes, const int type_offset);
+
+// Read Int from `data_bytes`. The bytes have only the data itself.
+// | int value(4bytes) |
 ResultV<std::unique_ptr<DataItem>>
 ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset);
 
