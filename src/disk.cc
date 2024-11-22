@@ -1,6 +1,7 @@
 #include "disk.h"
 
 #include "data/char.h"
+#include "data/data_read.h"
 #include "data/int.h"
 #include <algorithm>
 #include <cstring>
@@ -146,6 +147,11 @@ Result Block::WriteString(const int offset, const std::string &value) {
 
 Result Block::Write(const int offset, const data::DataItem &data_item) {
     return data_item.Write(content_, offset);
+}
+
+ResultV<std::unique_ptr<data::DataItem>>
+Block::Read(const int offset, const data::DataType &datatype) const {
+    return data::ReadData(datatype, content_, offset);
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }
