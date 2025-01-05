@@ -2,8 +2,6 @@
 
 namespace buffer {
 
-/** Buffer */
-
 Buffer::Buffer() : block_id_(disk::BlockID("", 0)), block_(disk::Block()) {}
 
 Buffer::Buffer(const disk::BlockID &block_id, const disk::Block &block)
@@ -11,17 +9,17 @@ Buffer::Buffer(const disk::BlockID &block_id, const disk::Block &block)
 
 const disk::BlockID &Buffer::BlockID() const { return block_id_; }
 
-disk::Block Buffer::Block() const { return block_; }
+const disk::Block &Buffer::Block() const { return block_; }
 
-void Buffer::SetBlock(const disk::Block &block) { block_ = block; }
-
-/** BufferManager */
-
-BufferManager::BufferManager(const int buffer_size,
-                             const disk::DiskManager &disk_manager)
-    : disk_manager_(disk_manager) {
-    buffer_pool_.resize(buffer_size);
+void Buffer::SetBlock(const disk::Block &block,
+                      const dblog::LogSequenceNumber lsn) {
+    block_ = block;
+    if (lsn > latest_lsn_) latest_lsn_ = lsn;
 }
+
+BufferManager::BufferManager(const disk::DiskManager &disk_manager,
+                             const dblog::LogManager &log_manager)
+    : disk_manager_(disk_manager), log_manager_(log_manager) {}
 
 Result BufferManager::Read(const disk::BlockID &block_id, disk::Block &block) {
     auto buffer_result = FindBufferWithBlockID(block_id);
@@ -37,10 +35,11 @@ Result BufferManager::Read(const disk::BlockID &block_id, disk::Block &block) {
 }
 
 Result BufferManager::Write(const disk::BlockID &block_id,
-                            const disk::Block &block) {
+                            const disk::Block &block,
+                            const dblog::LogSequenceNumber lsn) {
     auto buffer_result = FindBufferWithBlockID(block_id);
     if (buffer_result.IsOk()) {
-        buffer_result.Get()->SetBlock(block);
+        buffer_result.Get()->SetBlock(block, lsn);
         return Ok();
     }
     return AddNewBuffer(Buffer(block_id, block));
@@ -48,17 +47,9 @@ Result BufferManager::Write(const disk::BlockID &block_id,
 
 Result BufferManager::Flush(const disk::BlockID &block_id) {
     auto buffer_result = FindBufferWithBlockID(block_id);
-    if (buffer_result.IsOk()) {
-        auto write_result =
-            disk_manager_.Write(block_id, buffer_result.Get()->Block());
-        if (write_result.IsError())
-            return write_result +
-                   Error("buffer::BufferManager::Flush() failed to write.");
-    }
+    if (buffer_result.IsOk()) { return FlushBuffer(*buffer_result.Get()); }
     return disk_manager_.Flush(block_id.Filename());
 }
-
-std::vector<Buffer> BufferManager::BufferPool() const { return buffer_pool_; }
 
 ResultV<Buffer *>
 BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
@@ -69,16 +60,54 @@ BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
                  "with the block_id.");
 }
 
-Result BufferManager::AddNewBuffer(const Buffer &buffer) {
-    // (TODO) implement decent evicting logic like LRU.
-    Result result = Ok();
+Result BufferManager::FlushBuffer(const Buffer &buffer) {
+    // To make sure that the corresponding log is written to disk,
+    // flush the log file first and then write the block to disk.
+    auto log_result = log_manager_.Flush(buffer.LatestLogSequenceNumber());
+    if (log_result.IsError())
+        return log_result +
+               Error("buffer::BufferManager::Flush() failed to flush log.");
 
-    // NOTE: If BlockID().Filename() is empty, it means the buffer is empty.
-    if (buffer_pool_[0].BlockID().Filename() != "")
-        result = disk_manager_.Write(buffer_pool_[0].BlockID(),
-                                     buffer_pool_[0].Block());
-    buffer_pool_[0] = buffer;
-    return result;
+    auto write_result = disk_manager_.Write(buffer.BlockID(), buffer.Block());
+    if (write_result.IsError())
+        return write_result +
+               Error("buffer::BufferManager::Flush() failed to write.");
+
+    return Ok();
 }
+
+Result BufferManager::AddNewBuffer(const Buffer &buffer) {
+    ResultV<int> evicted_buffer_id = SelectEvictBufferID();
+    if (evicted_buffer_id.IsError()) {
+        return evicted_buffer_id +
+               Error("buffer::BufferManager::AddNewBuffer() "
+                     "failed to select evict buffer.");
+    }
+
+    const Buffer &evicted_buffer = buffer_pool_[evicted_buffer_id.Get()];
+    if (evicted_buffer.IsDirty()) {
+        Result flush_result = FlushBuffer(evicted_buffer);
+        if (flush_result.IsError()) {
+            return flush_result + Error("buffer::BufferManager::AddNewBuffer() "
+                                        "failed to flush buffer.");
+        }
+    }
+
+    buffer_pool_[evicted_buffer_id.Get()] = buffer;
+    return Ok();
+}
+
+SimpleBufferManager::SimpleBufferManager(const int buffer_size,
+                                         const disk::DiskManager &disk_manager,
+                                         const dblog::LogManager &log_manager)
+    : BufferManager(disk_manager, log_manager) {
+    buffer_pool_.resize(buffer_size);
+}
+
+const std::vector<Buffer> &SimpleBufferManager::BufferPool() const {
+    return buffer_pool_;
+}
+
+ResultV<int> SimpleBufferManager::SelectEvictBufferID() { return Ok(0); }
 
 } // namespace buffer
