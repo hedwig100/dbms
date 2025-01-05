@@ -2,6 +2,7 @@
 #define BUFFER_H
 
 #include "disk.h"
+#include "log.h"
 #include "result.h"
 #include <vector>
 
@@ -20,19 +21,31 @@ class Buffer {
     const disk::BlockID &BlockID() const;
 
     // Returns the owned block.
-    disk::Block Block() const;
+    const disk::Block &Block() const;
 
-    // Set the owned block.
-    void SetBlock(const disk::Block &block);
+    // Latest log sequence number of modifications of the block.
+    dblog::LogSequenceNumber LatestLogSequenceNumber() const {
+        return latest_lsn_;
+    }
+
+    // Returns true if the block is dirty (modified).
+    bool IsDirty() const { return block_id_.Filename() != ""; }
+
+    // Set the block with a log sequence number.
+    void SetBlock(const disk::Block &block, const dblog::LogSequenceNumber lsn);
 
   private:
+    dblog::LogSequenceNumber latest_lsn_;
     disk::BlockID block_id_;
     disk::Block block_;
 };
 
+// BufferManager manages the buffer pool and reads and writes blocks to the
+// buffer pool. Eviction policy should be implemented in the derived class.
 class BufferManager {
   public:
-    BufferManager(const int buffer_size, const disk::DiskManager &disk_manager);
+    explicit BufferManager(const disk::DiskManager &disk_manager,
+                           const dblog::LogManager &log_manager);
 
     // Reads the block of `block_id` from the buffer pool. The block with
     // `block_id` is cached in `buffer_pool_`.
@@ -41,20 +54,15 @@ class BufferManager {
     // Writes the block of `block_id` to the buffer pool. The block with
     // `block_id` is cached in `buffer_pool_`. When execution of this method
     // succeeds, it does not mean the block is written to disk. You have to call
-    // `::Flush()` to make sure that the block is written to disk.
-    // NOTE: Does't raise an error even if there is no block with `block_id`.
-    // Thus, you should make sure that the block with `block_id` exists before
-    // you call this function.
-    Result Write(const disk::BlockID &block_id, const disk::Block &block);
+    // `BufferManager::Flush()` to make sure that the block is written to disk.
+    // NOTE: Does't raise an error even if there is no block with
+    // `block_id`. Thus, you should make sure that the block with `block_id`
+    // exists before you call this function.
+    Result Write(const disk::BlockID &block_id, const disk::Block &block,
+                 const dblog::LogSequenceNumber lsn);
 
     // Flush the block of `block_id` to disk.
     Result Flush(const disk::BlockID &block_id);
-
-    // Returns the content of buffer pool.
-    std::vector<Buffer> BufferPool() const;
-
-    // TODO: implement the follwing method when necesary.
-    // void Pin(const disk::BlockID &block_id) const;
 
   private:
     // Find the buffer with the `block_id` and return a pointer to the
@@ -64,12 +72,38 @@ class BufferManager {
     // mutate the buffer in `buffer_pool_` with shared_ptr.)
     ResultV<Buffer *> FindBufferWithBlockID(const disk::BlockID &block_id);
 
+    // Flush the buffer to the disk. This method flushes the log file first and
+    // then writes the block to the disk, to make sure that the corresponding
+    // log is written to disk.
+    Result FlushBuffer(const Buffer &buffer);
+
     // Add new buffer to the buffer pool. When the buffer poll is full, select a
     // evicted buffer and swap the content.
     Result AddNewBuffer(const Buffer &buffer);
 
+    // Selects a buffer to evict in the buffer pool. This method should be
+    // implemented in the derived class.
+    virtual ResultV<int> SelectEvictBufferID() = 0;
+
+  protected:
     disk::DiskManager disk_manager_;
+    dblog::LogManager log_manager_;
     std::vector<Buffer> buffer_pool_;
+};
+
+// SimpleBufferManager is a simple implementation of BufferManager.
+// This class does not implement any eviction policy (just flush the first
+// block).
+class SimpleBufferManager : public BufferManager {
+  public:
+    SimpleBufferManager(const int buffer_size,
+                        const disk::DiskManager &disk_manager,
+                        const dblog::LogManager &log_manager);
+
+    const std::vector<Buffer> &BufferPool() const;
+
+  private:
+    ResultV<int> SelectEvictBufferID();
 };
 
 } // namespace buffer

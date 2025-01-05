@@ -14,6 +14,7 @@ add_library(buffer
 )
 target_link_libraries(buffer
   disk
+  log
 )
 target_include_directories(buffer
   PUBLIC ${PROJECT_SOURCE_DIR}/src
