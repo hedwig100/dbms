@@ -213,3 +213,30 @@ target_link_libraries(sample_lib_test
   GTest::gtest_main
 )
 gtest_discover_tests(sample_lib_test)
+
+## transaction
+add_library(transaction
+  transaction.cc
+)
+target_link_libraries(transaction
+  buffer
+  concurrency
+  log 
+  recovery
+  result
+)
+target_include_directories(transaction
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(transaction_test
+  transaction_test.cc
+)
+target_include_directories(transaction_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(transaction_test
+  transaction
+  GTest::gtest_main
+)
+gtest_discover_tests(transaction_test)
