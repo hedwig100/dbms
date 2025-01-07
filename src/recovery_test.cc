@@ -64,15 +64,13 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccess) {
     const int expect_value = 4;
     disk::DiskPosition position1(
         disk::DiskPosition(disk::BlockID(filename1, 4), 3));
-    dblog::LogOperation log1(transaction_id, dblog::ManiplationType::kUpdate,
-                             position1,
+    dblog::LogOperation log1(transaction_id, position1,
                              std::make_unique<data::Int>(expect_value),
                              std::make_unique<data::Int>(7));
     ASSERT_TRUE(manager.WriteLog(log1).IsOk());
     disk::DiskPosition position2 =
         disk::DiskPosition(disk::BlockID(filename1, 8), 3);
-    dblog::LogOperation log2(0, dblog::ManiplationType::kUpdate, position2,
-                             std::make_unique<data::Int>(2),
+    dblog::LogOperation log2(0, position2, std::make_unique<data::Int>(2),
                              std::make_unique<data::Int>(5));
     ASSERT_TRUE(manager.WriteLog(log2).IsOk());
 
@@ -115,29 +113,25 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
     const int expect_value0 = 4;
     disk::DiskPosition position0(
         disk::DiskPosition(disk::BlockID(filename1, 4), 3));
-    dblog::LogOperation log2(committed_transaction_id,
-                             dblog::ManiplationType::kUpdate, position0,
+    dblog::LogOperation log2(committed_transaction_id, position0,
                              std::make_unique<data::Int>(2),
                              std::make_unique<data::Int>(expect_value0));
     ASSERT_TRUE(manager.WriteLog(log2).IsOk());
-    dblog::LogOperation log3(rollbacked_transaction_id,
-                             dblog::ManiplationType::kUpdate, position0,
+    dblog::LogOperation log3(rollbacked_transaction_id, position0,
                              std::make_unique<data::Int>(expect_value0),
                              std::make_unique<data::Int>(5));
     ASSERT_TRUE(manager.WriteLog(log3).IsOk());
     const int expect_value1 = 3;
     disk::DiskPosition position1 =
         disk::DiskPosition(disk::BlockID(filename1, 8), 3);
-    dblog::LogOperation log4(rollbacked_transaction_id,
-                             dblog::ManiplationType::kUpdate, position1,
+    dblog::LogOperation log4(rollbacked_transaction_id, position1,
                              std::make_unique<data::Int>(expect_value1),
                              std::make_unique<data::Int>(1));
     ASSERT_TRUE(manager.WriteLog(log4).IsOk());
     const int expect_value2 = -7;
     disk::DiskPosition position2 =
         disk::DiskPosition(disk::BlockID(filename1, 0), 3);
-    dblog::LogOperation log5(committed_transaction_id,
-                             dblog::ManiplationType::kUpdate, position2,
+    dblog::LogOperation log5(committed_transaction_id, position2,
                              std::make_unique<data::Int>(2),
                              std::make_unique<data::Int>(expect_value2));
     ASSERT_TRUE(manager.WriteLog(log5).IsOk());
