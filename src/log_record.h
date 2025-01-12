@@ -27,18 +27,6 @@ enum class LogType {
 // TransactionID is represented as an unsigned 32-bit integer.
 using TransactionID = uint32_t;
 
-// Maniplation type to an item (like integer, char) in disk
-enum class ManiplationType {
-    // Inserts to a disk
-    kInsert = 0,
-
-    // Updates a disk
-    kUpdate = 1,
-
-    // Deletes a disk
-    kDelete = 2,
-};
-
 // Types of the end of transctions.
 enum class TransactionEndType {
     // Indicates that the transaction successfully commits.
@@ -57,10 +45,6 @@ class LogRecord {
     // Returns TransactionID of LogRecord. When the record type is
     // checkpointing, always returns 0.
     virtual TransactionID GetTransactionID() const = 0;
-
-    // Retrurns maniplation type of LogOperation If the record is not
-    // LogOperation, returns meaningless value.
-    virtual ManiplationType GetManiplationType() const = 0;
 
     // Retrurns transaction end type of LogTransactionEnd/ If the record is not
     // LogTransactionEnd, returns meaningless value.
@@ -92,9 +76,6 @@ class LogTransactionBegin : public LogRecord {
     explicit LogTransactionBegin(const TransactionID transaction_id);
     inline LogType Type() const { return LogType::kTransactionBegin; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
-    inline ManiplationType GetManiplationType() const {
-        return ManiplationType::kInsert;
-    }
     inline TransactionEndType GetTransactionEndType() const {
         return TransactionEndType::kCommit;
     }
@@ -117,15 +98,11 @@ class LogOperation : public LogRecord {
   public:
     // Initialize a LogOperation log. Either of `previous_item` or `new_item`
     // must be non-null pointer.
-    LogOperation(TransactionID transaction_id, ManiplationType maniplation_type,
-                 const disk::DiskPosition &offset,
+    LogOperation(TransactionID transaction_id, const disk::DiskPosition &offset,
                  std::unique_ptr<data::DataItem> previous_item,
                  std::unique_ptr<data::DataItem> new_item);
     inline LogType Type() const { return LogType::kOperation; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
-    inline ManiplationType GetManiplationType() const {
-        return maniplation_type_;
-    }
     inline TransactionEndType GetTransactionEndType() const {
         return TransactionEndType::kCommit;
     }
@@ -135,7 +112,6 @@ class LogOperation : public LogRecord {
 
   private:
     TransactionID transaction_id_;
-    ManiplationType maniplation_type_;
     disk::DiskPosition offset_;
     std::unique_ptr<data::DataItem> previous_item_;
     std::unique_ptr<data::DataItem> new_item_;
@@ -149,9 +125,6 @@ class LogTransactionEnd : public LogRecord {
                       TransactionEndType transaction_end_type);
     inline LogType Type() const { return LogType::kTransactionEnd; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
-    inline ManiplationType GetManiplationType() const {
-        return ManiplationType::kInsert;
-    }
     inline TransactionEndType GetTransactionEndType() const {
         return transaction_end_type_;
     }
@@ -175,9 +148,6 @@ class LogCheckpointing : public LogRecord {
     LogCheckpointing();
     inline LogType Type() const { return LogType::kCheckpointing; }
     inline TransactionID GetTransactionID() const { return 0; }
-    inline ManiplationType GetManiplationType() const {
-        return ManiplationType::kInsert;
-    }
     inline TransactionEndType GetTransactionEndType() const {
         return TransactionEndType::kCommit;
     }

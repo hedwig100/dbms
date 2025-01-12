@@ -153,14 +153,10 @@ RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
         } else if (log_record->Type() == dblog::LogType::kOperation &&
                    !already_committed_or_rollbacked(
                        log_record->GetTransactionID())) {
-            switch (log_record->GetManiplationType()) {
-            case dblog::ManiplationType::kDelete:
-            case dblog::ManiplationType::kUpdate:
-                Result undo_result = log_record->UnDo(data_disk_manager);
-                if (undo_result.IsError()) {
-                    return undo_result + Error("recovery::RecoveryManager::"
-                                               "UnDoStage() failed to undo.");
-                }
+            Result undo_result = log_record->UnDo(data_disk_manager);
+            if (undo_result.IsError()) {
+                return undo_result + Error("recovery::RecoveryManager::"
+                                           "UnDoStage() failed to undo.");
             }
         }
 
