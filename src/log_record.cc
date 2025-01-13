@@ -72,10 +72,10 @@ ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
         return newdata_result + Error("dblog::ReadLogOperationUpdate() failed "
                                       "to read the new data.");
 
-    return ResultV<std::unique_ptr<LogRecord>>(
-        std::move(std::make_unique<LogOperation>(transaction_id, offset,
-                                                 prevdata_result.MoveValue(),
-                                                 newdata_result.MoveValue())));
+    return ResultV<std::unique_ptr<LogRecord>>(std::move(
+        std::make_unique<LogOperation>(transaction_id, offset,
+                                       *prevdata_result.MoveValue().get(),
+                                       *newdata_result.MoveValue().get())));
 }
 
 ResultV<std::unique_ptr<LogRecord>>
@@ -196,10 +196,9 @@ constexpr size_t kEstimatedAverageLogSize = 24;
 
 LogOperation::LogOperation(TransactionID transaction_id,
                            const disk::DiskPosition &offset,
-                           std::unique_ptr<data::DataItem> previous_item,
-                           std::unique_ptr<data::DataItem> new_item)
-    : transaction_id_(transaction_id), offset_(offset),
-      previous_item_(std::move(previous_item)), new_item_(std::move(new_item)) {
+                           const data::DataItem &previous_item,
+                           const data::DataItem &new_item)
+    : transaction_id_(transaction_id), offset_(offset) {
     log_body_.reserve(kEstimatedAverageLogSize);
 
     log_body_.push_back(kLogOperationMask);
@@ -212,18 +211,11 @@ LogOperation::LogOperation(TransactionID transaction_id,
                          offset.BlockID().BlockIndex());
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
 
-    if (previous_item_) {
-        previous_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
-        previous_item_->WriteNoFail(log_body_, log_body_.size());
-    }
-    if (new_item_) {
-        if (previous_item_) {
-            new_item_->WriteNoFail(log_body_, log_body_.size());
-        } else {
-            new_item_->Type().WriteTypeParameter(log_body_, log_body_.size());
-            new_item_->WriteNoFail(log_body_, log_body_.size());
-        }
-    }
+    previous_item.Type().WriteTypeParameter(log_body_, log_body_.size());
+    previous_item_offset_in_log_body_ = log_body_.size();
+    previous_item.WriteNoFail(log_body_, log_body_.size());
+    new_item_offset_in_log_body_ = log_body_.size();
+    new_item.WriteNoFail(log_body_, log_body_.size());
 }
 
 Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
@@ -232,13 +224,13 @@ Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
     if (result.IsError())
         return result +
                Error("dblog::LogOperation::Undo() failed read data block.");
-    if (!previous_item_)
-        return Error("dblog::LogOperation::UnDo() previous_item must not "
-                     "be nullptr for Update, Delete type LogOperation.");
-    result = block.Write(offset_.Offset(), *previous_item_);
-    if (result.IsError())
-        return result +
-               Error("dblog::LogOperation::Undo() failed to write to block.");
+
+    ResultE<size_t> size_result = block.WriteBytesWithOffset(
+        offset_.Offset(), log_body_, previous_item_offset_in_log_body_);
+    if (size_result.IsError())
+        return Error("dblog::LogOperation::Undo() failed to write previous "
+                     "item to the block.");
+
     result = disk_manager.Write(offset_.BlockID(), block);
     if (result.IsError())
         return result + Error("dblog::LogOperation::Undo() failed to "
@@ -252,13 +244,13 @@ Result LogOperation::ReDo(const disk::DiskManager &disk_manager) const {
     if (result.IsError())
         return result +
                Error("dblog::LogOperation::Redo() failed read data block.");
-    if (!new_item_)
-        return Error("dblog::LogOperation::ReDo() new_item must not be "
-                     "nullptr for Insert, Update type LogOperation.");
-    result = block.Write(offset_.Offset(), *new_item_);
-    if (result.IsError())
-        return result +
-               Error("dblog::LogOperation::Redo() failed to write to block.");
+
+    ResultE<size_t> size_result = block.WriteBytesWithOffset(
+        offset_.Offset(), log_body_, new_item_offset_in_log_body_);
+    if (size_result.IsError())
+        return Error("dblog::LogOperation::Redo() failed to write new "
+                     "item to the block.");
+
     result = disk_manager.Write(offset_.BlockID(), block);
     if (result.IsError())
         return result + Error("dblog::LogOperation::Redo() failed to "
