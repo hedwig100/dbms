@@ -99,8 +99,8 @@ class LogOperation : public LogRecord {
     // Initialize a LogOperation log. Either of `previous_item` or `new_item`
     // must be non-null pointer.
     LogOperation(TransactionID transaction_id, const disk::DiskPosition &offset,
-                 std::unique_ptr<data::DataItem> previous_item,
-                 std::unique_ptr<data::DataItem> new_item);
+                 const data::DataItem &previous_item,
+                 const data::DataItem &new_item);
     inline LogType Type() const { return LogType::kOperation; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
     inline TransactionEndType GetTransactionEndType() const {
@@ -113,8 +113,7 @@ class LogOperation : public LogRecord {
   private:
     TransactionID transaction_id_;
     disk::DiskPosition offset_;
-    std::unique_ptr<data::DataItem> previous_item_;
-    std::unique_ptr<data::DataItem> new_item_;
+    int previous_item_offset_in_log_body_, new_item_offset_in_log_body_;
     std::vector<uint8_t> log_body_;
 };
 
