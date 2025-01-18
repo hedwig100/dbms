@@ -2,6 +2,7 @@
 #define RESULT_H
 
 #include <exception>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -39,15 +40,25 @@ template <typename T, typename E> class ResultVE {
     }
 
     ResultVE &operator=(const ResultVE &result) {
-        tag_ = result.tag_;
-        switch (tag_) {
+        switch (result.tag_) {
         case Tag::Ok:
-            ok_ = result.ok_;
+            if (tag_ == result.tag_)
+                ok_ = result.ok_;
+            else {
+                error_.~E();
+                new (&ok_) T(result.ok_);
+            }
             break;
         case Tag::Error:
-            error_ = result.error_;
+            if (tag_ == result.tag_)
+                error_ = result.error_;
+            else {
+                ok_.~T();
+                new (&error_) E(result.error_);
+            }
             break;
         }
+        tag_ = result.tag_;
         return *this;
     }
 
