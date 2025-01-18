@@ -89,6 +89,7 @@ class BufferManager {
     disk::DiskManager &disk_manager_;
     dblog::LogManager &log_manager_;
     std::vector<Buffer> buffer_pool_;
+    std::shared_mutex buffer_pool_mutex_;
 };
 
 // SimpleBufferManager is a simple implementation of BufferManager.

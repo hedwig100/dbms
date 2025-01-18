@@ -53,6 +53,7 @@ Result BufferManager::Flush(const disk::BlockID &block_id) {
 
 ResultV<Buffer *>
 BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
+    std::shared_lock<std::shared_mutex> lock(buffer_pool_mutex_);
     for (auto &buffer : buffer_pool_) {
         if (buffer.BlockID() == block_id) { return Ok(&buffer); }
     }
@@ -77,6 +78,8 @@ Result BufferManager::FlushBuffer(const Buffer &buffer) {
 }
 
 Result BufferManager::AddNewBuffer(const Buffer &buffer) {
+    std::lock_guard<std::shared_mutex> lock(buffer_pool_mutex_);
+
     ResultV<int> evicted_buffer_id = SelectEvictBufferID();
     if (evicted_buffer_id.IsError()) {
         return evicted_buffer_id +
