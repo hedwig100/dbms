@@ -14,7 +14,7 @@ using namespace result;
 // rollback, and recover operations using log records.
 class RecoveryManager {
   public:
-    explicit RecoveryManager(dblog::LogManager &&log_manager);
+    explicit RecoveryManager(dblog::LogManager &log_manager);
 
     // Writes the log of log record. Even after this function terminates, it
     // does not mean the log is flushed to the disk. `Commit` method should be
@@ -29,21 +29,21 @@ class RecoveryManager {
     // `data_disk_manager` is a disk manager responsible for the data of
     // `transaction_id`.
     Result Rollback(const dblog::TransactionID transaction_id,
-                    const disk::DiskManager &data_disk_manager);
+                    disk::DiskManager &data_disk_manager);
 
     // Recover records from logs.
-    Result Recover(const disk::DiskManager &data_disk_manager) const;
+    Result Recover(disk::DiskManager &data_disk_manager) const;
 
   private:
     Result UnDoStage(dblog::LogIterator &log_iter,
                      std::set<dblog::TransactionID> &committed,
                      std::set<dblog::TransactionID> &rollbacked,
-                     const disk::DiskManager &data_disk_manager) const;
+                     disk::DiskManager &data_disk_manager) const;
     Result ReDoStage(dblog::LogIterator &log_iter,
                      std::set<dblog::TransactionID> &committed,
                      std::set<dblog::TransactionID> &rollbacked,
-                     const disk::DiskManager &data_disk_manager) const;
-    dblog::LogManager log_manager_;
+                     disk::DiskManager &data_disk_manager) const;
+    dblog::LogManager &log_manager_;
 };
 
 } // namespace recovery

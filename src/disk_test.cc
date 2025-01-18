@@ -342,7 +342,7 @@ FILE_EXISTENT_TEST(TempFileTest, "hello ");
 FILE_NONEXISTENT_TEST(NonExistentFileTest);
 
 TEST_F(TempFileTest, DiskManagerCorrectlyReads) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     disk::Block block;
 
     EXPECT_TRUE(disk_manager.Read(disk::BlockID(filename, 0), block).IsOk());
@@ -363,8 +363,8 @@ TEST_F(TempFileTest, DiskManagerCorrectlyReads) {
 }
 
 TEST_F(NonExistentFileTest, DiskManagerReadFail) {
-    const disk::DiskManager disk_manager(directory_path,
-                                         /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path,
+                                   /*block_size=*/3);
     disk::Block block;
 
     EXPECT_TRUE(
@@ -373,7 +373,7 @@ TEST_F(NonExistentFileTest, DiskManagerReadFail) {
 }
 
 TEST_F(TempFileTest, DiskManagerCorrectlyWrites) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
 
     char goodbye[] = "goodbye";
     disk::Block block_write(3, goodbye), block_read0, block_read1;
@@ -402,8 +402,8 @@ TEST_F(TempFileTest, DiskManagerCorrectlyWrites) {
 }
 
 TEST_F(NonExistentFileTest, DiskManagerWriteFail) {
-    const disk::DiskManager disk_manager(directory_path,
-                                         /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path,
+                                   /*block_size=*/3);
     disk::Block block;
 
     EXPECT_TRUE(
@@ -412,24 +412,24 @@ TEST_F(NonExistentFileTest, DiskManagerWriteFail) {
 }
 
 TEST_F(TempFileTest, DiskManagerFlushSucceeds) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     EXPECT_TRUE(disk_manager.Flush(filename).IsOk());
 }
 
 TEST_F(NonExistentFileTest, DiskManagerFlushFails) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     EXPECT_TRUE(disk_manager.Flush(non_existent_filename).IsError());
 }
 
 TEST_F(TempFileTest, DiskManagerSizeSucceeds) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     const auto expect_ok = disk_manager.Size(filename);
     EXPECT_TRUE(expect_ok.IsOk());
     EXPECT_EQ(expect_ok.Get(), 2);
 }
 
 TEST_F(NonExistentFileTest, DiskManagerSizeFails) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     const auto expect_ok = disk_manager.Size(non_existent_filename);
     EXPECT_TRUE(expect_ok.IsError());
 }
@@ -438,7 +438,7 @@ TEST_F(TempFileTest, DiskManagerAllocateNewFileSucceeds) {
     const int block_size  = 3;
     const int block_index = 10;
 
-    const disk::DiskManager disk_manager(directory_path, block_size);
+    disk::DiskManager disk_manager(directory_path, block_size);
     EXPECT_TRUE(
         disk_manager.AllocateNewBlocks(disk::BlockID(filename, block_index))
             .IsOk());
@@ -450,7 +450,7 @@ TEST_F(NonExistentFileTest, DiskManagerAllocateNewFileSucceedsWithoutFile) {
     const int block_size  = 3;
     const int block_index = 10;
 
-    const disk::DiskManager disk_manager(directory_path, block_size);
+    disk::DiskManager disk_manager(directory_path, block_size);
     EXPECT_TRUE(disk_manager
                     .AllocateNewBlocks(
                         disk::BlockID(non_existent_filename, block_index))
@@ -480,7 +480,7 @@ TEST_F(
 
 TEST_F(TempFileTest, DiskReadBytesAcrossBlocksOneBlockSuccess) {
     const size_t block_size = 5;
-    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskManager manager(directory_path, block_size);
     disk::BlockID block_id(filename, 0);
     disk::Block block;
     int offset = 2;
@@ -507,7 +507,7 @@ FILE_EXISTENT_TEST(
 
 TEST_F(LongFileTest, DiskReadBytesAcrossBlocksLongLengthSuccess) {
     const size_t block_size = 5;
-    const disk::DiskManager manager(directory_path, block_size);
+    disk::DiskManager manager(directory_path, block_size);
     disk::BlockID block_id(filename, 1);
     disk::Block block;
     int offset = 2;

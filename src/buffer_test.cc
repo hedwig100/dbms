@@ -42,7 +42,7 @@ bool DoesBufferPoolContainTheBlock(
 }
 
 TEST_F(BufferManagerTest, BufferManagerReadCorrectlyReadAndCached) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     dblog::LogManager log_manager(filename1, directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
@@ -61,9 +61,9 @@ TEST_F(BufferManagerTest, BufferManagerReadCorrectlyReadAndCached) {
 }
 
 TEST_F(NonExistentFileTest, BufferManagerReadFailWhenThereIsNoBlock) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
-    const dblog::LogManager log_manager(non_existent_filename, directory_path,
-                                        /*block_size=*/20);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    dblog::LogManager log_manager(non_existent_filename, directory_path,
+                                  /*block_size=*/20);
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
                                                log_manager);
     const disk::BlockID block_id(non_existent_filename, 0);
@@ -73,7 +73,7 @@ TEST_F(NonExistentFileTest, BufferManagerReadFailWhenThereIsNoBlock) {
 }
 
 TEST_F(BufferManagerTest, BufferManagerWriteCorrectlyWriteAndCached) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     dblog::LogManager log_manager(filename1, directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
@@ -94,7 +94,7 @@ TEST_F(BufferManagerTest, BufferManagerWriteCorrectlyWriteAndCached) {
 }
 
 TEST_F(BufferManagerTest, BufferManagerWriteWriteToCache) {
-    const disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     dblog::LogManager log_manager(filename1, directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
@@ -120,7 +120,7 @@ TEST_F(BufferManagerTest, BufferManagerWriteWriteToCache) {
 
 TEST_F(BufferManagerTest, BufferManagerCorrectlyFlush) {
     const int BLOCK_SIZE = 4;
-    const disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
+    disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
     dblog::LogManager log_manager(filename1, directory_path,
                                   /*block_size=*/20);
     ASSERT_TRUE(log_manager.Init().IsOk());
@@ -145,9 +145,9 @@ TEST_F(BufferManagerTest, BufferManagerCorrectlyFlush) {
 
 TEST_F(NonExistentFileTest, BufferManagerFlushFailWhenThereIsNoBlock) {
     const int BLOCK_SIZE = 4;
-    const disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
-    const dblog::LogManager log_manager(non_existent_filename, directory_path,
-                                        /*block_size=*/20);
+    disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
+    dblog::LogManager log_manager(non_existent_filename, directory_path,
+                                  /*block_size=*/20);
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
                                                log_manager);
     const disk::BlockID block_id(non_existent_filename, 0);

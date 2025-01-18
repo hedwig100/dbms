@@ -113,13 +113,13 @@ TEST(LogRecordCheckpointing, WriteReadCorrectly) {
 FILE_EXISTENT_TEST(LogRecordTransactionBeginWithFile, "");
 
 TEST_F(LogRecordTransactionBeginWithFile, UnDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogTransactionBegin log_record(4);
     EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
 }
 
 TEST_F(LogRecordTransactionBeginWithFile, ReDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogTransactionBegin log_record(4);
     EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
 }
@@ -127,7 +127,7 @@ TEST_F(LogRecordTransactionBeginWithFile, ReDoCorrectly) {
 FILE_EXISTENT_TEST(LogRecordOperationWithFile, "");
 
 TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     const data::Int int_value(4), dummy_value(0);
     const int offset = 7;
 
@@ -151,7 +151,7 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
 }
 
 TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     const data::Int int_value(4), dummy_value(0);
     const int offset = 7;
 
@@ -177,13 +177,13 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
 FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "");
 
 TEST_F(LogRecordTransactionEndWithFile, UnDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
     EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
 }
 
 TEST_F(LogRecordTransactionEndWithFile, ReDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
     EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
 }
@@ -191,13 +191,13 @@ TEST_F(LogRecordTransactionEndWithFile, ReDoCorrectly) {
 FILE_EXISTENT_TEST(LogRecordCheckpointingWithFile, "");
 
 TEST_F(LogRecordCheckpointingWithFile, UnDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogCheckpointing log_record;
     EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
 }
 
 TEST_F(LogRecordCheckpointingWithFile, ReDoCorrectly) {
-    const disk::DiskManager disk_manager(directory_path, 20);
+    disk::DiskManager disk_manager(directory_path, 20);
     dblog::LogCheckpointing log_record;
     EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
 }

@@ -54,6 +54,11 @@ TEST(ResultVE, ErrorWhenValueAndErrorTypeIsSame) {
     EXPECT_EQ(ok.Error(), 3);
 }
 
+TEST(ResultVE, CopyOkValueToErrorValue) {
+    result::ResultVE<int, std::string> ok(3), error("aiueo");
+    ok = error;
+}
+
 class WithReference {
   public:
     WithReference(const int &integer) : integer_(integer) {}

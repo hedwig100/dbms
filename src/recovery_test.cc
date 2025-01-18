@@ -14,7 +14,7 @@ TEST_F(RecoveryManagerTest, WriteLogSuccess) {
                                   /*log_directory_path=*/directory_path,
                                   /*block_size=*/12);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    recovery::RecoveryManager manager(std::move(log_manager));
+    recovery::RecoveryManager manager(log_manager);
 
     dblog::LogTransactionBegin log0(/*transaction_id=*/5);
     dblog::LogCheckpointing log1;
@@ -31,7 +31,7 @@ TEST_F(RecoveryManagerTest, CommitSuccess) {
                                   /*log_directory_path=*/directory_path,
                                   /*block_size=*/12);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    recovery::RecoveryManager manager(std::move(log_manager));
+    recovery::RecoveryManager manager(log_manager);
 
     dblog::LogTransactionBegin log0(/*transaction_id=*/5);
     ResultV<dblog::LogSequenceNumber> write_result = manager.WriteLog(log0);
@@ -49,7 +49,7 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccess) {
                                   /*log_directory_path=*/directory_path,
                                   /*block_size=*/block_size);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    recovery::RecoveryManager manager(std::move(log_manager));
+    recovery::RecoveryManager manager(log_manager);
     disk::DiskManager disk_manager(/*directory_name=*/directory_path,
                                    /*block_size=*/12);
     ASSERT_TRUE(
@@ -95,7 +95,7 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
                                   /*log_directory_path=*/directory_path,
                                   /*block_size=*/block_size);
     ASSERT_TRUE(log_manager.Init().IsOk());
-    recovery::RecoveryManager manager(std::move(log_manager));
+    recovery::RecoveryManager manager(log_manager);
     disk::DiskManager disk_manager(/*directory_name=*/directory_path,
                                    /*block_size=*/block_size);
     ASSERT_TRUE(

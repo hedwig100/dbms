@@ -218,7 +218,7 @@ LogOperation::LogOperation(TransactionID transaction_id,
     new_item.WriteNoFail(log_body_, log_body_.size());
 }
 
-Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
+Result LogOperation::UnDo(disk::DiskManager &disk_manager) const {
     disk::Block block;
     Result result = disk_manager.Read(offset_.BlockID(), block);
     if (result.IsError())
@@ -238,7 +238,7 @@ Result LogOperation::UnDo(const disk::DiskManager &disk_manager) const {
     return Ok();
 }
 
-Result LogOperation::ReDo(const disk::DiskManager &disk_manager) const {
+Result LogOperation::ReDo(disk::DiskManager &disk_manager) const {
     disk::Block block;
     Result result = disk_manager.Read(offset_.BlockID(), block);
     if (result.IsError())

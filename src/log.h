@@ -5,6 +5,7 @@
 #include "log_record.h"
 #include "result.h"
 #include <memory>
+#include <shared_mutex>
 #include <string>
 
 namespace dblog {
@@ -38,7 +39,7 @@ class LogBlock {
                            size_t bytes_offset);
 
     // Read a log block from disk.
-    Result ReadLogBlock(const disk::DiskManager &disk_manager,
+    Result ReadLogBlock(disk::DiskManager &disk_manager,
                         const disk::BlockID block_id);
 
     // Returns a raw content of the block including offset. This method is
@@ -78,7 +79,7 @@ const ResultV<std::vector<uint8_t>> kCompleteLogNotWrittenToDisk =
 // `log_start` is the position that log header starts.
 class LogIterator {
   public:
-    LogIterator(const disk::DiskManager &disk_manager,
+    LogIterator(disk::DiskManager &disk_manager,
                 const disk::DiskPosition &log_start, int log_body_length);
 
     LogIterator(const LogIterator &other);
@@ -106,7 +107,7 @@ class LogIterator {
     // Returns the block at which `log_start_` is located.
     ResultV<internal::LogBlock> LogStartBlock();
 
-    const disk::DiskManager &disk_manager_;
+    disk::DiskManager &disk_manager_;
     disk::DiskPosition log_start_;
     int log_body_length_;
     std::unique_ptr<internal::LogBlock> log_start_block_;
@@ -126,16 +127,14 @@ class LogManager {
     // This function should be called before starting using the instance.
     Result Init();
 
-    inline const disk::DiskManager &DiskManager() const {
-        return disk_manager_;
-    }
+    inline disk::DiskManager &DiskManager() { return disk_manager_; }
 
     // Writes bytes to log file.
     ResultV<LogSequenceNumber>
     WriteLog(const std::vector<uint8_t> &log_record_bytes);
 
     // Returns the most recent log iterator.
-    ResultV<LogIterator> LastLog() const;
+    ResultV<LogIterator> LastLog();
 
     // Flushes log records until logs with log sequence number of
     // `number_to_flush` (including the end).
@@ -150,7 +149,7 @@ class LogManager {
     Result MoveToNextBlock();
 
     // Writes the current block to disk.
-    inline Result WriteCurrentBlock() const {
+    inline Result WriteCurrentBlock() {
         return disk_manager_.Write(current_block_id_,
                                    current_block_.RawBlock());
     }
@@ -164,6 +163,7 @@ class LogManager {
     LogSequenceNumber next_save_number_ = 0;
     disk::BlockID current_block_id_;
     internal::LogBlock current_block_;
+    std::shared_mutex mutex_;
 };
 
 } // namespace dblog

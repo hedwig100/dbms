@@ -17,8 +17,8 @@ void Buffer::SetBlock(const disk::Block &block,
     if (lsn > latest_lsn_) latest_lsn_ = lsn;
 }
 
-BufferManager::BufferManager(const disk::DiskManager &disk_manager,
-                             const dblog::LogManager &log_manager)
+BufferManager::BufferManager(disk::DiskManager &disk_manager,
+                             dblog::LogManager &log_manager)
     : disk_manager_(disk_manager), log_manager_(log_manager) {}
 
 Result BufferManager::Read(const disk::BlockID &block_id, disk::Block &block) {
@@ -53,6 +53,7 @@ Result BufferManager::Flush(const disk::BlockID &block_id) {
 
 ResultV<Buffer *>
 BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
+    std::shared_lock<std::shared_mutex> lock(buffer_pool_mutex_);
     for (auto &buffer : buffer_pool_) {
         if (buffer.BlockID() == block_id) { return Ok(&buffer); }
     }
@@ -77,6 +78,8 @@ Result BufferManager::FlushBuffer(const Buffer &buffer) {
 }
 
 Result BufferManager::AddNewBuffer(const Buffer &buffer) {
+    std::lock_guard<std::shared_mutex> lock(buffer_pool_mutex_);
+
     ResultV<int> evicted_buffer_id = SelectEvictBufferID();
     if (evicted_buffer_id.IsError()) {
         return evicted_buffer_id +
@@ -98,8 +101,8 @@ Result BufferManager::AddNewBuffer(const Buffer &buffer) {
 }
 
 SimpleBufferManager::SimpleBufferManager(const int buffer_size,
-                                         const disk::DiskManager &disk_manager,
-                                         const dblog::LogManager &log_manager)
+                                         disk::DiskManager &disk_manager,
+                                         dblog::LogManager &log_manager)
     : BufferManager(disk_manager, log_manager) {
     buffer_pool_.resize(buffer_size);
 }

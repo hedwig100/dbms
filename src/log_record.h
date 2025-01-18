@@ -54,10 +54,10 @@ class LogRecord {
     virtual const std::vector<uint8_t> &LogBody() const = 0;
 
     // Put the state back to the state bfore the operation
-    virtual Result UnDo(const disk::DiskManager &disk_manager) const = 0;
+    virtual Result UnDo(disk::DiskManager &disk_manager) const = 0;
 
     // Put the state after the operation
-    virtual Result ReDo(const disk::DiskManager &disk_manager) const = 0;
+    virtual Result ReDo(disk::DiskManager &disk_manager) const = 0;
 
     // Appends the log body to `bytes`.
     void AppendLogBody(std::vector<uint8_t> &bytes) const {
@@ -80,12 +80,8 @@ class LogTransactionBegin : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
-    inline Result ReDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
+    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
 
   private:
     TransactionID transaction_id_;
@@ -107,8 +103,8 @@ class LogOperation : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    Result UnDo(const disk::DiskManager &disk_manager) const;
-    Result ReDo(const disk::DiskManager &disk_manager) const;
+    Result UnDo(disk::DiskManager &disk_manager) const;
+    Result ReDo(disk::DiskManager &disk_manager) const;
 
   private:
     TransactionID transaction_id_;
@@ -128,12 +124,8 @@ class LogTransactionEnd : public LogRecord {
         return transaction_end_type_;
     }
     const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
-    inline Result ReDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
+    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
 
   private:
     TransactionID transaction_id_;
@@ -151,12 +143,8 @@ class LogCheckpointing : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
-    inline Result ReDo(const disk::DiskManager &disk_manager) const {
-        return Ok();
-    }
+    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
 
   private:
     std::vector<uint8_t> log_body_;
