@@ -399,6 +399,7 @@ LogManager::LogManager(const std::string &log_filename,
           /*directory_path=*/log_directory_path, /*block_size=*/block_size)) {}
 
 Result LogManager::Init() {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
     if (disk_manager_.BlockSize() < internal::kDefaultOffset) {
         return Error(
             "dblog::LogManager::Init() log blocksize must be larger than 4.");
@@ -430,6 +431,7 @@ Result LogManager::Init() {
 }
 
 ResultV<LogIterator> LogManager::LastLog() {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
     return ReadPreviousLog(
         disk_manager_,
         disk::DiskPosition(current_block_id_, current_block_.Offset()),
@@ -438,6 +440,7 @@ ResultV<LogIterator> LogManager::LastLog() {
 
 ResultV<LogSequenceNumber>
 LogManager::WriteLog(const std::vector<uint8_t> &log_record_bytes) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
 
     const disk::BlockID rollback_block_id   = current_block_id_;
     const internal::LogBlock rollback_block = current_block_;
@@ -466,6 +469,8 @@ Result LogManager::Flush(LogSequenceNumber number_to_flush) {
 }
 
 Result LogManager::Flush() {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+
     Result write_result = WriteCurrentBlock();
     if (write_result.IsError()) {
         return write_result + Error("dblog::LogManager::Flush() failed to "

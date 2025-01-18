@@ -5,6 +5,7 @@
 #include "log_record.h"
 #include "result.h"
 #include <memory>
+#include <shared_mutex>
 #include <string>
 
 namespace dblog {
@@ -162,6 +163,7 @@ class LogManager {
     LogSequenceNumber next_save_number_ = 0;
     disk::BlockID current_block_id_;
     internal::LogBlock current_block_;
+    std::shared_mutex mutex_;
 };
 
 } // namespace dblog
