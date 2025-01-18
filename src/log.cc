@@ -28,7 +28,7 @@ ResultE<size_t> LogBlock::Append(const std::vector<uint8_t> &bytes,
 
 constexpr int kOffsetPositionInLogBlock = 0;
 
-Result LogBlock::ReadLogBlock(const disk::DiskManager &disk_manager,
+Result LogBlock::ReadLogBlock(disk::DiskManager &disk_manager,
                               const disk::BlockID block_id) {
     Result read_result = disk_manager.Read(block_id, block_);
     if (read_result.IsError())
@@ -56,7 +56,7 @@ void LogBlock::UpdateOffset(int new_offset) {
 // the offset region of the block (outside the first `kDefaultOffset` bytes of
 // the block). `block` is the block in which `position` is located. `length` is
 // the length of the bytes to read. The bytes are written to `bytes`.
-Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
+Result ReadBytesAcrossBlocks(disk::DiskManager &disk_manager,
                              const LogBlock &block,
                              const disk::DiskPosition &position, int length,
                              std::vector<uint8_t> &bytes) {
@@ -113,7 +113,7 @@ Result ReadBytesAcrossBlocks(const disk::DiskManager &disk_manager,
 // the start position to read the bytes. The `position` needs to be located
 // outside the offset region of the block (outside the first `kDefaultOffset`
 // bytes of the block). `block` is the block in which `position` is located.
-ResultV<uint32_t> ReadUint32AcrossBlocks(const disk::DiskManager &disk_manager,
+ResultV<uint32_t> ReadUint32AcrossBlocks(disk::DiskManager &disk_manager,
                                          const LogBlock &block,
                                          const disk::DiskPosition &position) {
     std::vector<uint8_t> uint32_bytes(data::kUint32Bytesize);
@@ -144,7 +144,7 @@ disk::DiskPosition MoveInLogBlock(const disk::DiskPosition &position,
 // The `position` needs to be located outside the offset region of the block.
 // `block` is the block in which `position` is located. `length` is the length
 // of the bytes to read. The bytes are written to `bytes`.
-Result ReadBytesAcrossBlocksWithOffset(const disk::DiskManager &disk_manager,
+Result ReadBytesAcrossBlocksWithOffset(disk::DiskManager &disk_manager,
                                        const LogBlock &block,
                                        const disk::DiskPosition &position,
                                        const int offset, int length,
@@ -171,9 +171,10 @@ Result ReadBytesAcrossBlocksWithOffset(const disk::DiskManager &disk_manager,
 // `position.`.Move(`offset`) specifies the start position to read the bytes.
 // The `position` needs to be located outside the offset region of the block.
 // `block` is the block in which `position` is located.
-ResultV<int> ReadIntAcrossBlocksWithOffset(
-    const disk::DiskManager &disk_manager, const LogBlock &block,
-    const disk::DiskPosition &position, const int offset) {
+ResultV<int> ReadIntAcrossBlocksWithOffset(disk::DiskManager &disk_manager,
+                                           const LogBlock &block,
+                                           const disk::DiskPosition &position,
+                                           const int offset) {
     std::vector<uint8_t> int_bytes(data::kIntBytesize);
     auto read_result = ReadBytesAcrossBlocksWithOffset(
         disk_manager, block, position, offset, data::kIntBytesize, int_bytes);
@@ -217,7 +218,7 @@ std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record) {
 
 // Read the previous log of the log which starts from `log_start`. The `block`
 // is the block that `log_start` is located.
-ResultV<LogIterator> ReadPreviousLog(const disk::DiskManager &disk_manager,
+ResultV<LogIterator> ReadPreviousLog(disk::DiskManager &disk_manager,
                                      const disk::DiskPosition &log_start,
                                      const internal::LogBlock &block) {
 
@@ -239,7 +240,7 @@ ResultV<LogIterator> ReadPreviousLog(const disk::DiskManager &disk_manager,
                           log_body_length_result.Get()));
 }
 
-LogIterator::LogIterator(const disk::DiskManager &disk_manager,
+LogIterator::LogIterator(disk::DiskManager &disk_manager,
                          const disk::DiskPosition &log_start,
                          int log_body_length)
     : disk_manager_(disk_manager), log_start_(log_start),
@@ -428,7 +429,7 @@ Result LogManager::Init() {
     return Ok();
 }
 
-ResultV<LogIterator> LogManager::LastLog() const {
+ResultV<LogIterator> LogManager::LastLog() {
     return ReadPreviousLog(
         disk_manager_,
         disk::DiskPosition(current_block_id_, current_block_.Offset()),

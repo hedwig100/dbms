@@ -2,7 +2,7 @@
 
 namespace recovery {
 
-RecoveryManager::RecoveryManager(dblog::LogManager &&log_manger)
+RecoveryManager::RecoveryManager(dblog::LogManager &log_manger)
     : log_manager_(log_manger) {}
 
 ResultV<dblog::LogSequenceNumber>
@@ -31,7 +31,7 @@ Result RecoveryManager::Commit(const dblog::TransactionID transaction_id) {
 }
 
 Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
-                                 const disk::DiskManager &data_disk_manager) {
+                                 disk::DiskManager &data_disk_manager) {
     ResultV<dblog::LogIterator> log_iter_result = log_manager_.LastLog();
     if (log_iter_result.IsError()) {
         return log_iter_result + Error("dblog::RecoveryManager::Rollback() "
@@ -85,8 +85,7 @@ Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
     return Ok();
 }
 
-Result
-RecoveryManager::Recover(const disk::DiskManager &data_disk_manager) const {
+Result RecoveryManager::Recover(disk::DiskManager &data_disk_manager) const {
     ResultV<dblog::LogIterator> log_iter_result = log_manager_.LastLog();
     if (log_iter_result.IsError()) {
         return log_iter_result + Error("recovery::RecoveryManager::Recover() "
@@ -112,11 +111,10 @@ RecoveryManager::Recover(const disk::DiskManager &data_disk_manager) const {
     return Ok();
 }
 
-Result
-RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
-                           std::set<dblog::TransactionID> &committed,
-                           std::set<dblog::TransactionID> &rollbacked,
-                           const disk::DiskManager &data_disk_manager) const {
+Result RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
+                                  std::set<dblog::TransactionID> &committed,
+                                  std::set<dblog::TransactionID> &rollbacked,
+                                  disk::DiskManager &data_disk_manager) const {
 
     auto already_committed_or_rollbacked =
         [&committed, &rollbacked](dblog::TransactionID transaction_id) -> bool {
@@ -172,11 +170,10 @@ RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
     return Ok();
 }
 
-Result
-RecoveryManager::ReDoStage(dblog::LogIterator &log_iter,
-                           std::set<dblog::TransactionID> &committed,
-                           std::set<dblog::TransactionID> &rollbacked,
-                           const disk::DiskManager &data_disk_manager) const {
+Result RecoveryManager::ReDoStage(dblog::LogIterator &log_iter,
+                                  std::set<dblog::TransactionID> &committed,
+                                  std::set<dblog::TransactionID> &rollbacked,
+                                  disk::DiskManager &data_disk_manager) const {
     while (true) {
         ResultV<std::vector<uint8_t>> log_body_result = log_iter.LogBody();
         if (log_body_result.IsError()) {

@@ -17,8 +17,8 @@ void Buffer::SetBlock(const disk::Block &block,
     if (lsn > latest_lsn_) latest_lsn_ = lsn;
 }
 
-BufferManager::BufferManager(const disk::DiskManager &disk_manager,
-                             const dblog::LogManager &log_manager)
+BufferManager::BufferManager(disk::DiskManager &disk_manager,
+                             dblog::LogManager &log_manager)
     : disk_manager_(disk_manager), log_manager_(log_manager) {}
 
 Result BufferManager::Read(const disk::BlockID &block_id, disk::Block &block) {
@@ -98,8 +98,8 @@ Result BufferManager::AddNewBuffer(const Buffer &buffer) {
 }
 
 SimpleBufferManager::SimpleBufferManager(const int buffer_size,
-                                         const disk::DiskManager &disk_manager,
-                                         const dblog::LogManager &log_manager)
+                                         disk::DiskManager &disk_manager,
+                                         dblog::LogManager &log_manager)
     : BufferManager(disk_manager, log_manager) {
     buffer_pool_.resize(buffer_size);
 }

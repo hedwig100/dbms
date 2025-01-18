@@ -44,8 +44,8 @@ class Buffer {
 // buffer pool. Eviction policy should be implemented in the derived class.
 class BufferManager {
   public:
-    explicit BufferManager(const disk::DiskManager &disk_manager,
-                           const dblog::LogManager &log_manager);
+    explicit BufferManager(disk::DiskManager &disk_manager,
+                           dblog::LogManager &log_manager);
 
     // Reads the block of `block_id` from the buffer pool. The block with
     // `block_id` is cached in `buffer_pool_`.
@@ -86,8 +86,8 @@ class BufferManager {
     virtual ResultV<int> SelectEvictBufferID() = 0;
 
   protected:
-    disk::DiskManager disk_manager_;
-    dblog::LogManager log_manager_;
+    disk::DiskManager &disk_manager_;
+    dblog::LogManager &log_manager_;
     std::vector<Buffer> buffer_pool_;
 };
 
@@ -96,9 +96,8 @@ class BufferManager {
 // block).
 class SimpleBufferManager : public BufferManager {
   public:
-    SimpleBufferManager(const int buffer_size,
-                        const disk::DiskManager &disk_manager,
-                        const dblog::LogManager &log_manager);
+    SimpleBufferManager(const int buffer_size, disk::DiskManager &disk_manager,
+                        dblog::LogManager &log_manager);
 
     const std::vector<Buffer> &BufferPool() const;
 

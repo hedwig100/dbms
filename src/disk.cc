@@ -162,7 +162,9 @@ DiskManager::DiskManager(const std::string &directory_path,
                          const int block_size)
     : directory_path_(directory_path), block_size_(block_size) {}
 
-Result DiskManager::Read(const BlockID &block_id, Block &block) const {
+Result DiskManager::Read(const BlockID &block_id, Block &block) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
+
     std::ifstream file(directory_path_ + block_id.Filename(),
                        std::ios::ate | std::ios::binary);
     if (!file.is_open())
@@ -186,7 +188,9 @@ Result DiskManager::Read(const BlockID &block_id, Block &block) const {
     return Ok();
 }
 
-Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
+Result DiskManager::Write(const BlockID &block_id, const Block &block) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+
     std::ofstream file(directory_path_ + block_id.Filename(),
                        std::ios::ate | std::ios::binary | std::ios::in);
     if (!file.is_open())
@@ -209,7 +213,9 @@ Result DiskManager::Write(const BlockID &block_id, const Block &block) const {
     return Ok();
 }
 
-Result DiskManager::Flush(const std::string &filename) const {
+Result DiskManager::Flush(const std::string &filename) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+
     int fd = open((directory_path_ + filename).c_str(), O_FSYNC);
     if (fd < 0)
         return Error("disk::DiskManager::Flush() failed to open a file.");
@@ -223,7 +229,9 @@ Result DiskManager::Flush(const std::string &filename) const {
     return Ok();
 }
 
-ResultV<size_t> DiskManager::Size(const std::string &filename) const {
+ResultV<size_t> DiskManager::Size(const std::string &filename) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
+
     try {
         std::uintmax_t filesize =
             std::filesystem::file_size(directory_path_ + filename);
@@ -233,7 +241,9 @@ ResultV<size_t> DiskManager::Size(const std::string &filename) const {
     }
 }
 
-Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
+Result DiskManager::AllocateNewBlocks(const BlockID &block_id) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+
     const auto filepath = directory_path_ + block_id.Filename();
     if (!std::filesystem::exists(filepath)) {
         if (!std::filesystem::exists(directory_path_)) {
@@ -260,7 +270,7 @@ Result DiskManager::AllocateNewBlocks(const BlockID &block_id) const {
 
 // Moves the `block` to the next block of `block_id`.
 Result MoveToNextBlock(disk::BlockID &block_id, disk::Block &block,
-                       const disk::DiskManager &disk_manager) {
+                       disk::DiskManager &disk_manager) {
     disk::BlockID next_block_id(block_id.Filename(), block_id.BlockIndex() + 1);
     Result read_result = disk_manager.Read(next_block_id, block);
     if (read_result.IsError())
@@ -273,7 +283,7 @@ Result MoveToNextBlock(disk::BlockID &block_id, disk::Block &block,
 Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
                              disk::Block &block, int length,
                              std::vector<uint8_t> &read_bytes,
-                             const disk::DiskManager &disk_manager) {
+                             disk::DiskManager &disk_manager) {
     if (offset < 0 || offset >= disk_manager.BlockSize())
         return Error(
             "disk::ReadBytesAcrossBlocks() offset should be in the block.");

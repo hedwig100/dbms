@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <data/data.h>
 #include <memory>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -148,6 +149,8 @@ class DiskManager {
   public:
     // Initiate a disk manager, the directory of `directory_path` should exist
     // when this disk manager is initiated.
+    // WARNING: You should not use the same directory path for multiple
+    // DiskManager. This can cause unexpected behavior.
     DiskManager(const std::string &directory_path, const int block_size);
 
     // Returns a directory path which this instance manages.
@@ -159,28 +162,29 @@ class DiskManager {
     // Reads the bytes of `block_id` into `block`. `block.BlockSize()` and
     // `this.BlockSize()` must be the same to run this function without any
     // unintentional behavior.
-    Result Read(const BlockID &block_id, Block &block) const;
+    Result Read(const BlockID &block_id, Block &block);
 
     // Writes the bytes `block` to the place of `block_id`. `block.BlockSize()`
     // and `this.BlockSize()` must be the same to run this function without any
     // unintentional behavior.
-    Result Write(const BlockID &block_id, const Block &block) const;
+    Result Write(const BlockID &block_id, const Block &block);
 
     // Flushes the writes of `directory_path`/`filename` to the disk.
-    Result Flush(const std::string &filename) const;
+    Result Flush(const std::string &filename);
 
     // The number of blocks in the file of `filename`.
-    ResultV<size_t> Size(const std::string &filename) const;
+    ResultV<size_t> Size(const std::string &filename);
 
     // Allocates new blocks until the id of `block_id` (including the end).
     // If file of `block_id.Filename()` does not exist, this function creates a
     // new file and resize it to the `block_id.BlockIndex()`. If file of
     // `block_id.Filename()` exists, resize it.
-    Result AllocateNewBlocks(const BlockID &block_id) const;
+    Result AllocateNewBlocks(const BlockID &block_id);
 
   private:
     const std::string directory_path_;
     const int block_size_;
+    std::shared_mutex mutex_;
 };
 
 // Read bytes which can lie across multiple blocks. `block_id` and `offset`
@@ -191,7 +195,7 @@ class DiskManager {
 Result ReadBytesAcrossBlocks(disk::BlockID &block_id, int &offset,
                              disk::Block &block, int length,
                              std::vector<uint8_t> &read_bytes,
-                             const disk::DiskManager &disk_manager);
+                             disk::DiskManager &disk_manager);
 
 } // namespace disk
 
