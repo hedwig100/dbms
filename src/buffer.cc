@@ -93,17 +93,18 @@ Result BufferManager::WriteBuffer(const Buffer &buffer) {
     auto log_result = log_manager_.Flush(buffer.LatestLogSequenceNumber());
     if (log_result.IsError())
         return log_result +
-               Error("buffer::BufferManager::Flush() failed to flush log.");
+               Error(
+                   "buffer::BufferManager::WriteBuffer() failed to flush log.");
 
     auto write_result = disk_manager_.Write(buffer.BlockID(), buffer.Block());
     if (write_result.IsError())
         return write_result +
-               Error("buffer::BufferManager::Flush() failed to write.");
+               Error("buffer::BufferManager::WriteBuffer() failed to write.");
 
     auto flush_result = disk_manager_.Flush(buffer.BlockID().Filename());
     if (flush_result.IsError())
         return flush_result +
-               Error("buffer::BufferManager::Flush() failed to flush.");
+               Error("buffer::BufferManager::WriteBuffer() failed to flush.");
     return Ok();
 }
 

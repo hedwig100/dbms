@@ -184,6 +184,24 @@ uint8_t LogTransactionEndMask(TransactionEndType transaction_end_type) {
     return 0;
 }
 
+// This is an super roughly estimated average size of log record.
+// 4 + 4 + Value + 4 nearly equals to 40.
+constexpr size_t kApproximateLogRecordLength = 40;
+
+std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record) {
+    std::vector<uint8_t> log_body_with_header;
+    log_body_with_header.reserve(kApproximateLogRecordLength);
+    const std::vector<uint8_t> &log_body = log_record.LogBody();
+    data::WriteUint32NoFail(log_body_with_header, log_body_with_header.size(),
+                            ComputeChecksum(log_body));
+    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
+                         log_body.size());
+    log_record.AppendLogBody(log_body_with_header);
+    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
+                         log_body.size());
+    return log_body_with_header;
+}
+
 LogTransactionBegin::LogTransactionBegin(const TransactionID transaction_id)
     : transaction_id_(transaction_id) {
     log_body_.resize(kLogTransactionBeginByteSize);
@@ -218,9 +236,9 @@ LogOperation::LogOperation(TransactionID transaction_id,
     new_item.WriteNoFail(log_body_, log_body_.size());
 }
 
-Result LogOperation::UnDo(disk::DiskManager &disk_manager) const {
+Result LogOperation::UnDo(buffer::BufferManager &buffer_manager) const {
     disk::Block block;
-    Result result = disk_manager.Read(offset_.BlockID(), block);
+    Result result = buffer_manager.Read(offset_.BlockID(), block);
     if (result.IsError())
         return result +
                Error("dblog::LogOperation::Undo() failed read data block.");
@@ -233,16 +251,19 @@ Result LogOperation::UnDo(disk::DiskManager &disk_manager) const {
                Error("dblog::LogOperation::Undo() failed to write previous "
                      "item to the block.");
 
-    result = disk_manager.Write(offset_.BlockID(), block);
+    // When doing UnDo, the log record is already written to the log file.
+    // Therefore, we don't need to specify the log sequence number (there is no
+    // log record that should be written before the buffer is flushed).
+    result = buffer_manager.Write(offset_.BlockID(), block, /*lsn=*/0);
     if (result.IsError())
         return result + Error("dblog::LogOperation::Undo() failed to "
                               "write block to disk.");
     return Ok();
 }
 
-Result LogOperation::ReDo(disk::DiskManager &disk_manager) const {
+Result LogOperation::ReDo(buffer::BufferManager &buffer_manager) const {
     disk::Block block;
-    Result result = disk_manager.Read(offset_.BlockID(), block);
+    Result result = buffer_manager.Read(offset_.BlockID(), block);
     if (result.IsError())
         return result +
                Error("dblog::LogOperation::Redo() failed read data block.");
@@ -255,7 +276,10 @@ Result LogOperation::ReDo(disk::DiskManager &disk_manager) const {
                Error("dblog::LogOperation::Redo() failed to write new "
                      "item to the block.");
 
-    result = disk_manager.Write(offset_.BlockID(), block);
+    // When doing UnDo, the log record is already written to the log file.
+    // Therefore, we don't need to specify the log sequence number (there is no
+    // log record that should be written before the buffer is flushed).
+    result = buffer_manager.Write(offset_.BlockID(), block, /*lsn=*/0);
     if (result.IsError())
         return result + Error("dblog::LogOperation::Redo() failed to "
                               "write block to disk.");

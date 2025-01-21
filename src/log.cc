@@ -188,9 +188,6 @@ ResultV<int> ReadIntAcrossBlocksWithOffset(disk::DiskManager &disk_manager,
 
 } // namespace internal
 
-// TODO: compute check sum
-uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes) { return 0; }
-
 constexpr int kChecksumBytesize = data::kUint32Bytesize;
 
 constexpr int kLogLengthBytesize = data::kIntBytesize;
@@ -201,20 +198,6 @@ constexpr size_t kLogHeaderLength = kChecksumBytesize + kLogLengthBytesize;
 
 constexpr size_t kApproximateLogRecordLength =
     kLogHeaderLength + 40 + kLogLengthBytesize;
-
-std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record) {
-    std::vector<uint8_t> log_body_with_header;
-    log_body_with_header.reserve(kApproximateLogRecordLength);
-    const std::vector<uint8_t> &log_body = log_record.LogBody();
-    data::WriteUint32NoFail(log_body_with_header, log_body_with_header.size(),
-                            ComputeChecksum(log_body));
-    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
-                         log_body.size());
-    log_record.AppendLogBody(log_body_with_header);
-    data::WriteIntNoFail(log_body_with_header, log_body_with_header.size(),
-                         log_body.size());
-    return log_body_with_header;
-}
 
 // Read the previous log of the log which starts from `log_start`. The `block`
 // is the block that `log_start` is located.

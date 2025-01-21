@@ -1,6 +1,8 @@
 #ifndef _LOG_RECORD_H
 #define _LOG_RECORD_H
 
+#include "buffer.h"
+#include "checksum.h"
 #include "data/data.h"
 #include "disk.h"
 #include <cstdint>
@@ -54,10 +56,10 @@ class LogRecord {
     virtual const std::vector<uint8_t> &LogBody() const = 0;
 
     // Put the state back to the state bfore the operation
-    virtual Result UnDo(disk::DiskManager &disk_manager) const = 0;
+    virtual Result UnDo(buffer::BufferManager &buffer_manager) const = 0;
 
     // Put the state after the operation
-    virtual Result ReDo(disk::DiskManager &disk_manager) const = 0;
+    virtual Result ReDo(buffer::BufferManager &buffer_manager) const = 0;
 
     // Appends the log body to `bytes`.
     void AppendLogBody(std::vector<uint8_t> &bytes) const {
@@ -65,6 +67,14 @@ class LogRecord {
         std::copy(log_body.begin(), log_body.end(), std::back_inserter(bytes));
     }
 };
+
+// Compute the checksum of the `bytes`.
+uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes);
+
+// Compute the log record with the header. The header has
+// length of log record in bytes and hash of the log record (to achieve
+// atomic write of logs). NOTE: log length must be smaller than 2^32-1.
+std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record);
 
 // Read LogRecord from `log_body_bytes`.
 ResultV<std::unique_ptr<LogRecord>>
@@ -80,8 +90,12 @@ class LogTransactionBegin : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
-    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result UnDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
+    inline Result ReDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
 
   private:
     TransactionID transaction_id_;
@@ -103,8 +117,8 @@ class LogOperation : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    Result UnDo(disk::DiskManager &disk_manager) const;
-    Result ReDo(disk::DiskManager &disk_manager) const;
+    Result UnDo(buffer::BufferManager &buffer_manager) const;
+    Result ReDo(buffer::BufferManager &buffer_manager) const;
 
   private:
     // Returns the length of the values  in the log record.
@@ -129,8 +143,12 @@ class LogTransactionEnd : public LogRecord {
         return transaction_end_type_;
     }
     const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
-    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result UnDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
+    inline Result ReDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
 
   private:
     TransactionID transaction_id_;
@@ -148,8 +166,12 @@ class LogCheckpointing : public LogRecord {
         return TransactionEndType::kCommit;
     }
     inline const std::vector<uint8_t> &LogBody() const { return log_body_; }
-    inline Result UnDo(disk::DiskManager &disk_manager) const { return Ok(); }
-    inline Result ReDo(disk::DiskManager &disk_manager) const { return Ok(); }
+    inline Result UnDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
+    inline Result ReDo(buffer::BufferManager &buffer_manager) const {
+        return Ok();
+    }
 
   private:
     std::vector<uint8_t> log_body_;

@@ -1,8 +1,8 @@
 #ifndef _LOG_H
 #define _LOG_H
 
+#include "checksum.h"
 #include "disk.h"
-#include "log_record.h"
 #include "result.h"
 #include <memory>
 #include <shared_mutex>
@@ -55,14 +55,6 @@ class LogBlock {
 };
 
 } // namespace internal
-
-// Compute the checksum of the `bytes`.
-uint32_t ComputeChecksum(const std::vector<uint8_t> &bytes);
-
-// Compute the log record with the header. The header has
-// length of log record in bytes and hash of the log record (to achieve
-// atomic write of logs). NOTE: log length must be smaller than 2^32-1.
-std::vector<uint8_t> LogRecordWithHeader(const LogRecord &log_record);
 
 // The error that implies the complete log record is not written to the disk.
 const ResultV<std::vector<uint8_t>> kCompleteLogNotWrittenToDisk =
