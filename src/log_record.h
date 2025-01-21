@@ -107,6 +107,11 @@ class LogOperation : public LogRecord {
     Result ReDo(disk::DiskManager &disk_manager) const;
 
   private:
+    // Returns the length of the values  in the log record.
+    inline int ValueLength() const {
+        return new_item_offset_in_log_body_ - previous_item_offset_in_log_body_;
+    }
+
     TransactionID transaction_id_;
     disk::DiskPosition offset_;
     int previous_item_offset_in_log_body_, new_item_offset_in_log_body_;

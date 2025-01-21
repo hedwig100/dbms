@@ -225,10 +225,12 @@ Result LogOperation::UnDo(disk::DiskManager &disk_manager) const {
         return result +
                Error("dblog::LogOperation::Undo() failed read data block.");
 
-    ResultE<size_t> size_result = block.WriteBytesWithOffset(
-        offset_.Offset(), log_body_, previous_item_offset_in_log_body_);
-    if (size_result.IsError())
-        return Error("dblog::LogOperation::Undo() failed to write previous "
+    Result write_result = block.WriteBytesWithOffsetLength(
+        offset_.Offset(), log_body_, previous_item_offset_in_log_body_,
+        ValueLength());
+    if (write_result.IsError())
+        return write_result +
+               Error("dblog::LogOperation::Undo() failed to write previous "
                      "item to the block.");
 
     result = disk_manager.Write(offset_.BlockID(), block);
@@ -245,10 +247,12 @@ Result LogOperation::ReDo(disk::DiskManager &disk_manager) const {
         return result +
                Error("dblog::LogOperation::Redo() failed read data block.");
 
-    ResultE<size_t> size_result = block.WriteBytesWithOffset(
-        offset_.Offset(), log_body_, new_item_offset_in_log_body_);
-    if (size_result.IsError())
-        return Error("dblog::LogOperation::Redo() failed to write new "
+    Result write_result = block.WriteBytesWithOffsetLength(
+        offset_.Offset(), log_body_, new_item_offset_in_log_body_,
+        ValueLength());
+    if (write_result.IsError())
+        return write_result +
+               Error("dblog::LogOperation::Redo() failed to write new "
                      "item to the block.");
 
     result = disk_manager.Write(offset_.BlockID(), block);
