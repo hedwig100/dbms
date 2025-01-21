@@ -117,6 +117,14 @@ class Block {
                                          const std::vector<uint8_t> &value,
                                          const size_t value_offset);
 
+    // Writes `value`[`value_offset`:`value_offset`+`length`] to the block with
+    // `offset`. If `value`[`value_offset`:`value_offset`+`length`] does not fit
+    // the block, return Error.
+    Result WriteBytesWithOffsetLength(const size_t offset,
+                                      const std::vector<uint8_t> &value,
+                                      const size_t value_offset,
+                                      const size_t length);
+
     // Reads the int with the `offset`. The value is read as little-endian.
     ResultV<int> ReadInt(const int offset) const;
 
