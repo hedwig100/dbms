@@ -31,7 +31,7 @@ Result RecoveryManager::Commit(const dblog::TransactionID transaction_id) {
 }
 
 Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
-                                 disk::DiskManager &data_disk_manager) {
+                                 buffer::BufferManager &buffer_manager) {
     ResultV<dblog::LogIterator> log_iter_result = log_manager_.LastLog();
     if (log_iter_result.IsError()) {
         return log_iter_result + Error("dblog::RecoveryManager::Rollback() "
@@ -61,7 +61,7 @@ Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
             if (log_record->Type() == dblog::LogType::kTransactionBegin) {
                 break;
             }
-            Result undo_result = log_record->UnDo(data_disk_manager);
+            Result undo_result = log_record->UnDo(buffer_manager);
             if (undo_result.IsError())
                 return undo_result + Error("dblog::RecoveryManager::Rollback() "
                                            "failed to do undo operation.");
@@ -85,7 +85,7 @@ Result RecoveryManager::Rollback(const dblog::TransactionID transaction_id,
     return Ok();
 }
 
-Result RecoveryManager::Recover(disk::DiskManager &data_disk_manager) const {
+Result RecoveryManager::Recover(buffer::BufferManager &buffer_manager) const {
     ResultV<dblog::LogIterator> log_iter_result = log_manager_.LastLog();
     if (log_iter_result.IsError()) {
         return log_iter_result + Error("recovery::RecoveryManager::Recover() "
@@ -95,14 +95,14 @@ Result RecoveryManager::Recover(disk::DiskManager &data_disk_manager) const {
     std::set<dblog::TransactionID> committed, rollbacked;
 
     Result undo_result =
-        UnDoStage(log_iter, committed, rollbacked, data_disk_manager);
+        UnDoStage(log_iter, committed, rollbacked, buffer_manager);
     if (undo_result.IsError()) {
         return undo_result +
                Error("recovery::RecoveryManager::Recover() failed to undo.");
     }
 
     Result redo_result =
-        ReDoStage(log_iter, committed, rollbacked, data_disk_manager);
+        ReDoStage(log_iter, committed, rollbacked, buffer_manager);
     if (redo_result.IsError()) {
         return redo_result +
                Error("recovery::RecoveryManager::Recover() failed to redo.");
@@ -114,7 +114,7 @@ Result RecoveryManager::Recover(disk::DiskManager &data_disk_manager) const {
 Result RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
                                   std::set<dblog::TransactionID> &committed,
                                   std::set<dblog::TransactionID> &rollbacked,
-                                  disk::DiskManager &data_disk_manager) const {
+                                  buffer::BufferManager &buffer_manager) const {
 
     auto already_committed_or_rollbacked =
         [&committed, &rollbacked](dblog::TransactionID transaction_id) -> bool {
@@ -151,7 +151,7 @@ Result RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
         } else if (log_record->Type() == dblog::LogType::kOperation &&
                    !already_committed_or_rollbacked(
                        log_record->GetTransactionID())) {
-            Result undo_result = log_record->UnDo(data_disk_manager);
+            Result undo_result = log_record->UnDo(buffer_manager);
             if (undo_result.IsError()) {
                 return undo_result + Error("recovery::RecoveryManager::"
                                            "UnDoStage() failed to undo.");
@@ -173,7 +173,7 @@ Result RecoveryManager::UnDoStage(dblog::LogIterator &log_iter,
 Result RecoveryManager::ReDoStage(dblog::LogIterator &log_iter,
                                   std::set<dblog::TransactionID> &committed,
                                   std::set<dblog::TransactionID> &rollbacked,
-                                  disk::DiskManager &data_disk_manager) const {
+                                  buffer::BufferManager &buffer_manager) const {
     while (true) {
         ResultV<std::vector<uint8_t>> log_body_result = log_iter.LogBody();
         if (log_body_result.IsError()) {
@@ -193,7 +193,7 @@ Result RecoveryManager::ReDoStage(dblog::LogIterator &log_iter,
 
         if (log_record->Type() == dblog::LogType::kOperation &&
             committed.count(log_record->GetTransactionID())) {
-            Result redo_result = log_record->ReDo(data_disk_manager);
+            Result redo_result = log_record->ReDo(buffer_manager);
             if (redo_result.IsError()) {
                 return redo_result +
                        Error("recovery::RecoveryManager::"

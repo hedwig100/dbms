@@ -128,6 +128,20 @@ ResultE<size_t> Block::WriteBytesWithOffset(const size_t offset,
     return Error(value_offset + length);
 }
 
+Result Block::WriteBytesWithOffsetLength(const size_t offset,
+                                         const std::vector<uint8_t> &value,
+                                         const size_t value_offset,
+                                         const size_t length) {
+    if (offset + length <= content_.size()) {
+        std::copy(value.begin() + value_offset,
+                  value.begin() + value_offset + length,
+                  content_.begin() + offset);
+        return Ok();
+    }
+    return Error("disk::Block::WriteBytesWithOffsetLength() value does not fit "
+                 "the block.");
+}
+
 ResultV<int> Block::ReadInt(const int offset) const {
     return data::ReadInt(content_, offset);
 }

@@ -243,6 +243,32 @@ TEST(Block, WriteBytesWithOffsetTooLong) {
     EXPECT_EQ(read_value, expect_value);
 }
 
+TEST(Block, WriteBytesWithOffsetLengthSuccess) {
+    disk::Block block(5);
+    const std::vector<uint8_t> write_value  = {'a', 'b', 'c', 'd'},
+                               expect_value = {'c'};
+
+    EXPECT_TRUE(block
+                    .WriteBytesWithOffsetLength(1, write_value,
+                                                /*value_offset=*/2,
+                                                /*length=*/1)
+                    .IsOk());
+
+    std::vector<uint8_t> read_value(1);
+    auto read_result = block.ReadBytes(1, 1, read_value);
+    ASSERT_TRUE(read_result.IsOk());
+    EXPECT_EQ(read_value, expect_value);
+}
+
+TEST(Block, WriteBytesWithOffsetLengthTooLong) {
+    disk::Block block(5);
+    const std::vector<uint8_t> write_value = {'a', 'b', 'c', 'd', 'e', 'f'};
+
+    auto write_result = block.WriteBytesWithOffsetLength(
+        /*offset=*/1, /*value=*/write_value, /*value_offset=*/0, /*length=*/5);
+    EXPECT_TRUE(write_result.IsError());
+}
+
 TEST(Block, CorrectlyReadInt) {
     disk::Block block(5);
 

@@ -1,10 +1,20 @@
+#include "buffer.h"
 #include "data/int.h"
+#include "log.h"
 #include "log_record.h"
 #include "macro_test.h"
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
+
+TEST(Log, LogRecordWithHeaderSuccess) {
+    dblog::LogTransactionBegin log_record(/*transaction_id=*/0);
+    auto log_record_with_header = dblog::LogRecordWithHeader(log_record);
+    EXPECT_EQ(log_record_with_header.size(),
+              /*length of checksum*/ 4 + /*length of size of log*/ 4 +
+                  log_record.LogBody().size() + /*length of size of log*/ 4);
+}
 
 TEST(LogRecordLogTransactionBegin, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
@@ -110,39 +120,52 @@ TEST(LogRecordCheckpointing, WriteReadCorrectly) {
     EXPECT_EQ(log_record_ptr->LogBody(), log_body);
 }
 
-FILE_EXISTENT_TEST(LogRecordTransactionBeginWithFile, "");
+TWO_FILE_EXISTENT_TEST(LogRecordTransactionBeginWithFile, "", "");
 
 TEST_F(LogRecordTransactionBeginWithFile, UnDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogTransactionBegin log_record(4);
-    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.UnDo(buffer_manager).IsOk());
 }
 
 TEST_F(LogRecordTransactionBeginWithFile, ReDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogTransactionBegin log_record(4);
-    EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.ReDo(buffer_manager).IsOk());
 }
 
-FILE_EXISTENT_TEST(LogRecordOperationWithFile, "");
+TWO_FILE_EXISTENT_TEST(LogRecordOperationWithFile, "", "");
 
 TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     const data::Int int_value(4), dummy_value(0);
+    const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
-
     dblog::LogOperation log_record(
-        /*transaction_id=*/4,
-        disk::DiskPosition(disk::BlockID(filename, 0), offset),
+        /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
         /*previous_item=*/int_value, /*new_item=*/dummy_value);
-
     ASSERT_TRUE(
-        disk_manager.AllocateNewBlocks(disk::BlockID(filename, 2)).IsOk());
-    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
-    ASSERT_TRUE(disk_manager.Flush(filename).IsOk());
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
+
+    EXPECT_TRUE(log_record.UnDo(buffer_manager).IsOk());
+    Result flush_result = buffer_manager.Flush(block_id);
+    ASSERT_TRUE(flush_result.IsOk()) << flush_result.Error();
 
     disk::Block block;
-    Result read_result = disk_manager.Read(disk::BlockID(filename, 0), block);
+    Result read_result = disk_manager.Read(block_id, block);
     EXPECT_TRUE(read_result.IsOk());
 
     ResultV<int> int_result = block.ReadInt(offset);
@@ -152,21 +175,25 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
 
 TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     const data::Int int_value(4), dummy_value(0);
+    const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
-
     dblog::LogOperation log_record(
-        /*transaction_id=*/4,
-        disk::DiskPosition(disk::BlockID(filename, 0), offset),
+        /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
         /*previous_item=*/dummy_value, /*new_item=*/int_value);
-
     ASSERT_TRUE(
-        disk_manager.AllocateNewBlocks(disk::BlockID(filename, 2)).IsOk());
-    EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
-    ASSERT_TRUE(disk_manager.Flush(filename).IsOk());
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
+
+    EXPECT_TRUE(log_record.ReDo(buffer_manager).IsOk());
+    Result flush_result = buffer_manager.Flush(block_id);
+    ASSERT_TRUE(flush_result.IsOk()) << flush_result.Error();
 
     disk::Block block;
-    Result read_result = disk_manager.Read(disk::BlockID(filename, 0), block);
+    Result read_result = disk_manager.Read(block_id, block);
     EXPECT_TRUE(read_result.IsOk());
 
     ResultV<int> int_result = block.ReadInt(offset);
@@ -174,30 +201,46 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     EXPECT_EQ(int_result.Get(), int_value.Value());
 }
 
-FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "");
+TWO_FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "", "");
 
 TEST_F(LogRecordTransactionEndWithFile, UnDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
-    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.UnDo(buffer_manager).IsOk());
 }
 
 TEST_F(LogRecordTransactionEndWithFile, ReDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogTransactionEnd log_record(4, dblog::TransactionEndType::kCommit);
-    EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.ReDo(buffer_manager).IsOk());
 }
 
-FILE_EXISTENT_TEST(LogRecordCheckpointingWithFile, "");
+TWO_FILE_EXISTENT_TEST(LogRecordCheckpointingWithFile, "", "");
 
 TEST_F(LogRecordCheckpointingWithFile, UnDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogCheckpointing log_record;
-    EXPECT_TRUE(log_record.UnDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.UnDo(buffer_manager).IsOk());
 }
 
 TEST_F(LogRecordCheckpointingWithFile, ReDoCorrectly) {
     disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     dblog::LogCheckpointing log_record;
-    EXPECT_TRUE(log_record.ReDo(disk_manager).IsOk());
+    EXPECT_TRUE(log_record.ReDo(buffer_manager).IsOk());
 }

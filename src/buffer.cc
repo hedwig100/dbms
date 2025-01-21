@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include <set>
 
 namespace buffer {
 
@@ -47,8 +48,33 @@ Result BufferManager::Write(const disk::BlockID &block_id,
 
 Result BufferManager::Flush(const disk::BlockID &block_id) {
     auto buffer_result = FindBufferWithBlockID(block_id);
-    if (buffer_result.IsOk()) { return FlushBuffer(*buffer_result.Get()); }
+    if (buffer_result.IsOk()) { return WriteBuffer(*buffer_result.Get()); }
     return disk_manager_.Flush(block_id.Filename());
+}
+
+Result BufferManager::FlushAll() {
+    std::lock_guard<std::shared_mutex> lock(buffer_pool_mutex_);
+    std::set<std::string> filenames_to_be_flushed;
+
+    for (const Buffer &buffer : buffer_pool_) {
+        if (buffer.IsDirty()) {
+            Result write_result = WriteBuffer(buffer);
+            if (write_result.IsError()) {
+                return write_result + Error("buffer::BufferManager::FlushAll() "
+                                            "failed to write.");
+            }
+            filenames_to_be_flushed.insert(buffer.BlockID().Filename());
+        }
+    }
+
+    for (const std::string &filename : filenames_to_be_flushed) {
+        Result flush_result = disk_manager_.Flush(filename);
+        if (flush_result.IsError()) {
+            return flush_result + Error("buffer::BufferManager::FlushAll() "
+                                        "failed to flush.");
+        }
+    }
+    return Ok();
 }
 
 ResultV<Buffer *>
@@ -61,19 +87,24 @@ BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
                  "with the block_id.");
 }
 
-Result BufferManager::FlushBuffer(const Buffer &buffer) {
+Result BufferManager::WriteBuffer(const Buffer &buffer) {
     // To make sure that the corresponding log is written to disk,
     // flush the log file first and then write the block to disk.
     auto log_result = log_manager_.Flush(buffer.LatestLogSequenceNumber());
     if (log_result.IsError())
         return log_result +
-               Error("buffer::BufferManager::Flush() failed to flush log.");
+               Error(
+                   "buffer::BufferManager::WriteBuffer() failed to flush log.");
 
     auto write_result = disk_manager_.Write(buffer.BlockID(), buffer.Block());
     if (write_result.IsError())
         return write_result +
-               Error("buffer::BufferManager::Flush() failed to write.");
+               Error("buffer::BufferManager::WriteBuffer() failed to write.");
 
+    auto flush_result = disk_manager_.Flush(buffer.BlockID().Filename());
+    if (flush_result.IsError())
+        return flush_result +
+               Error("buffer::BufferManager::WriteBuffer() failed to flush.");
     return Ok();
 }
 
@@ -89,10 +120,10 @@ Result BufferManager::AddNewBuffer(const Buffer &buffer) {
 
     const Buffer &evicted_buffer = buffer_pool_[evicted_buffer_id.Get()];
     if (evicted_buffer.IsDirty()) {
-        Result flush_result = FlushBuffer(evicted_buffer);
-        if (flush_result.IsError()) {
-            return flush_result + Error("buffer::BufferManager::AddNewBuffer() "
-                                        "failed to flush buffer.");
+        Result write_result = WriteBuffer(evicted_buffer);
+        if (write_result.IsError()) {
+            return write_result + Error("buffer::BufferManager::AddNewBuffer() "
+                                        "failed to write buffer.");
         }
     }
 

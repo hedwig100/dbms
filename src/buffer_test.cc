@@ -143,6 +143,34 @@ TEST_F(BufferManagerTest, BufferManagerCorrectlyFlush) {
     file.close();
 }
 
+TEST_F(BufferManagerTest, BufferManagerFlushesAllBuffers) {
+    const int BLOCK_SIZE = 4;
+    disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
+    dblog::LogManager log_manager(filename1, directory_path,
+                                  /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
+                                               log_manager);
+    const disk::BlockID block_id0(filename0, 0), block_id1(filename0, 1);
+    char expect_block_content[BLOCK_SIZE] = "aiu";
+    const disk::Block write_block(BLOCK_SIZE, expect_block_content);
+    ASSERT_TRUE(buffer_manager.Write(block_id0, write_block, /*lsn=*/0).IsOk());
+    ASSERT_TRUE(buffer_manager.Write(block_id1, write_block, /*lsn=*/0).IsOk());
+
+    Result flush_result = buffer_manager.FlushAll();
+
+    EXPECT_TRUE(flush_result.IsOk()) << flush_result.Error();
+    std::ifstream file(directory_path + filename0, std::ios::binary);
+    char actual_block_content[2 * BLOCK_SIZE];
+    file.read(actual_block_content, 2 * BLOCK_SIZE);
+    EXPECT_FALSE(file.fail());
+    EXPECT_STREQ(actual_block_content, expect_block_content)
+        << "actual_block_content: " << actual_block_content;
+    EXPECT_STREQ(actual_block_content + BLOCK_SIZE, expect_block_content)
+        << "actual_block_content: " << actual_block_content;
+    file.close();
+}
+
 TEST_F(NonExistentFileTest, BufferManagerFlushFailWhenThereIsNoBlock) {
     const int BLOCK_SIZE = 4;
     disk::DiskManager disk_manager(directory_path, BLOCK_SIZE);
@@ -151,7 +179,6 @@ TEST_F(NonExistentFileTest, BufferManagerFlushFailWhenThereIsNoBlock) {
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
                                                log_manager);
     const disk::BlockID block_id(non_existent_filename, 0);
-    const disk::Block write_block(BLOCK_SIZE, "aiu");
 
     EXPECT_TRUE(buffer_manager.Flush(block_id).IsError());
 }

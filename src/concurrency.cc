@@ -83,13 +83,13 @@ Result ConcurrentManager::WriteLock(const disk::BlockID &block_id) {
         Result lock_result = lock_table_.WriteLockWhenOwningReadLock(block_id);
         if (lock_result.IsError())
             return lock_result +
-                   Error("dbconcurrency::ConcurrentManager::ReadLock() failed "
+                   Error("dbconcurrency::ConcurrentManager::WriteLock() failed "
                          "to acquire write lock when owning read lock.");
     } else {
         Result lock_result = lock_table_.WriteLock(block_id);
         if (lock_result.IsError())
             return lock_result +
-                   Error("dbconcurrency::ConcurrentManager::ReadLock() failed "
+                   Error("dbconcurrency::ConcurrentManager::WriteLock() failed "
                          "to acquire write lock.");
     }
     owned_locks_[block_id] = ReadOrWrite::kWrite;

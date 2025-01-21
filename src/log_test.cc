@@ -72,14 +72,6 @@ TEST_F(LogFileNonExistentTest, ReadLogBlockFailWithoutFile) {
     EXPECT_TRUE(read_result.IsError());
 }
 
-TEST(Log, LogRecordWithHeaderSuccess) {
-    dblog::LogTransactionBegin log_record(/*transaction_id=*/0);
-    auto log_record_with_header = dblog::LogRecordWithHeader(log_record);
-    EXPECT_EQ(log_record_with_header.size(),
-              /*length of checksum*/ 4 + /*length of size of log*/ 4 +
-                  log_record.LogBody().size() + /*length of size of log*/ 4);
-}
-
 FILE_EXISTENT_TEST(LogFileExistentLogManager, "abcdef");
 FILE_NONEXISTENT_TEST(LogFileNonExistentLogManager);
 

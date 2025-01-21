@@ -1,3 +1,4 @@
+#include "buffer.h"
 #include "data/int.h"
 #include "log.h"
 #include "log_record.h"
@@ -52,6 +53,8 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccess) {
     recovery::RecoveryManager manager(log_manager);
     disk::DiskManager disk_manager(/*directory_name=*/directory_path,
                                    /*block_size=*/12);
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     ASSERT_TRUE(
         disk_manager
             .AllocateNewBlocks(disk::BlockID(filename1, /*block_index=*/9))
@@ -73,8 +76,10 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccess) {
     dblog::LogOperation log2(0, position2, dummy_value1, dummy_value2);
     ASSERT_TRUE(manager.WriteLog(log2).IsOk());
 
-    Result rollback_result = manager.Rollback(transaction_id, disk_manager);
+    Result rollback_result = manager.Rollback(transaction_id, buffer_manager);
     EXPECT_TRUE(rollback_result.IsOk());
+    EXPECT_TRUE(buffer_manager.FlushAll().IsOk());
+
     disk::Block block(block_size);
     Result read_result = disk_manager.Read(position1.BlockID(), block);
     ASSERT_TRUE(read_result.IsOk());
@@ -98,6 +103,8 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
     recovery::RecoveryManager manager(log_manager);
     disk::DiskManager disk_manager(/*directory_name=*/directory_path,
                                    /*block_size=*/block_size);
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
     ASSERT_TRUE(
         disk_manager
             .AllocateNewBlocks(disk::BlockID(filename1, /*block_index=*/9))
@@ -132,8 +139,10 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
     Result commit_result = manager.Commit(committed_transaction_id);
     ASSERT_TRUE(commit_result.IsOk());
 
-    Result recover_result = manager.Recover(disk_manager);
+    Result recover_result = manager.Recover(buffer_manager);
     EXPECT_TRUE(recover_result.IsOk());
+    EXPECT_TRUE(buffer_manager.FlushAll().IsOk());
+
     disk::Block block(block_size);
     Result read_result = disk_manager.Read(position0.BlockID(), block);
     ASSERT_TRUE(read_result.IsOk());

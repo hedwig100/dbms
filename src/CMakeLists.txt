@@ -32,6 +32,14 @@ target_link_libraries(buffer_test
 )
 gtest_discover_tests(buffer_test)
 
+## checksum
+add_library(checksum
+  checksum.cc
+)
+target_include_directories(checksum
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
 ## concurrency
 add_library(concurrency
   concurrency.cc
@@ -85,6 +93,7 @@ add_library(log
   log.cc
 )
 target_link_libraries(log
+  checksum
   disk
   log_record
 )
@@ -109,7 +118,9 @@ add_library(log_record
   log_record.cc
 )
 target_link_libraries(log_record
+  buffer
   char
+  checksum
   data_read
   disk
   int 
@@ -202,3 +213,30 @@ target_link_libraries(sample_lib_test
   GTest::gtest_main
 )
 gtest_discover_tests(sample_lib_test)
+
+## transaction
+add_library(transaction
+  transaction.cc
+)
+target_link_libraries(transaction
+  buffer
+  concurrency
+  log 
+  recovery
+  result
+)
+target_include_directories(transaction
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(transaction_test
+  transaction_test.cc
+)
+target_include_directories(transaction_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(transaction_test
+  transaction
+  GTest::gtest_main
+)
+gtest_discover_tests(transaction_test)

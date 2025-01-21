@@ -1,6 +1,7 @@
 #ifndef _RECOVERY_H
 #define _RECOVERY_H
 
+#include "buffer.h"
 #include "log.h"
 #include "log_record.h"
 #include "result.h"
@@ -26,23 +27,21 @@ class RecoveryManager {
     Result Commit(const dblog::TransactionID transaction_id);
 
     // Rollbacks the transaction whose id is `transaction_id`.
-    // `data_disk_manager` is a disk manager responsible for the data of
-    // `transaction_id`.
     Result Rollback(const dblog::TransactionID transaction_id,
-                    disk::DiskManager &data_disk_manager);
+                    buffer::BufferManager &buffer_manager);
 
     // Recover records from logs.
-    Result Recover(disk::DiskManager &data_disk_manager) const;
+    Result Recover(buffer::BufferManager &buffer_manager) const;
 
   private:
     Result UnDoStage(dblog::LogIterator &log_iter,
                      std::set<dblog::TransactionID> &committed,
                      std::set<dblog::TransactionID> &rollbacked,
-                     disk::DiskManager &data_disk_manager) const;
+                     buffer::BufferManager &buffer_manager) const;
     Result ReDoStage(dblog::LogIterator &log_iter,
                      std::set<dblog::TransactionID> &committed,
                      std::set<dblog::TransactionID> &rollbacked,
-                     disk::DiskManager &data_disk_manager) const;
+                     buffer::BufferManager &buffer_manager) const;
     dblog::LogManager &log_manager_;
 };
 
