@@ -64,6 +64,9 @@ class BufferManager {
     // Flush the block of `block_id` to disk.
     Result Flush(const disk::BlockID &block_id);
 
+    // Flush all buffers.
+    Result FlushAll();
+
   private:
     // Find the buffer with the `block_id` and return a pointer to the
     // buffer, if there is no buffer with the `block_id`, returns ErrorValue.
@@ -72,10 +75,10 @@ class BufferManager {
     // mutate the buffer in `buffer_pool_` with shared_ptr.)
     ResultV<Buffer *> FindBufferWithBlockID(const disk::BlockID &block_id);
 
-    // Flush the buffer to the disk. This method flushes the log file first and
+    // Writes the buffer to the disk. This method flushes the log file first and
     // then writes the block to the disk, to make sure that the corresponding
     // log is written to disk.
-    Result FlushBuffer(const Buffer &buffer);
+    Result WriteBuffer(const Buffer &buffer);
 
     // Add new buffer to the buffer pool. When the buffer poll is full, select a
     // evicted buffer and swap the content.
