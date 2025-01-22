@@ -1,20 +1,31 @@
 #include "buffer.h"
+#include <atomic>
 #include <set>
 
 namespace buffer {
 
+// A simple atomic time counter.
+std::atomic<int> time = 0;
+
+// Returns the (virtual) current time.
+inline int CurrentTime() { return time.fetch_add(1); }
+
 Buffer::Buffer() : block_id_(disk::BlockID("", 0)), block_(disk::Block()) {}
 
 Buffer::Buffer(const disk::BlockID &block_id, const disk::Block &block)
-    : block_id_(block_id), block_(block) {}
+    : block_id_(block_id), block_(block), access_time_(CurrentTime()) {}
 
 const disk::BlockID &Buffer::BlockID() const { return block_id_; }
 
-const disk::Block &Buffer::Block() const { return block_; }
+const disk::Block &Buffer::Block() {
+    access_time_ = CurrentTime();
+    return block_;
+}
 
 void Buffer::SetBlock(const disk::Block &block,
                       const dblog::LogSequenceNumber lsn) {
-    block_ = block;
+    access_time_ = CurrentTime();
+    block_       = block;
     if (lsn > latest_lsn_) latest_lsn_ = lsn;
 }
 
@@ -56,7 +67,7 @@ Result BufferManager::FlushAll() {
     std::lock_guard<std::shared_mutex> lock(buffer_pool_mutex_);
     std::set<std::string> filenames_to_be_flushed;
 
-    for (const Buffer &buffer : buffer_pool_) {
+    for (Buffer &buffer : buffer_pool_) {
         if (buffer.IsDirty()) {
             Result write_result = WriteBuffer(buffer);
             if (write_result.IsError()) {
@@ -87,7 +98,7 @@ BufferManager::FindBufferWithBlockID(const disk::BlockID &block_id) {
                  "with the block_id.");
 }
 
-Result BufferManager::WriteBuffer(const Buffer &buffer) {
+Result BufferManager::WriteBuffer(Buffer &buffer) {
     // To make sure that the corresponding log is written to disk,
     // flush the log file first and then write the block to disk.
     auto log_result = log_manager_.Flush(buffer.LatestLogSequenceNumber());
@@ -118,7 +129,7 @@ Result BufferManager::AddNewBuffer(const Buffer &buffer) {
                      "failed to select evict buffer.");
     }
 
-    const Buffer &evicted_buffer = buffer_pool_[evicted_buffer_id.Get()];
+    Buffer &evicted_buffer = buffer_pool_[evicted_buffer_id.Get()];
     if (evicted_buffer.IsDirty()) {
         Result write_result = WriteBuffer(evicted_buffer);
         if (write_result.IsError()) {
@@ -143,5 +154,24 @@ const std::vector<Buffer> &SimpleBufferManager::BufferPool() const {
 }
 
 ResultV<int> SimpleBufferManager::SelectEvictBufferID() { return Ok(0); }
+
+LRUBufferManager::LRUBufferManager(const int buffer_size,
+                                   disk::DiskManager &disk_manager,
+                                   dblog::LogManager &log_manager)
+    : BufferManager(disk_manager, log_manager) {
+    buffer_pool_.resize(buffer_size);
+}
+
+ResultV<int> LRUBufferManager::SelectEvictBufferID() {
+    int evict_buffer_id = 0;
+    int min_access_time = buffer_pool_[0].AccessTime();
+    for (int i = 1; i < buffer_pool_.size(); i++) {
+        if (buffer_pool_[i].AccessTime() < min_access_time) {
+            min_access_time = buffer_pool_[i].AccessTime();
+            evict_buffer_id = i;
+        }
+    }
+    return Ok(evict_buffer_id);
+}
 
 } // namespace buffer

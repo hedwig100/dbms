@@ -17,7 +17,7 @@ TEST(BufferBlockID, CorrectlyReturnsBlockID) {
 TEST(BufferBlock, CorrectlyReturnsBlock) {
     const disk::BlockID block_id("filename", 1);
     const disk::Block block(/*block_size=*/7, "my dbms");
-    const buffer::Buffer buf(block_id, block);
+    buffer::Buffer buf(block_id, block);
     EXPECT_EQ(buf.Block().Content(), block.Content());
 }
 
