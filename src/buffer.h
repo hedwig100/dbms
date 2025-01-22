@@ -21,7 +21,10 @@ class Buffer {
     const disk::BlockID &BlockID() const;
 
     // Returns the owned block.
-    const disk::Block &Block() const;
+    const disk::Block &Block();
+
+    // Returns the access time of the block.
+    inline int AccessTime() const { return access_time_; }
 
     // Latest log sequence number of modifications of the block.
     dblog::LogSequenceNumber LatestLogSequenceNumber() const {
@@ -38,6 +41,7 @@ class Buffer {
     dblog::LogSequenceNumber latest_lsn_;
     disk::BlockID block_id_;
     disk::Block block_;
+    int access_time_ = 0;
 };
 
 // BufferManager manages the buffer pool and reads and writes blocks to the
@@ -78,7 +82,7 @@ class BufferManager {
     // Writes the buffer to the disk. This method flushes the log file first and
     // then writes the block to the disk, to make sure that the corresponding
     // log is written to disk.
-    Result WriteBuffer(const Buffer &buffer);
+    Result WriteBuffer(Buffer &buffer);
 
     // Add new buffer to the buffer pool. When the buffer poll is full, select a
     // evicted buffer and swap the content.
@@ -104,6 +108,16 @@ class SimpleBufferManager : public BufferManager {
                         dblog::LogManager &log_manager);
 
     const std::vector<Buffer> &BufferPool() const;
+
+  private:
+    ResultV<int> SelectEvictBufferID();
+};
+
+// LRUBufferManager implements the LRU (Least Recently Used) eviction policy.
+class LRUBufferManager : public BufferManager {
+  public:
+    LRUBufferManager(const int buffer_size, disk::DiskManager &disk_manager,
+                     dblog::LogManager &log_manager);
 
   private:
     ResultV<int> SelectEvictBufferID();
