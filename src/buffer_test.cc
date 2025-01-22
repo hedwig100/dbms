@@ -182,3 +182,39 @@ TEST_F(NonExistentFileTest, BufferManagerFlushFailWhenThereIsNoBlock) {
 
     EXPECT_TRUE(buffer_manager.Flush(block_id).IsError());
 }
+
+TEST_F(BufferManagerTest, LRUBufferManagerReadsCorrectly) {
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    dblog::LogManager log_manager(filename1, directory_path,
+                                  /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::LRUBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
+                                            log_manager);
+    const disk::BlockID block_id(filename0, 0);
+    disk::Block read_block(3, "xxx");
+
+    auto read_result = buffer_manager.Read(block_id, read_block);
+
+    EXPECT_TRUE(read_result.IsOk()) << read_result.Error();
+    std::vector<uint8_t> expect = {'h', 'e', 'l'};
+    EXPECT_EQ(read_block.Content(), expect);
+}
+
+TEST_F(BufferManagerTest, LRUBufferManagerWritesCorrectly) {
+    disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
+    dblog::LogManager log_manager(filename1, directory_path,
+                                  /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::LRUBufferManager buffer_manager(/*buffer_size=*/5, disk_manager,
+                                            log_manager);
+    const disk::BlockID block_id(filename0, 0);
+    const disk::Block write_block(3, "aiu");
+    disk::Block read_block(3, "xxx");
+
+    auto write_result = buffer_manager.Write(block_id, write_block, /*lsn=*/0);
+
+    EXPECT_TRUE(write_result.IsOk()) << write_result.Error();
+    ASSERT_TRUE(buffer_manager.Read(block_id, read_block).IsOk());
+    std::vector<uint8_t> expect = {'a', 'i', 'u'};
+    EXPECT_EQ(read_block.Content(), expect);
+}
