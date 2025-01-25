@@ -5,6 +5,7 @@
 
 namespace transaction {
 
+// Returns the next transaction id which is unique in the system.
 dblog::TransactionID NextTransactionID() {
     static dblog::TransactionID transaction_id = 0;
     return transaction_id++;

@@ -10,44 +10,63 @@
 
 namespace transaction {
 
-// Returns the next transaction id which is unique in the system.
-dblog::TransactionID NextTransactionID();
+class TransactionInterface {
+  public:
+    // Reads bytes from `position` with `length`.
+    virtual ResultV<std::vector<uint8_t>>
+    ReadBytes(const disk::DiskPosition &position, const size_t length) = 0;
+
+    // Reads int from `position`.
+    virtual ResultV<int> ReadInt(const disk::DiskPosition &position) = 0;
+
+    // Reads string with `length` from `position`.
+    virtual ResultV<std::string> ReadString(const disk::DiskPosition &position,
+                                            const size_t length) = 0;
+
+    // Writes the data to `position`.
+    virtual Result Write(const disk::DiskPosition &position,
+                         const data::DataItem &data) = 0;
+
+    // Commits the transaction.
+    virtual Result Commit() = 0;
+
+    // Rollbacks the transaction.
+    virtual Result Rollback() = 0;
+
+    // Returns the size of the file.
+    virtual ResultV<size_t> Size(const std::string &filename) = 0;
+
+    // Allocates new blocks for the file.
+    virtual Result AllocateNewBlocks(const disk::BlockID &block_id) = 0;
+};
 
 // Transaction manages the data and the log records.
 // If one methods fails (returns Error), the transaction rolls back itself.
 // Thus, rollback is not user's responsibility even if the method fails.
-class Transaction {
+class Transaction : TransactionInterface {
   public:
     Transaction(disk::DiskManager &disk_manager,
                 buffer::BufferManager &buffer_manager,
                 dblog::LogManager &log_manager,
                 dbconcurrency::LockTable &lock_table);
 
-    // Reads bytes from `position` with `length`.
     ResultV<std::vector<uint8_t>> ReadBytes(const disk::DiskPosition &position,
                                             const size_t length);
 
-    // Reads int from `position`.
     ResultV<int> ReadInt(const disk::DiskPosition &position);
 
-    // Reads string with `length` from `position`.
     ResultV<std::string> ReadString(const disk::DiskPosition &position,
                                     const size_t length);
 
-    // Writes the data to `position`.
     Result Write(const disk::DiskPosition &position,
                  const data::DataItem &data);
 
-    // Commits the transaction.
     Result Commit();
 
-    // Rollbacks the transaction.
     Result Rollback();
 
-    // Returns the size of the file.
     ResultV<size_t> Size(const std::string &filename);
 
-    // Allocates new blocks for the file.
     Result AllocateNewBlocks(const disk::BlockID &block_id);
 
   private:
