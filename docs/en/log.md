@@ -41,17 +41,14 @@ Has the following log body.
 
 Has the following log body.
 ```
-| 0b01{MANIP_TYPE(2bits)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | new_content* | 
+| 0b01000000 | transaction_id | filename length | filename | offset | type_parameter | previous_content | new_content | 
 ```
 
-- MANIP_TYPE represents insert, update, or delete in 2bits.
 - filenam length is length of the filename in bytes.
 - filename, offset is the place where the data item is written.
 - type_parameter is the type and any values equipped with the type.
     - `Int`: 0b00000000
     - `Char(N)`: | 0b00000001 | N |
-- previous_content is the previous value of the data item. This is empty in the case of insert log.
-- new_content is the new value of the data item. This is empty in the case of delete log.
 
 ### End of a transaction
 

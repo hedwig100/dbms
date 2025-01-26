@@ -40,17 +40,14 @@ DBMSはコミットされたトランザクションの永続化のため, ロ�
 
 ログ本体は以下のようである.
 ```
-| 0b01{MANIP_TYPE(2bit)}0000 | transaction_id | filename length | filename | offset | type_parameter* | previous_content* | new_content* | 
+| 0b01000000 | transaction_id | filename length | filename | offset | type_parameter | previous_content | new_content | 
 ```
 
-- MANIP_TYPEは追加, 更新, 削除のいずれかを2bitであらわす.
 - filename lengthはfilenameのバイト単位での長さを表す.
 - filename, offsetはこのデータアイテムが書かれていた場所を指す.
 - type_parameterは型と型に付随する値をあらわす.
     - `Int`: 0b00000000
     - `Char(N)`: | 0b00000001 | N |
-- previous_contentはデータアイテムの以前のである. これは追加ログの場合はない.
-- new_contentはデータアイテムの新しい値. これは削除ログの場合はない.
 
 ### トランザクション終了
 
