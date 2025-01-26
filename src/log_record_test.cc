@@ -29,7 +29,8 @@ TEST(LogRecordLogTransactionBegin, InstantiationSuccess) {
 TEST(LogRecordLogOperation, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
     const disk::BlockID block_id("file.txt", 3);
-    const data::Int int_value(4), dummy_value(0);
+    const std::vector<uint8_t> int_value = {4, 0, 0, 0};
+    const data::Int dummy_value(0);
     dblog::LogOperation log_op(id, disk::DiskPosition(block_id, 4),
                                /*previous_item=*/int_value,
                                /*new_item=*/dummy_value);
@@ -74,7 +75,8 @@ TEST(LogRecordTransactionBegin, WriteReadCorrectly) {
 }
 
 TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
-    const data::Int previous_value(4), new_value(6);
+    const std::vector<uint8_t> previous_value = {4, 0, 0, 0};
+    const data::Int new_value(6);
     dblog::LogOperation log_record(
         /*transaction_id=*/6,
         disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3), previous_value,
@@ -151,7 +153,9 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
     ASSERT_TRUE(log_manager.Init().IsOk());
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
                                                log_manager);
-    const data::Int int_value(4), dummy_value(0);
+    const int expect_value               = 4;
+    const std::vector<uint8_t> int_value = {expect_value, 0, 0, 0};
+    const data::Int dummy_value(0);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
@@ -170,7 +174,7 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
 
     ResultV<int> int_result = block.ReadInt(offset);
     EXPECT_TRUE(int_result.IsOk());
-    EXPECT_EQ(int_result.Get(), int_value.Value());
+    EXPECT_EQ(int_result.Get(), expect_value);
 }
 
 TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
@@ -179,7 +183,8 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     ASSERT_TRUE(log_manager.Init().IsOk());
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
                                                log_manager);
-    const data::Int int_value(4), dummy_value(0);
+    const std::vector<uint8_t> dummy_value = {0, 0, 0, 0};
+    const data::Int int_value(4);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(

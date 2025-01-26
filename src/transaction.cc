@@ -1,6 +1,5 @@
 #include "transaction.h"
 #include "data/char.h"
-#include "data/data_read.h"
 #include "data/int.h"
 
 namespace transaction {
@@ -116,8 +115,9 @@ Result Transaction::Write(const disk::DiskPosition &position,
                               "the block.");
     }
 
-    ResultV<std::unique_ptr<data::DataItem>> previous_data =
-        block.Read(position.Offset(), data.Type());
+    std::vector<uint8_t> previous_item_bytes;
+    Result previous_data = block.ReadBytes(
+        position.Offset(), data.Type().ValueLength(), previous_item_bytes);
     if (previous_data.IsError()) {
         ROLLBACK(previous_data);
         return previous_data + Error("transaction::Transaction::"
@@ -127,7 +127,7 @@ Result Transaction::Write(const disk::DiskPosition &position,
 
     ResultV<dblog::LogSequenceNumber> lsn_result =
         recovery_manager_.WriteLog(dblog::LogOperation(
-            transaction_id_, position, *previous_data.MoveValue().get(), data));
+            transaction_id_, position, previous_item_bytes, data));
     if (lsn_result.IsError()) {
         ROLLBACK(lsn_result);
         return lsn_result + Error("transaction::Transaction::"

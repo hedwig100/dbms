@@ -69,7 +69,6 @@ add_library(disk
 )
 target_link_libraries(disk
   char
-  data_read
   int
 )
 target_include_directories(disk
@@ -119,9 +118,9 @@ add_library(log_record
 )
 target_link_libraries(log_record
   buffer
+  bytes
   char
   checksum
-  data_read
   disk
   int 
   uint32
