@@ -141,10 +141,6 @@ class Block {
     // Writes the `data_item` with the `offset`.
     Result Write(const int offset, const data::DataItem &data_item);
 
-    // Reads the data item with the `offset`.
-    ResultV<std::unique_ptr<data::DataItem>>
-    Read(const int offset, const data::DataType &datatype) const;
-
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;
 

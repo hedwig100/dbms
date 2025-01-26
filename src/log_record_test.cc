@@ -29,7 +29,8 @@ TEST(LogRecordLogTransactionBegin, InstantiationSuccess) {
 TEST(LogRecordLogOperation, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
     const disk::BlockID block_id("file.txt", 3);
-    const data::Int int_value(4), dummy_value(0);
+    const std::vector<uint8_t> int_value = {4, 0, 0, 0};
+    const data::Int dummy_value(0);
     dblog::LogOperation log_op(id, disk::DiskPosition(block_id, 4),
                                /*previous_item=*/int_value,
                                /*new_item=*/dummy_value);
@@ -74,7 +75,8 @@ TEST(LogRecordTransactionBegin, WriteReadCorrectly) {
 }
 
 TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
-    const data::Int previous_value(4), new_value(6);
+    const std::vector<uint8_t> previous_value = {4, 0, 0, 0};
+    const data::Int new_value(6);
     dblog::LogOperation log_record(
         /*transaction_id=*/6,
         disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3), previous_value,
@@ -151,7 +153,9 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
     ASSERT_TRUE(log_manager.Init().IsOk());
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
                                                log_manager);
-    const data::Int int_value(4), dummy_value(0);
+    const int expect_value               = 4;
+    const std::vector<uint8_t> int_value = {expect_value, 0, 0, 0};
+    const data::Int dummy_value(0);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
@@ -170,7 +174,38 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
 
     ResultV<int> int_result = block.ReadInt(offset);
     EXPECT_TRUE(int_result.IsOk());
-    EXPECT_EQ(int_result.Get(), int_value.Value());
+    EXPECT_EQ(int_result.Get(), expect_value);
+}
+
+TEST_F(LogRecordOperationWithFile, InitializedFromLogBytesThenUnDoCorrectly) {
+    disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
+    const disk::BlockID block_id(filename0, 0);
+    const int offset                     = 7;
+    const int expect_value               = 4;
+    const std::vector<uint8_t> log_bytes = {121, expect_value, 0, 0, 0, 0, 0, 0,
+                                            0};
+    dblog::LogOperation log_record(
+        /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
+        /*log_bytes=*/log_bytes, /*data_offset_in_log_bytes=*/1);
+    ASSERT_TRUE(
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
+
+    EXPECT_TRUE(log_record.UnDo(buffer_manager).IsOk());
+    Result flush_result = buffer_manager.Flush(block_id);
+    ASSERT_TRUE(flush_result.IsOk()) << flush_result.Error();
+
+    disk::Block block;
+    Result read_result = disk_manager.Read(block_id, block);
+    EXPECT_TRUE(read_result.IsOk());
+
+    ResultV<int> int_result = block.ReadInt(offset);
+    EXPECT_TRUE(int_result.IsOk());
+    EXPECT_EQ(int_result.Get(), expect_value);
 }
 
 TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
@@ -179,7 +214,8 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     ASSERT_TRUE(log_manager.Init().IsOk());
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
                                                log_manager);
-    const data::Int int_value(4), dummy_value(0);
+    const std::vector<uint8_t> dummy_value = {0, 0, 0, 0};
+    const data::Int int_value(4);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
@@ -199,6 +235,36 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     ResultV<int> int_result = block.ReadInt(offset);
     EXPECT_TRUE(int_result.IsOk());
     EXPECT_EQ(int_result.Get(), int_value.Value());
+}
+
+TEST_F(LogRecordOperationWithFile, InitializedFromLogBytesThenReDoCorrectly) {
+    disk::DiskManager disk_manager(directory_path, 20);
+    dblog::LogManager log_manager(filename1, directory_path, /*block_size=*/20);
+    ASSERT_TRUE(log_manager.Init().IsOk());
+    buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
+                                               log_manager);
+    const disk::BlockID block_id(filename0, 0);
+    const int offset                     = 7;
+    const int expect_value               = 4;
+    const std::vector<uint8_t> log_bytes = {121,          0, 0, 0, 0,
+                                            expect_value, 0, 0, 0};
+    dblog::LogOperation log_record(
+        /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
+        /*log_bytes=*/log_bytes, /*data_offset_in_log_bytes=*/1);
+    ASSERT_TRUE(
+        disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
+
+    EXPECT_TRUE(log_record.ReDo(buffer_manager).IsOk());
+    Result flush_result = buffer_manager.Flush(block_id);
+    ASSERT_TRUE(flush_result.IsOk()) << flush_result.Error();
+
+    disk::Block block;
+    Result read_result = disk_manager.Read(block_id, block);
+    EXPECT_TRUE(read_result.IsOk());
+
+    ResultV<int> int_result = block.ReadInt(offset);
+    EXPECT_TRUE(int_result.IsOk());
+    EXPECT_EQ(int_result.Get(), expect_value);
 }
 
 TWO_FILE_EXISTENT_TEST(LogRecordTransactionEndWithFile, "", "");

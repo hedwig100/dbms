@@ -1,7 +1,7 @@
 #include "log_record.h"
+#include "data/bytes.h"
 #include "data/char.h"
 #include "data/data.h"
-#include "data/data_read.h"
 #include "data/int.h"
 #include "data/uint32.h"
 
@@ -59,23 +59,9 @@ ReadLogTransactionBegin(const std::vector<uint8_t> &log_body_bytes) {
 ResultV<std::unique_ptr<LogRecord>> ReadLogOperationUpdate(
     TransactionID transaction_id, const disk::DiskPosition &offset,
     const std::vector<uint8_t> &log_body_bytes, int bytes_offset) {
-    ResultV<std::unique_ptr<data::DataItem>> prevdata_result =
-        data::ReadTypeData(log_body_bytes, bytes_offset);
-    if (prevdata_result.IsError())
-        return prevdata_result + Error("dblog::ReadLogOperationUpdate() failed "
-                                       "to read previous data.");
-    bytes_offset += prevdata_result.Get()->Type().TypeParameterValueLength();
-
-    ResultV<std::unique_ptr<data::DataItem>> newdata_result = data::ReadData(
-        prevdata_result.Get()->Type(), log_body_bytes, bytes_offset);
-    if (newdata_result.IsError())
-        return newdata_result + Error("dblog::ReadLogOperationUpdate() failed "
-                                      "to read the new data.");
-
-    return ResultV<std::unique_ptr<LogRecord>>(std::move(
-        std::make_unique<LogOperation>(transaction_id, offset,
-                                       *prevdata_result.MoveValue().get(),
-                                       *newdata_result.MoveValue().get())));
+    return ResultV<std::unique_ptr<LogRecord>>(
+        std::move(std::make_unique<LogOperation>(
+            transaction_id, offset, log_body_bytes, bytes_offset)));
 }
 
 ResultV<std::unique_ptr<LogRecord>>
@@ -210,11 +196,11 @@ LogTransactionBegin::LogTransactionBegin(const TransactionID transaction_id)
 }
 
 // This is an super roughly estimated average size of log operation.
-constexpr size_t kEstimatedAverageLogSize = 24;
+constexpr size_t kEstimatedAverageLogSize = 34;
 
 LogOperation::LogOperation(TransactionID transaction_id,
                            const disk::DiskPosition &offset,
-                           const data::DataItem &previous_item,
+                           const std::vector<uint8_t> &previous_item,
                            const data::DataItem &new_item)
     : transaction_id_(transaction_id), offset_(offset) {
     log_body_.reserve(kEstimatedAverageLogSize);
@@ -229,11 +215,37 @@ LogOperation::LogOperation(TransactionID transaction_id,
                          offset.BlockID().BlockIndex());
     data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
 
-    previous_item.Type().WriteTypeParameter(log_body_, log_body_.size());
     previous_item_offset_in_log_body_ = log_body_.size();
-    previous_item.WriteNoFail(log_body_, log_body_.size());
+    data::WriteBytesWithOffsetNoFail(log_body_, log_body_.size(), previous_item,
+                                     0);
     new_item_offset_in_log_body_ = log_body_.size();
     new_item.WriteNoFail(log_body_, log_body_.size());
+}
+
+LogOperation::LogOperation(TransactionID transaction_id,
+                           const disk::DiskPosition &offset,
+                           const std::vector<uint8_t> &log_body,
+                           const int data_offset_in_log_body)
+    : transaction_id_(transaction_id), offset_(offset) {
+    log_body_.reserve(kEstimatedAverageLogSize);
+
+    log_body_.push_back(kLogOperationMask);
+    data::WriteUint32NoFail(log_body_, log_body_.size(), transaction_id);
+    data::WriteUint32NoFail(log_body_, log_body_.size(),
+                            offset.BlockID().Filename().size());
+    data::WriteStringNoFail(log_body_, log_body_.size(),
+                            offset.BlockID().Filename());
+    data::WriteIntNoFail(log_body_, log_body_.size(),
+                         offset.BlockID().BlockIndex());
+    data::WriteIntNoFail(log_body_, log_body_.size(), offset.Offset());
+
+    // The length of the item is half of the (left part of) log body size.
+    const int item_bytesize = (log_body.size() - data_offset_in_log_body) / 2;
+    previous_item_offset_in_log_body_ = log_body_.size();
+    new_item_offset_in_log_body_      = log_body_.size() + item_bytesize;
+
+    data::WriteBytesWithOffsetNoFail(log_body_, log_body_.size(), log_body,
+                                     data_offset_in_log_body);
 }
 
 Result LogOperation::UnDo(buffer::BufferManager &buffer_manager) const {

@@ -41,14 +41,12 @@ Has the following log body.
 
 Has the following log body.
 ```
-| 0b01000000 | transaction_id | filename length | filename | offset | type_parameter | previous_content | new_content | 
+| 0b01000000 | transaction_id | filename length | filename | offset | previous_content | new_content | 
 ```
 
 - filenam length is length of the filename in bytes.
 - filename, offset is the place where the data item is written.
-- type_parameter is the type and any values equipped with the type.
-    - `Int`: 0b00000000
-    - `Char(N)`: | 0b00000001 | N |
+- previous_content and new_content must have the same length.
 
 ### End of a transaction
 

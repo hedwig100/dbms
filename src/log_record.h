@@ -106,11 +106,19 @@ class LogTransactionBegin : public LogRecord {
 // the disk.
 class LogOperation : public LogRecord {
   public:
-    // Initialize a LogOperation log. Either of `previous_item` or `new_item`
-    // must be non-null pointer.
+    // Initialize a LogOperation log. `previous_item` and `new_item` are the
+    // previous and new data. `previous_item_bytes` is the bytes because this is
+    // read from the disk.
     LogOperation(TransactionID transaction_id, const disk::DiskPosition &offset,
-                 const data::DataItem &previous_item,
+                 const std::vector<uint8_t> &previous_item_bytes,
                  const data::DataItem &new_item);
+
+    // Initialize a LogOperation log. `log_body`[`data_offset_in_log_body`:]
+    // corresponds to the bytes of the previous and new data.
+    LogOperation(TransactionID transaction_id, const disk::DiskPosition &offset,
+                 const std::vector<uint8_t> &log_body,
+                 int data_offset_in_log_body);
+
     inline LogType Type() const { return LogType::kOperation; }
     inline TransactionID GetTransactionID() const { return transaction_id_; }
     inline TransactionEndType GetTransactionEndType() const {

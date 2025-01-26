@@ -25,15 +25,6 @@ TEST(DataChar, DataItemSmallCharTypeValueLength) {
     EXPECT_EQ(hello.Value(), "hello ");
 }
 
-TEST(DataChar, DataItemCharWriteTypeParameter) {
-    data::Char hello("hello", 5);
-    std::vector<uint8_t> bytes;
-
-    hello.Type().WriteTypeParameter(bytes, 0);
-    EXPECT_TRUE(bytes.size() >= 2);
-    EXPECT_EQ(bytes[1], 5);
-}
-
 TEST(DataChar, DataItemCharWriteOfSmallBytes) {
     const uint8_t length = 5;
     data::Char hello("hello", length);
@@ -107,26 +98,4 @@ TEST(DataChar, WriteStringNoFailWithOutsideIndexSuccess) {
     auto expect_str = data::ReadString(bytes, 6, 3);
     ASSERT_TRUE(expect_str.IsOk());
     EXPECT_EQ(expect_str.Get(), "abc");
-}
-
-TEST(DataChar, ReadDataCharSuccess) {
-    std::vector<uint8_t> data_bytes = {1, 6, 'a', 'b', 'c', 'd', 'e', 'f'};
-
-    auto datachar_result = data::ReadDataChar(data_bytes, 2, 6);
-    EXPECT_TRUE(datachar_result.IsOk());
-    auto char_ptr = datachar_result.MoveValue();
-    EXPECT_EQ(char_ptr->Type().BaseType(), data::BaseDataType::kChar);
-
-    std::vector<uint8_t> read_bytes;
-    char_ptr->WriteNoFail(read_bytes, 0);
-    const std::vector<uint8_t> expect_read_bytes = {'a', 'b', 'c',
-                                                    'd', 'e', 'f'};
-    EXPECT_EQ(read_bytes, expect_read_bytes);
-}
-
-TEST(DataChar, ReadDataCharShortFail) {
-    std::vector<uint8_t> data_bytes = {1, 8, 'a', 'b', 'c', 'd', 'e', 'f'};
-
-    auto datachar_result = data::ReadDataChar(data_bytes, 2, 8);
-    EXPECT_TRUE(datachar_result.IsError());
 }

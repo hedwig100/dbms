@@ -8,14 +8,6 @@ TEST(DataInt, DataItemIntTypeValue) {
     EXPECT_EQ(two.Value(), 2);
 }
 
-TEST(DataInt, DataItemIntWriteTypeParameter) {
-    data::Int two(2);
-    std::vector<uint8_t> bytes;
-
-    two.Type().WriteTypeParameter(bytes, 0);
-    EXPECT_EQ(bytes.size(), 1);
-}
-
 TEST(DataInt, DataItemIntWriteOfSmallBytes) {
     data::Int two(2);
     std::vector<uint8_t> bytes;
@@ -92,25 +84,4 @@ TEST(DataInt, WriteIntNoFailSuccessWithOutsideIndex) {
     auto expect_int = data::ReadInt(bytes, 28);
     ASSERT_TRUE(expect_int.IsOk());
     EXPECT_EQ(expect_int.Get(), -3);
-}
-
-TEST(DataInt, ReadDataIntSuccess) {
-    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
-
-    auto dataint_result = data::ReadDataInt(data_bytes, 0);
-    EXPECT_TRUE(dataint_result.IsOk());
-    auto int_ptr = dataint_result.MoveValue();
-    EXPECT_EQ(int_ptr->Type().BaseType(), data::BaseDataType::kInt);
-
-    std::vector<uint8_t> read_bytes;
-    int_ptr->WriteNoFail(read_bytes, 0);
-    const std::vector<uint8_t> expect_read_bytes = {'\x4', '\x7', 0, 0};
-    EXPECT_EQ(read_bytes, expect_read_bytes);
-}
-
-TEST(DataInt, ReadDataIntShortFail) {
-    std::vector<uint8_t> data_bytes = {'\x4', '\x7', 0, 0};
-
-    auto dataint_result = data::ReadDataInt(data_bytes, 2);
-    EXPECT_TRUE(dataint_result.IsError());
 }

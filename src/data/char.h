@@ -18,14 +18,7 @@ class TypeChar : public DataType {
 
     inline BaseDataType BaseType() const { return BaseDataType::kChar; }
 
-    inline int TypeParameterLength() const {
-        return /*header size*/ 1 + /*length size*/ 1;
-    }
-
     inline int ValueLength() const { return length_; }
-
-    void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                            const size_t offset) const;
 
     // Returns the length parameter.
     inline uint8_t Length() const { return length_; }
@@ -67,16 +60,6 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 // this functions extends `bytes` when `value` does not fit `bytes`.
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
-
-// Reads Char type from `type_bytes`. The bytes have type parameter.
-ResultV<std::unique_ptr<DataType>>
-ReadTypeChar(const std::vector<uint8_t> &type_bytes, const int type_offset);
-
-// Read Char type value from `data_bytes`. The bytes have only the data.
-// | char value(N byte) |
-ResultV<std::unique_ptr<DataItem>>
-ReadDataChar(const std::vector<uint8_t> &data_bytes, int data_offset,
-             const int length);
 
 } // namespace data
 
