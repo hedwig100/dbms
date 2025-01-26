@@ -6,7 +6,7 @@
 
 一枚のファイルが一つのテーブルのすべてのデータに対応する.
 
-## スキーマのレイアウト
+## ブロック上のレイアウト
 各データはつぎのようにファイル上で保存する.
 ファイルはブロックサイズごとにブロックに分かれている. 各レコードは
 
@@ -19,7 +19,7 @@
 並べられており, 余った分は余りとして使われない.
 
 ```
-| empty flag (1byte) | record | empty flag (1byte) | record | ... | not used|
+| empty flag (1byte) | record | empty flag (1byte) | record | ... | not used |
 ```
 
 empty flagが0x01のときemptyではなく, 0x00のときemptyである.
