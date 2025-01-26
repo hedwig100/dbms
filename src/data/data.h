@@ -27,15 +27,8 @@ class DataType {
     // Type of the data such as integer, char...
     virtual BaseDataType BaseType() const = 0;
 
-    // Byte length of type parameters.
-    virtual int TypeParameterLength() const = 0;
-
     // Byte length of the value.
     virtual int ValueLength() const = 0;
-
-    inline int TypeParameterValueLength() const {
-        return TypeParameterLength() + ValueLength();
-    }
 };
 
 // DataItem represents one data item such as a integer, a char.

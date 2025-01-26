@@ -19,8 +19,6 @@ class TypeInt : public DataType {
 
     inline BaseDataType BaseType() const { return BaseDataType::kInt; }
 
-    inline int TypeParameterLength() const { return /*header size*/ 1; }
-
     inline int ValueLength() const { return kIntBytesize; }
 };
 
@@ -57,15 +55,6 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 // does not fit `bytes`.
 void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                     const int value);
-
-// Reads the type from `type_bytes`. The bytes have type paremeter.
-ResultV<std::unique_ptr<DataType>>
-ReadTypeInt(const std::vector<uint8_t> &type_bytes, const int type_offset);
-
-// Read Int from `data_bytes`. The bytes have only the data itself.
-// | int value(4bytes) |
-ResultV<std::unique_ptr<DataItem>>
-ReadDataInt(const std::vector<uint8_t> &data_bytes, int data_offset);
 
 } // namespace data
 

@@ -46,24 +46,4 @@ void Char::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
     WriteStringNoFail(bytes, offset, value_);
 }
 
-ResultV<std::unique_ptr<DataType>>
-ReadTypeChar(const std::vector<uint8_t> &type_bytes, const int type_offset) {
-    if (type_offset + 1 >= type_bytes.size())
-        return Error("data::ReadTypeChar() type parameter is too short.");
-    uint8_t length = type_bytes[type_offset + 1];
-    return ResultV<std::unique_ptr<DataType>>(
-        std::move(std::make_unique<TypeChar>(length)));
-}
-
-ResultV<std::unique_ptr<DataItem>>
-ReadDataChar(const std::vector<uint8_t> &data_bytes, const int data_offset,
-             const int length) {
-    ResultV<std::string> char_result =
-        ReadString(data_bytes, data_offset, length);
-    if (char_result.IsError())
-        return char_result +
-               Error("data::ReadDataChar() failed to read string from bytes.");
-    return ResultV<std::unique_ptr<DataItem>>(
-        std::move(std::make_unique<Char>(char_result.Get(), length)));
-}
 } // namespace data
