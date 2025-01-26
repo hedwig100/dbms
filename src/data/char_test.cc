@@ -25,15 +25,6 @@ TEST(DataChar, DataItemSmallCharTypeValueLength) {
     EXPECT_EQ(hello.Value(), "hello ");
 }
 
-TEST(DataChar, DataItemCharWriteTypeParameter) {
-    data::Char hello("hello", 5);
-    std::vector<uint8_t> bytes;
-
-    hello.Type().WriteTypeParameter(bytes, 0);
-    EXPECT_TRUE(bytes.size() >= 2);
-    EXPECT_EQ(bytes[1], 5);
-}
-
 TEST(DataChar, DataItemCharWriteOfSmallBytes) {
     const uint8_t length = 5;
     data::Char hello("hello", length);

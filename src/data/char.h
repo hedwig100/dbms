@@ -24,9 +24,6 @@ class TypeChar : public DataType {
 
     inline int ValueLength() const { return length_; }
 
-    void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                            const size_t offset) const;
-
     // Returns the length parameter.
     inline uint8_t Length() const { return length_; }
 

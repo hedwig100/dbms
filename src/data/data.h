@@ -33,11 +33,6 @@ class DataType {
     // Byte length of the value.
     virtual int ValueLength() const = 0;
 
-    // Write a byte sequence that represents type parameters to `bytes` with
-    // `offset`. For example, type parameters are length in the case of Char.
-    virtual void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                                    const size_t offset) const = 0;
-
     inline int TypeParameterValueLength() const {
         return TypeParameterLength() + ValueLength();
     }

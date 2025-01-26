@@ -8,14 +8,6 @@ TEST(DataInt, DataItemIntTypeValue) {
     EXPECT_EQ(two.Value(), 2);
 }
 
-TEST(DataInt, DataItemIntWriteTypeParameter) {
-    data::Int two(2);
-    std::vector<uint8_t> bytes;
-
-    two.Type().WriteTypeParameter(bytes, 0);
-    EXPECT_EQ(bytes.size(), 1);
-}
-
 TEST(DataInt, DataItemIntWriteOfSmallBytes) {
     data::Int two(2);
     std::vector<uint8_t> bytes;

@@ -26,12 +26,6 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteInt(bytes, offset, value);
 }
 
-void TypeInt::WriteTypeParameter(std::vector<uint8_t> &bytes,
-                                 const size_t offset) const {
-    if (offset + 1 > bytes.size()) bytes.resize(offset + 1);
-    bytes[offset] = kTypeParameterInt;
-}
-
 Result Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
     return WriteInt(bytes, offset, value_);
 }

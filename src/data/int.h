@@ -22,9 +22,6 @@ class TypeInt : public DataType {
     inline int TypeParameterLength() const { return /*header size*/ 1; }
 
     inline int ValueLength() const { return kIntBytesize; }
-
-    void WriteTypeParameter(std::vector<uint8_t> &bytes,
-                            const size_t offset) const;
 };
 
 const TypeInt kTypeInt;
