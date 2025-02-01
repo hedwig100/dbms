@@ -213,6 +213,26 @@ target_link_libraries(sample_lib_test
 )
 gtest_discover_tests(sample_lib_test)
 
+## schema
+add_library(schema
+  schema.cc
+)
+target_include_directories(schema
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(schema_test
+  schema_test.cc
+)
+target_include_directories(schema_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(schema_test
+  schema
+  GTest::gtest_main
+)
+gtest_discover_tests(schema_test)
+
 ## transaction
 add_library(transaction
   transaction.cc
