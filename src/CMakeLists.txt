@@ -234,6 +234,33 @@ target_link_libraries(schema_test
 )
 gtest_discover_tests(schema_test)
 
+## table_scan
+add_library(table_scan
+  table_scan.cc
+)
+target_link_libraries(table_scan
+  byte 
+  disk
+  schema
+  transaction
+)
+target_include_directories(table_scan
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(table_scan_test
+  table_scan_test.cc
+)
+target_include_directories(table_scan_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(table_scan_test
+  int
+  table_scan
+  GTest::gtest_main
+)
+gtest_discover_tests(table_scan_test)
+
 ## transaction
 add_library(transaction
   transaction.cc
