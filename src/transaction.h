@@ -23,6 +23,9 @@ class Transaction {
                 dblog::LogManager &log_manager,
                 dbconcurrency::LockTable &lock_table);
 
+    // Blocksize of the disk.
+    inline int BlockSize() const { return disk_manager_.BlockSize(); }
+
     // Reads bytes from `position` with `length`.
     ResultV<std::vector<uint8_t>> ReadBytes(const disk::DiskPosition &position,
                                             const size_t length);
