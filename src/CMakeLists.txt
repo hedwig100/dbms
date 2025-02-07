@@ -68,6 +68,7 @@ add_library(disk
   disk.cc
 )
 target_link_libraries(disk
+  byte
   char
   int
 )
