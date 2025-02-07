@@ -1,6 +1,27 @@
 enable_testing()
 include(GoogleTest)
 
+## byte
+add_library(byte
+  byte.cc
+)
+target_include_directories(byte
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(byte_test
+  byte_test.cc
+)
+target_include_directories(byte_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
+)
+target_link_libraries(byte_test
+  byte
+  GTest::gtest_main
+)
+gtest_discover_tests(byte_test)
+
+
 ## bytes
 add_library(bytes
   bytes.cc
