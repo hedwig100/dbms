@@ -1,5 +1,6 @@
 #include "disk.h"
 
+#include "data/byte.h"
 #include "data/char.h"
 #include "data/int.h"
 #include <algorithm>
@@ -79,16 +80,11 @@ Block::Block(const int block_size, const std::vector<uint8_t> &content) {
 }
 
 ResultV<uint8_t> Block::ReadByte(const int offset) const {
-    if (offset < 0 || offset >= content_.size())
-        return Error("disk::Block::ReadByte() offset should be fit the size.");
-    return Ok(content_[offset]);
+    return data::ReadByte(content_, offset);
 }
 
 Result Block::WriteByte(const int offset, const uint8_t value) {
-    if (offset < 0 || offset >= content_.size())
-        return Error("disk::Block::WriteByte() offset should be fit the size.");
-    content_[offset] = value;
-    return Ok();
+    return data::WriteByte(content_, offset, value);
 }
 
 Result Block::ReadBytes(const int offset, const size_t length,

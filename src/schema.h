@@ -53,12 +53,18 @@ class Layout {
         return offsets.at(fieldname);
     }
 
+    // Returns the length of the field. If the field does not exist, raise an
+    // exception.
+    int Length(const std::string &fieldname) const {
+        return field_lengths.at(fieldname);
+    }
+
     // Returns the length of the record (schema).
     int Length() const { return length; }
 
   private:
-    Schema schema;
     int length;
+    std::unordered_map<std::string, int> field_lengths;
     std::unordered_map<std::string, int> offsets;
 };
 

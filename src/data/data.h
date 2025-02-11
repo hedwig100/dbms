@@ -15,10 +15,10 @@ enum class BaseDataType {
 
     // Fixed length strings
     kChar = 1,
-};
 
-constexpr uint8_t kTypeParameterInt  = 0b00000000;
-constexpr uint8_t kTypeParameterChar = 0b00000001;
+    // Byte
+    kByte = 2,
+};
 
 // DataType represents the type of data such as integer, char with additional
 // parameters such as length of the string.

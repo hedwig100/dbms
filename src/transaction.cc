@@ -52,6 +52,20 @@ Transaction::Transaction(disk::DiskManager &disk_manager,
         read_block                                                             \
     }
 
+READ_FUNCTION(
+    ReadByte,
+    ResultV<uint8_t> Transaction::ReadByte(const disk::DiskPosition &position),
+    {
+        ResultV<uint8_t> byte_result = block.ReadByte(position.Offset());
+        if (byte_result.IsError()) {
+            ROLLBACK(byte_result);
+            return byte_result + Error("transaction::Transaction::"
+                                       "ReadByte() failed to "
+                                       "read the byte.");
+        }
+        return byte_result;
+    })
+
 READ_FUNCTION(ReadBytes,
               ResultV<std::vector<uint8_t>> Transaction::ReadBytes(
                   const disk::DiskPosition &position, const size_t length),
