@@ -150,6 +150,30 @@ target_include_directories(macro_test
   INTERFACE ${PROJECT_SOURCE_DIR}/src
 )
 
+## metadata
+add_library(metadata
+  metadata.cc
+)
+target_link_libraries(metadata
+  schema
+  transaction
+)
+target_include_directories(metadata
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(metadata_test
+  metadata_test.cc
+)
+target_include_directories(metadata_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(metadata_test
+  metadata
+  GTest::gtest_main
+)
+gtest_discover_tests(metadata_test)
+
 ## recovery
 add_library(recovery
   recovery.cc
