@@ -240,9 +240,7 @@ ResultV<size_t> DiskManager::Size(const std::string &filename) {
         std::uintmax_t filesize =
             std::filesystem::file_size(directory_path_ + filename);
         return Ok((filesize / block_size_));
-    } catch (std::filesystem::filesystem_error) {
-        return Error("disk::DiskManager::Size() failed to compute file size.");
-    }
+    } catch (std::filesystem::filesystem_error) { return Ok(0); }
 }
 
 Result DiskManager::AllocateNewBlocks(const BlockID &block_id) {

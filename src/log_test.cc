@@ -82,11 +82,11 @@ TEST_F(LogFileExistentLogManager, InitSuccess) {
     EXPECT_TRUE(log_manager.Init().IsOk());
 }
 
-TEST_F(LogFileNonExistentLogManager, InitFail) {
+TEST_F(LogFileNonExistentLogManager, InitSuccess) {
     dblog::LogManager log_manager(/*log_filename=*/non_existent_filename,
                                   /*log_directory_name=*/directory_path,
                                   /*block_size=*/20);
-    EXPECT_TRUE(log_manager.Init().IsError());
+    EXPECT_TRUE(log_manager.Init().IsOk());
 }
 
 TEST_F(LogFileExistentLogManager, WriteLogSuccess) {
