@@ -30,21 +30,9 @@ class TableScanTest : public ::testing::Test {
             std::filesystem::create_directories(log_directory_path);
         }
 
-        std::ofstream data_file(data_directory_path + data_filename);
-        if (data_file.is_open()) { data_file.close(); }
-        std::ofstream log_file(log_directory_path + log_filename);
-        if (log_file.is_open()) { log_file.close(); }
-
         Result result = log_manager.Init();
         if (result.IsError()) {
             throw std::runtime_error("Failed to initialize log manager " +
-                                     result.Error());
-        }
-
-        result = data_disk_manager.AllocateNewBlocks(
-            disk::BlockID(data_filename, /*block_id=*/0));
-        if (result.IsError()) {
-            throw std::runtime_error("Failed to allocate new blocks " +
                                      result.Error());
         }
     }
@@ -75,14 +63,13 @@ class TableScanTest : public ::testing::Test {
 
 TEST_F(TableScanTest, InitSuccess) {
     scan::TableScan table_scan(transaction, table_name, layout);
-    ResultV<bool> result = table_scan.Init();
+    Result result = table_scan.Init();
     EXPECT_TRUE(result.IsOk()) << result.Error();
-    EXPECT_FALSE(result.Get()); // because there is no row.
 }
 
 TEST_F(TableScanTest, InsertSuccess) {
     scan::TableScan table_scan(transaction, table_name, layout);
-    ResultV<bool> result = table_scan.Init();
+    Result result = table_scan.Init();
     ASSERT_TRUE(result.IsOk()) << result.Error();
 
     Result insert_result = table_scan.Insert();
@@ -96,7 +83,6 @@ TEST_F(TableScanTest, InsertSuccess) {
                                          layout);
     result = table_scan_for_check.Init();
     EXPECT_TRUE(result.IsOk()) << result.Error();
-    EXPECT_TRUE(result.Get()); // because there is a row.
     ResultV<bool> next_result = table_scan_for_check.Next();
     EXPECT_TRUE(next_result.IsOk()) << next_result.Error();
     EXPECT_TRUE(next_result.Get()); // because there is a row.
@@ -107,7 +93,7 @@ TEST_F(TableScanTest, InsertSuccess) {
 
 TEST_F(TableScanTest, UpdateSuccess) {
     scan::TableScan table_scan(transaction, table_name, layout);
-    ResultV<bool> result = table_scan.Init();
+    Result result = table_scan.Init();
     ASSERT_TRUE(result.IsOk()) << result.Error();
 
     Result insert_result = table_scan.Insert();
@@ -125,7 +111,6 @@ TEST_F(TableScanTest, UpdateSuccess) {
                                          layout);
     result = table_scan_for_check.Init();
     EXPECT_TRUE(result.IsOk()) << result.Error();
-    EXPECT_TRUE(result.Get()); // because there is a row.
     ResultV<int> int_result = table_scan_for_check.GetInt("field1");
     EXPECT_TRUE(int_result.IsOk()) << int_result.Error();
     EXPECT_EQ(int_result.Get(), 123);
@@ -142,7 +127,7 @@ TEST_F(TableScanTest, UpdateSuccess) {
 
 TEST_F(TableScanTest, DeleteSuccess) {
     scan::TableScan table_scan(transaction, table_name, layout);
-    ResultV<bool> result = table_scan.Init();
+    Result result = table_scan.Init();
     ASSERT_TRUE(result.IsOk()) << result.Error();
 
     Result insert_result = table_scan.Insert();
