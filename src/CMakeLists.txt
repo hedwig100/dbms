@@ -156,6 +156,7 @@ add_library(metadata
 )
 target_link_libraries(metadata
   schema
+  table_scan
   transaction
 )
 target_include_directories(metadata
@@ -169,6 +170,8 @@ target_include_directories(metadata_test
   PUBLIC ${PROJECT_SOURCE_DIR}/src
 )
 target_link_libraries(metadata_test
+  char 
+  int
   metadata
   GTest::gtest_main
 )
