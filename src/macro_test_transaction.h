@@ -15,8 +15,8 @@ const std::string data_filename       = "filename1";
 class TransactionTest : public ::testing::Test {
   protected:
     TransactionTest()
-        : data_disk_manager(data_directory_path, /*block_size=*/16),
-          log_manager(log_filename, log_directory_path, /*block_size=*/16),
+        : data_disk_manager(data_directory_path, /*block_size=*/128),
+          log_manager(log_filename, log_directory_path, /*block_size=*/128),
           buffer_manager(/*buffer_size=*/16, data_disk_manager, log_manager),
           lock_table(/*wait_time_sec=*/0.1),
           transaction_for_check(data_disk_manager, buffer_manager, log_manager,
