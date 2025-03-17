@@ -25,8 +25,8 @@ class TableScan : UpdateScan {
     // Get the bytes value of a field in the current row.
     ResultV<std::vector<uint8_t>> GetBytes(const std::string &fieldname);
 
-    // Get the string of a field in the current row.
-    ResultV<std::string> GetString(const std::string &fieldname);
+    // Get the string of the type CHAR in the current row.
+    ResultV<std::string> GetChar(const std::string &fieldname);
 
     // Get the int of a field in the current row.
     ResultV<int> GetInt(const std::string &fieldname);

@@ -7,7 +7,7 @@ This document explains external specification of dbms (interface).
 This DBMS supports the following types.
 
 - `INT`: a 32bit integer
-- `CHAR(N)`: a string represented as ASCII code of length $N\ (0 \leq N < 256)$. 
+- `CHAR(N)`: a string represented as ASCII code of length $N\ (0 \leq N < 256)$, trailing spaces are removed.
 
 ## DML
 

@@ -54,6 +54,11 @@ Result
 TableManager::UpdateTableMetadata(const std::string &table_name,
                                   const schema::Layout &layout,
                                   transaction::Transaction &transaction) {
+    if (table_name.size() > kMaxTablename) {
+        return Error(
+            "TableManager::UpdateTableMetadata() table name is too long");
+    }
+
     scan::TableScan table_scan(transaction, kTableTableName, kTableLayout);
     FIRST_TRY(table_scan.Init());
     TRY(table_scan.Insert());
@@ -69,6 +74,11 @@ Result TableManager::UpdateFieldMetadata(
     scan::TableScan field_scan(transaction, kFieldTableName, kFieldLayout);
     FIRST_TRY(field_scan.Init());
     for (const schema::Field &field : schema.Fields()) {
+        if (field.FieldName().size() > kMaxFieldname) {
+            return Error(
+                "TableManager::UpdateFieldMetadata() field name is too long");
+        }
+
         TRY(field_scan.Insert());
         TRY(field_scan.Update("table_name",
                               data::Char(table_name, kMaxTablename)));
@@ -91,7 +101,7 @@ TableManager::GetLayout(const std::string &table_name,
     scan::TableScan table_scan(transaction, kTableTableName, kTableLayout);
     FIRST_TRY(table_scan.Init());
     while (true) {
-        TRY_VALUE(name, table_scan.GetString("table_name"));
+        TRY_VALUE(name, table_scan.GetChar("table_name"));
         if (name.Get() == table_name) {
             TRY_VALUE(slot_size_result, table_scan.GetInt("slot_size"));
             slot_size = slot_size_result.Get();
@@ -112,9 +122,9 @@ TableManager::GetLayout(const std::string &table_name,
     TRY(field_scan.Init());
     std::unordered_map<std::string, int> field_lengths, offsets;
     while (true) {
-        TRY_VALUE(name, field_scan.GetString("table_name"));
+        TRY_VALUE(name, field_scan.GetChar("table_name"));
         if (name.Get() == table_name) {
-            TRY_VALUE(field_name, field_scan.GetString("field_name"));
+            TRY_VALUE(field_name, field_scan.GetChar("field_name"));
             TRY_VALUE(field_length, field_scan.GetInt("field_length"));
             TRY_VALUE(field_offset, field_scan.GetInt("field_offset"));
             field_lengths[field_name.Get()] = field_length.Get();

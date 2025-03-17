@@ -80,11 +80,11 @@ TableScan::GetBytes(const std::string &fieldname) {
     return transaction_.ReadBytes(position, layout_.Length(fieldname));
 }
 
-ResultV<std::string> TableScan::GetString(const std::string &fieldname) {
+ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
                                     layout_.Offset(fieldname));
-    return transaction_.ReadString(position, layout_.Length(fieldname));
+    return transaction_.ReadChar(position, layout_.Length(fieldname));
 }
 
 ResultV<int> TableScan::GetInt(const std::string &fieldname) {

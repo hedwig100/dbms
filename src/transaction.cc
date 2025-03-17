@@ -110,6 +110,19 @@ READ_FUNCTION(ReadString,
                   return char_result;
               })
 
+ResultV<std::string> Transaction::ReadChar(const disk::DiskPosition &position,
+                                           const size_t length) {
+    ResultV<std::string> char_result = ReadString(position, length);
+    if (char_result.IsError()) {
+        return char_result +
+               Error("transaction::Transaction::ReadChar() failed to "
+                     "read the char.");
+    }
+    std::string char_value = char_result.Get();
+    data::RightTrim(char_value);
+    return Ok(char_value);
+}
+
 Result Transaction::Write(const disk::DiskPosition &position,
                           const data::DataItem &data) {
     Result lock_result = concurrent_manager_.WriteLock(position.BlockID());

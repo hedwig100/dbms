@@ -61,6 +61,9 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
 
+// Trims the trailing spaces of the string.
+void RightTrim(std::string &value);
+
 } // namespace data
 
 #endif // _DATATYPE_CHAR_H

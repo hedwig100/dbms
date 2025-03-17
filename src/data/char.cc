@@ -1,5 +1,6 @@
 #include "char.h"
 #include "uint32.h"
+#include <algorithm>
 #include <cstring>
 #include <memory>
 
@@ -44,6 +45,13 @@ Result Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
 
 void Char::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
     WriteStringNoFail(bytes, offset, value_);
+}
+
+void RightTrim(std::string &value) {
+    value.erase(std::find_if(value.rbegin(), value.rend(),
+                             [](char ch) { return !std::isspace(ch); })
+                    .base(),
+                value.end());
 }
 
 } // namespace data
