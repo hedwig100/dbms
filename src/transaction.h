@@ -40,6 +40,11 @@ class Transaction {
     ResultV<std::string> ReadString(const disk::DiskPosition &position,
                                     const size_t length);
 
+    // Reads a value of type CHAR with `length` from `position`. The trailing
+    // spaces are removed as in the CHAR type specification.
+    ResultV<std::string> ReadChar(const disk::DiskPosition &position,
+                                  const size_t length);
+
     // Writes the data to `position`.
     Result Write(const disk::DiskPosition &position,
                  const data::DataItem &data);

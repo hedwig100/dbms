@@ -9,7 +9,6 @@
 
 namespace scan {
 
-// TODO: when implementing metadata management, move this function to the file.
 std::string TableFileName(const std::string &table_name);
 
 class TableScan : UpdateScan {
@@ -18,14 +17,16 @@ class TableScan : UpdateScan {
               schema::Layout layout);
 
     // Initialize the scan, ready to read the first row.
-    // If there is no row, return false.
-    ResultV<bool> Init();
+    Result Init();
 
     // Move to the next row. Returns false if there are no more rows.
     ResultV<bool> Next();
 
     // Get the bytes value of a field in the current row.
     ResultV<std::vector<uint8_t>> GetBytes(const std::string &fieldname);
+
+    // Get the string of the type CHAR in the current row.
+    ResultV<std::string> GetChar(const std::string &fieldname);
 
     // Get the int of a field in the current row.
     ResultV<int> GetInt(const std::string &fieldname);
@@ -44,6 +45,9 @@ class TableScan : UpdateScan {
     Result Close();
 
   private:
+    // When the database file is empty, create the file and its first block.
+    Result CreateFirstBlock();
+
     // Move to the next slot in the table. If there is a slot, returns true,
     // otherwise return false. It does not check if the slot is not empty.
     ResultV<bool> NextSlot();

@@ -73,6 +73,9 @@ class LogIterator {
   public:
     LogIterator(disk::DiskManager &disk_manager,
                 const disk::DiskPosition &log_start, int log_body_length);
+    LogIterator(disk::DiskManager &disk_manager,
+                const disk::DiskPosition &log_start, int log_body_length,
+                const internal::LogBlock &block);
 
     LogIterator(const LogIterator &other);
 

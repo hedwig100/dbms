@@ -457,7 +457,8 @@ TEST_F(TempFileTest, DiskManagerSizeSucceeds) {
 TEST_F(NonExistentFileTest, DiskManagerSizeFails) {
     disk::DiskManager disk_manager(directory_path, /*block_size=*/3);
     const auto expect_ok = disk_manager.Size(non_existent_filename);
-    EXPECT_TRUE(expect_ok.IsError());
+    EXPECT_TRUE(expect_ok.IsOk());
+    EXPECT_EQ(expect_ok.Get(), 0);
 }
 
 TEST_F(TempFileTest, DiskManagerAllocateNewFileSucceeds) {

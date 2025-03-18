@@ -9,6 +9,40 @@
 // The code in this file is partially from the following blog.
 // https://agtn.hatenablog.com/entry/2016/07/01/233009
 
+#define CAT_IMPL(s1, s2) s1##s2
+#define CAT(s1, s2) CAT_IMPL(s1, s2)
+#define UNIQUE_RESULT_ID() CAT(res, __LINE__)
+
+// This macro is used to return the result of the expression. If the expression
+// is an error, the function returns the error. Otherwise, the function assigns
+// the result to the variable `res`.
+#define TRY_VALUE(res, expr)                                                   \
+    auto res = expr;                                                           \
+    if (res.IsError()) {                                                       \
+        return res + result::Error(std::string(__func__) + "() [" + __FILE__ + \
+                                   "] failed with " #expr);                    \
+    }
+
+// This macro is used to execute the expression. If the expression is an error,
+// the function returns the error.
+#define SOLO_TRY(expr) TRY_VALUE(UNIQUE_RESULT_ID(), expr)
+
+// This macro is used to execute the expression. If the expression is an error,
+// the function returns the error. Otherwise, this macro assigns the result to
+// the variable `macro_result`.
+#define FIRST_TRY(expr) TRY_VALUE(macro_result, expr)
+
+// This macro is used to execute the expression. If the expression is an error,
+// the function returns the error. Otherwise, this macro assigns the result to
+// the variable `macro_result`. This macro is used after `FIRST_TRY`.
+#define TRY(expr)                                                              \
+    macro_result = expr;                                                       \
+    if (macro_result.IsError()) {                                              \
+        return macro_result +                                                  \
+               result::Error(std::string(__func__) + "() [" + __FILE__ +       \
+                             "] failed with " #expr);                          \
+    }
+
 namespace result {
 
 // Has either the expected value or an error.

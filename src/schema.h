@@ -46,6 +46,10 @@ class Schema {
 class Layout {
   public:
     explicit Layout(const Schema &schema);
+    explicit Layout(int length,
+                    std::unordered_map<std::string, int> field_lengths,
+                    std::unordered_map<std::string, int> offsets)
+        : length(length), field_lengths(field_lengths), offsets(offsets) {}
 
     // Returns the offset of the field. If the field does not exist, raise an
     // exception.

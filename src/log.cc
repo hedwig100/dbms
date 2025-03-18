@@ -219,6 +219,10 @@ ResultV<LogIterator> ReadPreviousLog(disk::DiskManager &disk_manager,
         -(kLogHeaderLength + log_body_length_result.Get() + kLogLengthBytesize),
         disk_manager.BlockSize());
 
+    if (previous_log_start.BlockID() == log_start.BlockID()) {
+        return Ok(LogIterator(disk_manager, previous_log_start,
+                              log_body_length_result.Get(), block));
+    }
     return Ok(LogIterator(disk_manager, previous_log_start,
                           log_body_length_result.Get()));
 }
@@ -228,6 +232,13 @@ LogIterator::LogIterator(disk::DiskManager &disk_manager,
                          int log_body_length)
     : disk_manager_(disk_manager), log_start_(log_start),
       log_body_length_(log_body_length) {}
+
+LogIterator::LogIterator(disk::DiskManager &disk_manager,
+                         const disk::DiskPosition &log_start,
+                         int log_body_length, const internal::LogBlock &block)
+    : disk_manager_(disk_manager), log_start_(log_start),
+      log_body_length_(log_body_length),
+      log_start_block_(new internal::LogBlock(block)) {}
 
 LogIterator::LogIterator(const LogIterator &other)
     : disk_manager_(other.disk_manager_), log_start_(other.log_start_),

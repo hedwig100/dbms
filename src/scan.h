@@ -16,7 +16,7 @@ class Scan {
   public:
     // Initialize the scan, ready to read the first row.
     // If there is no row, return false.
-    virtual ResultV<bool> Init() = 0;
+    virtual Result Init() = 0;
 
     // Move to the next row. Returns false if there are no more rows.
     virtual ResultV<bool> Next() = 0;

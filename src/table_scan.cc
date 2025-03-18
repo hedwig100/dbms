@@ -18,27 +18,37 @@ TableScan::TableScan(transaction::Transaction &transaction,
                      std::string table_name, schema::Layout layout)
     : transaction_(transaction), table_name_(table_name), layout_(layout) {}
 
-ResultV<bool> TableScan::Init() {
+Result TableScan::Init() {
     SetBlockNumber(0);
     slot_ = 0;
 
-    // TODO: when implementing metadata management, create a table file and
-    // the irst empty row when creating the table. Otherwise, the IsUsed()
-    // always fails.
+    ResultV<size_t> size = transaction_.Size(TableFileName(table_name_));
+    if (size.IsError()) {
+        return size +
+               Error("TableScan::Init() failed to get the size of the file");
+    }
+    if (size.Get() == 0) {
+        Result result = CreateFirstBlock();
+        if (result.IsError())
+            return result +
+                   Error("TableScan::Init() failed to create the first block.");
+        return Ok();
+    }
+
     ResultV<bool> is_used = IsUsed();
     if (is_used.IsError()) {
         return is_used +
                Error("TableScan::Init() failed to check if the slot is used");
     }
-
-    if (is_used.Get()) { return Ok(true); }
+    if (is_used.Get()) { return Ok(); }
 
     ResultV<bool> next = Next();
     if (next.IsError()) {
         return next + Error("TableScan::Init() failed to get the next slot");
     }
 
-    return next;
+    if (next.Get()) { return Ok(); }
+    return Insert();
 }
 
 ResultV<bool> TableScan::Next() {
@@ -68,6 +78,13 @@ TableScan::GetBytes(const std::string &fieldname) {
                                 /*offset=*/slot_ * layout_.Length() +
                                     layout_.Offset(fieldname));
     return transaction_.ReadBytes(position, layout_.Length(fieldname));
+}
+
+ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
+    disk::DiskPosition position(/*block_id=*/block_id_,
+                                /*offset=*/slot_ * layout_.Length() +
+                                    layout_.Offset(fieldname));
+    return transaction_.ReadChar(position, layout_.Length(fieldname));
 }
 
 ResultV<int> TableScan::GetInt(const std::string &fieldname) {
@@ -125,6 +142,17 @@ Result TableScan::Close() { return Ok(); }
 
 bool DoesNextSlotExist(int slot, int slot_size, int whole_size) {
     return (slot + 2) * slot_size <= whole_size;
+}
+
+Result TableScan::CreateFirstBlock() {
+    // Here, `block_id_` must be the first block of the database file.
+    Result allocate = transaction_.AllocateNewBlocks(block_id_);
+    if (allocate.IsError()) {
+        return allocate +
+               Error("TableScan::CreateFirstBlock() failed to allocate new "
+                     "blocks");
+    }
+    return Ok();
 }
 
 ResultV<bool> TableScan::NextSlot() {

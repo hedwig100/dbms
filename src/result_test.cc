@@ -10,6 +10,18 @@ TEST(ResultVE, IsOk) {
     EXPECT_FALSE(err.IsOk());
 }
 
+result::Result fail() { return result::Error("fail"); }
+
+result::Result test() {
+    TRY_VALUE(value, fail());
+    return result::Ok();
+}
+
+TEST(ResultVE, MacroTryReturn) {
+    const auto result = test();
+    EXPECT_TRUE(result.IsError()) << result.Error();
+}
+
 TEST(ResultVE, IsOkWhenValueAndErrorTypeIsSame) {
     const result::ResultVE<int, int> ok(4, true);
     EXPECT_TRUE(ok.IsOk());
