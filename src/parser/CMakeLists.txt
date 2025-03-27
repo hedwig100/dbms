@@ -33,6 +33,7 @@ add_library(parser
 target_include_directories(parser
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC ${PROJECT_SOURCE_DIR}/src
 )
 target_link_libraries(parser
     sql

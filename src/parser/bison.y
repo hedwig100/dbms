@@ -7,11 +7,31 @@
 
 /* Flex-related declaration */
 typedef void* yyscan_t;
+
+#define YY_USER_ACTION                        \
+  yylloc->first_line = yylloc->last_line;     \
+  yylloc->first_column = yylloc->last_column; \
+  for (int i = 0; yytext[i] != '\0'; i++) {   \
+    if (yytext[i] == '\n') {                  \
+      yylloc->last_line++;                    \
+      yylloc->last_column = 0;                \
+    } else {                                  \
+      yylloc->last_column++;                  \
+    }                                         \
+  }
 }
 
 %define api.pure full
 
+// (https://www.gnu.org/software/bison/manual/html_node/Location-Type.html)
 %locations
+%initial-action {
+  // Initialize
+  @$.first_column = 0;
+  @$.last_column = 0;
+  @$.first_line = 0;
+  @$.last_line = 0;
+};
 
 // Define additional parameters for yylex (http://www.gnu.org/software/bison/manual/html_node/Pure-Calling.html)
 %lex-param   { yyscan_t scanner }
@@ -67,16 +87,16 @@ input
     ;
 
 select_statement
-    : SELECT column FROM table ';' { std::cerr << "SELECT!!\n"; }
+    : SELECT column FROM table ';'
     ;
 
 column
-    : INTEGER_VAL { std::cerr << "integer!!\n"; }
-    | IDENTIFIER { std::cerr << "ident!!\n"; }
+    : INTEGER_VAL
+    | IDENTIFIER
     ;
 
 table
-    : IDENTIFIER { std::cerr << "ident!!\n"; }
+    : IDENTIFIER
     ;
 
 %%

@@ -53,7 +53,11 @@ FROM {return TOKEN_FROM;}
 %%
 
 void yyerror(YYLTYPE *llocp, sql::ParseResult* result, yyscan_t scanner, char const *msg) {
-    fprintf(stderr, "%s\n", msg);
+    char buffer[100];
+    sprintf(buffer, "Failed to parse at L%d,C%d -> L%d,C%d (near ' %s '): %s",
+            llocp->first_line, llocp->first_column,
+            llocp->last_line, llocp->last_column, yyget_text(scanner), msg);
+    result->SetError(buffer);
 }
 
 
