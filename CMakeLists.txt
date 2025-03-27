@@ -16,5 +16,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
+
 set(CMAKE_CXX_FLAGS_DEBUG "-DMYDB_DEBUG")
 add_subdirectory(src)

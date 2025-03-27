@@ -1,25 +1,25 @@
 # Specification
 
-このドキュメントではこのDBMSのインターフェースについて説明する.
+This document explains external specification of dbms (interface).
 
-## 型
-このDBMSは次のような型をサポートする. 
+## Data types
 
-- `INT`: 32ビット整数型
-- `CHAR(N)`: 長さN(0 <= N < 256)のASCIIコードで表現される文字列、末尾のスペースは削除される。
+This DBMS supports the following types.
+
+- `INT`: a 32bit integer
+- `CHAR(N)`: a string represented as ASCII code of length $N\ (0 \leq N < 256)$, trailing spaces are removed.
 
 ## DML
 
-以下のDMLをサポートする.
+Supports the following DML;
 
-- `SELECT`: データを読む.
-- `INSERT`: データを追加する. 
-- `UPDATE`: データを更新する. 
-- `DELETE`: データを消す.
+- `SELECT`: read data
+- `INSERT`: add data
+- `UPDATE`: update data
+- `DELETE`: delete data
 
-SQLステートメントとしては以下をサポートする.
-`*`は0回以上の繰り返し, `|` はいずれか一つ, `?`はそれが0個か1個あることを示す.
-`{any characters}, {any numbers}`はそれぞれ任意の文字列, 任意の数字を表す.
+This dbms supports the following sql statements.
+`*` means repeat more than 0 times, `|` means either of the side, `?` means 0 or 1 expression.
 
 ```
 <statement> =( <select-statement> | <insert-statement> | <update-statement> | <delete-statement> ) ";"
@@ -41,10 +41,10 @@ SQLステートメントとしては以下をサポートする.
 <fieldnames> = <fieldname> ("," <fieldname>)*
 <fieldname> = (<tablename> ".")? <name>
 <tablename> = <name>
-<name> = [A-Za-z] ([0-9A-Za-z])
+<name> = [_A-Za-z] ([0-9A-Za-z])
 ```
 
-上の条件を満たすステートメントは例えば, 
+For example, the following statements satisfy the grammer.
 ```
 SELECT a, b FROM A;
 SELECT A.a, B.b FROM A INNER JOIN B ON A.b = B.a;
@@ -57,4 +57,3 @@ UPDATE E SET col1 = "243", col2 = 2 WHERE e = 0;
 DELETE FROM F;
 DELETE FROM F WHERE f = 0;
 ```
-などがある.
