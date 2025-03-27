@@ -8,16 +8,23 @@
 }
 
 /****************
-** Options
+** Options (https://westes.github.io/flex/manual/Scanner-Options.html#Scanner-Options)
 *****************/
 
 %option noyywrap
 %option reentrant
+%option warn
+%option yylineno
+%option case-insensitive
+%option never-interactive
+
 %option bison-bridge
+%option bison-locations
 
 /****************
 ** Declarations
 ****************/
+
 DIGIT [0-9]
 ID [_a-zA-Z][_a-zA-Z0-9]*
 
@@ -45,7 +52,7 @@ FROM {return TOKEN_FROM;}
 
 %%
 
-void yyerror(sql::ParseResult* result, yyscan_t scanner, char const *msg) {
+void yyerror(YYLTYPE *llocp, sql::ParseResult* result, yyscan_t scanner, char const *msg) {
     fprintf(stderr, "%s\n", msg);
 }
 

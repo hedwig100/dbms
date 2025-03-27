@@ -11,6 +11,8 @@ typedef void* yyscan_t;
 
 %define api.pure full
 
+%locations
+
 // Define additional parameters for yylex (http://www.gnu.org/software/bison/manual/html_node/Pure-Calling.html)
 %lex-param   { yyscan_t scanner }
 
@@ -51,8 +53,8 @@ typedef void* yyscan_t;
 
 %code provides {
 /* Flex-related declaration */
-extern int yylex(YYSTYPE *, yyscan_t);
-extern void yyerror(sql::ParseResult *, yyscan_t, char const *);
+extern int yylex(YYSTYPE *, YYLTYPE *, yyscan_t);
+extern void yyerror(YYLTYPE *, sql::ParseResult *, yyscan_t, char const *);
 }
 
 /**********
