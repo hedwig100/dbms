@@ -2,6 +2,7 @@ enable_testing()
 include(GoogleTest)
 
 add_subdirectory(data)
+add_subdirectory(parser)
 
 ## main
 add_executable(main
