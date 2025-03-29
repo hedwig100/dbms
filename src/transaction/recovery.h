@@ -1,5 +1,5 @@
-#ifndef _RECOVERY_H
-#define _RECOVERY_H
+#ifndef _TRANSACTION_RECOVERY_H
+#define _TRANSACTION_RECOVERY_H
 
 #include "buffer.h"
 #include "log.h"

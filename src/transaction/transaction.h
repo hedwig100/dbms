@@ -1,5 +1,5 @@
-#ifndef TRANSACTION_H
-#define TRANSACTION_H
+#ifndef _TRANSACTION_TRANSACTION_H
+#define _TRANSACTION_TRANSACTION_H
 
 #include "buffer.h"
 #include "concurrency.h"

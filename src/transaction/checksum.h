@@ -1,5 +1,5 @@
-#ifndef _CHECKSUM_H
-#define _CHECKSUM_H
+#ifndef _TRANSACTION_CHECKSUM_H
+#define _TRANSACTION_CHECKSUM_H
 
 #include <cstdint>
 #include <vector>

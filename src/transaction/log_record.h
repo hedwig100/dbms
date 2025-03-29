@@ -1,5 +1,5 @@
-#ifndef _LOG_RECORD_H
-#define _LOG_RECORD_H
+#ifndef _TRANSACTION_LOG_RECORD_H
+#define _TRANSACTION_LOG_RECORD_H
 
 #include "buffer.h"
 #include "checksum.h"

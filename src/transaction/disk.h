@@ -1,5 +1,5 @@
-#ifndef DISK_H
-#define DISK_H
+#ifndef _TRANSACTION_DISK_H
+#define _TRANSACTION_DISK_H
 
 #include <cstdint>
 #include <data/data.h>
