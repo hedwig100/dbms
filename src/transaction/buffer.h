@@ -1,5 +1,5 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef _TRANSACTION_BUFFER_H
+#define _TRANSACTION_BUFFER_H
 
 #include "disk.h"
 #include "log.h"

@@ -1,5 +1,5 @@
-#ifndef _MACRO_TEST_TRANSACTION_H
-#define _MACRO_TEST_TRANSACTION_H
+#ifndef _TRANSACTION_MACRO_TEST_TRANSACTION_H
+#define _TRANSACTION_MACRO_TEST_TRANSACTION_H
 
 #include "transaction.h"
 #include <filesystem>

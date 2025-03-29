@@ -1,5 +1,5 @@
-#ifndef _CONCURRENCY_H
-#define _CONCURRENCY_H
+#ifndef _TRANSACTION_CONCURRENCY_H
+#define _TRANSACTION_CONCURRENCY_H
 
 #include "disk.h"
 #include "result.h"
