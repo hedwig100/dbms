@@ -5,8 +5,15 @@
 TEST(ParserTest, ExampleSuccessTest) {
     sql::Parser parser;
     const std::string sql_stmt = "SELECT a FROM table;";
-    auto result                = parser.Parse(sql_stmt);
+
+    auto result = parser.Parse(sql_stmt);
+
     EXPECT_TRUE(result.IsOk());
+
+    sql::SelectStatement *statement = result.Get().Statement();
+    ASSERT_TRUE(statement != nullptr);
+    EXPECT_EQ(statement->GetColumn()->ColumnName(), "a");
+    EXPECT_EQ(statement->GetTable()->TableName(), "table");
 }
 
 TEST(ParserTest, ExampleFailureTest) {
