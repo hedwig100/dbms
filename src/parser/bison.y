@@ -49,6 +49,8 @@ typedef void* yyscan_t;
     char *identifier;
 
     sql::SelectStatement *select_statement;
+    sql::Column *column;
+    sql::Table *table;
 }
 
 
@@ -70,6 +72,8 @@ typedef void* yyscan_t;
 
 /* Non-terminal symbols (https://www.gnu.org/software/bison/manual/html_node/Type-Decl.html) */
 %type <select_statement> select_statement
+%type <column> column
+%type <table> table
 
 %code provides {
 /* Flex-related declaration */
@@ -83,20 +87,20 @@ extern void yyerror(YYLTYPE *, sql::ParseResult *, yyscan_t, char const *);
 %%
 
 input
-    : select_statement
+    : select_statement { result->AddStatement($1); }
     ;
 
 select_statement
-    : SELECT column FROM table ';'
+    : SELECT column FROM table ';' { $$ = new sql::SelectStatement($2, $4); }
     ;
 
 column
-    : INTEGER_VAL
-    | IDENTIFIER
+    : INTEGER_VAL { $$ = new sql::Column($1); }
+    | IDENTIFIER { $$ = new sql::Column($1); }
     ;
 
 table
-    : IDENTIFIER
+    : IDENTIFIER { $$ = new sql::Table($1); }
     ;
 
 %%
