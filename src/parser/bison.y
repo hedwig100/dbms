@@ -1,6 +1,6 @@
 %code requires {
 
-#include "sql.h"
+#include "execute/sql.h"
 #include <string>
 #include <stdio.h>
 #include <iostream>
