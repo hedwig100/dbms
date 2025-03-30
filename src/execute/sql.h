@@ -1,6 +1,8 @@
 #ifndef _EXECUTE_SQL_H
 #define _EXECUTE_SQL_H
 
+#include "result.h"
+#include "transaction/transaction.h"
 #include <string>
 #include <variant>
 #include <vector>
@@ -38,8 +40,13 @@ class Column {
     std::variant<std::string, int> column_name_or_const_integer_;
 };
 
+class Statement {
+  public:
+    virtual Result Execute(transaction::Transaction &transaction) = 0;
+};
+
 // SelectStatement class represents a SELECT statement.
-class SelectStatement {
+class SelectStatement : public Statement {
   public:
     SelectStatement(Column *column, Table *table)
         : column_(column), table_(table) {}
@@ -47,13 +54,13 @@ class SelectStatement {
     Column *GetColumn() const { return column_; }
     Table *GetTable() const { return table_; }
 
+    // TODO: Implement the SELECT statement execution logic.
+    Result Execute(transaction::Transaction &transaction) { return Ok(); }
+
   private:
     Column *column_;
     Table *table_;
 };
-
-// Statement is a variant type that can hold different types of SQL statements.
-using Statement = std::variant<SelectStatement *>;
 
 // ParseResult class represents the result of parsing.
 // It contains a vector of statements and error handling.

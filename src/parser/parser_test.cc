@@ -12,7 +12,7 @@ TEST(ParserTest, ExampleSuccessTest) {
 
     sql::Statement *statement = result.Get().Statements()[0];
     sql::SelectStatement *select_statement =
-        std::get<sql::SelectStatement *>(*statement);
+        dynamic_cast<sql::SelectStatement *>(statement);
     ASSERT_TRUE(statement != nullptr);
     EXPECT_EQ(select_statement->GetColumn()->ColumnName(), "a");
     EXPECT_EQ(select_statement->GetTable()->TableName(), "table");
