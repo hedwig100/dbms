@@ -1,5 +1,5 @@
-#ifndef _PARSER_SQL_H
-#define _PARSER_SQL_H
+#ifndef _EXECUTE_SQL_H
+#define _EXECUTE_SQL_H
 
 #include <string>
 #include <variant>
@@ -89,4 +89,4 @@ class ParseResult {
 
 } // namespace sql
 
-#endif // _PARSER_SQL_H_
+#endif // _EXECUTE_SQL_H_
