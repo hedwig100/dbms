@@ -93,7 +93,7 @@ input
     ;
 
 statement 
-    : select_statement { $$ = new sql::Statement($1); }
+    : select_statement { $$ = $1; }
     ;
   
 select_statement
