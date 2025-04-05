@@ -8,7 +8,10 @@ namespace execute {
 
 using namespace result;
 
-Result Execute(const std::string &sql, transaction::Transaction &transaction);
+// Execute the SQL statement and return the result as a QueryResult
+// (corresponding the argument `result`).
+Result Execute(const std::string &sql, transaction::Transaction &transaction,
+               execute::QueryResult &result);
 
 }; // namespace execute
 

@@ -1,6 +1,7 @@
 #ifndef _EXECUTE_SQL_H
 #define _EXECUTE_SQL_H
 
+#include "execute/query_result.h"
 #include "result.h"
 #include "transaction/transaction.h"
 #include <string>
@@ -42,7 +43,8 @@ class Column {
 
 class Statement {
   public:
-    virtual Result Execute(transaction::Transaction &transaction) = 0;
+    virtual Result Execute(transaction::Transaction &transaction,
+                           execute::QueryResult &result) = 0;
 };
 
 // SelectStatement class represents a SELECT statement.
@@ -55,7 +57,10 @@ class SelectStatement : public Statement {
     Table *GetTable() const { return table_; }
 
     // TODO: Implement the SELECT statement execution logic.
-    Result Execute(transaction::Transaction &transaction) { return Ok(); }
+    Result Execute(transaction::Transaction &transaction,
+                   execute::QueryResult &result) {
+        return Ok();
+    }
 
   private:
     Column *column_;
