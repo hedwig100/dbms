@@ -8,6 +8,9 @@ add_library(byte
 target_include_directories(byte
   PUBLIC ${PROJECT_SOURCE_DIR}/src
 )
+target_link_libraries(byte
+  data
+)
 
 add_executable(byte_test
   byte_test.cc
@@ -49,6 +52,9 @@ add_library(char
 target_include_directories(char
   PUBLIC ${PROJECT_SOURCE_DIR}/src
 )
+target_link_libraries(char
+  data
+)
 
 add_executable(char_test
   char_test.cc
@@ -62,12 +68,35 @@ target_link_libraries(char_test
 )
 gtest_discover_tests(char_test)
 
+## data
+add_library(data
+  data.cc
+)
+target_include_directories(data
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(data_test
+  data_test.cc
+)
+target_include_directories(data_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/data
+)
+target_link_libraries(data_test
+  data
+  GTest::gtest_main
+)
+gtest_discover_tests(data_test)
+
 ## int
 add_library(int
   int.cc
 )
 target_include_directories(int
   PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(int
+  data
 )
 
 add_executable(int_test

@@ -15,5 +15,8 @@ TEST(Layout, ComputeOffset) {
     EXPECT_EQ(layout.Offset("a"), 1);
     EXPECT_EQ(layout.Offset("b"), 5);
     EXPECT_EQ(layout.Offset("c"), 12);
+    EXPECT_EQ(layout.Length("a"), 4);
+    EXPECT_EQ(layout.Length("b"), 7);
+    EXPECT_EQ(layout.Length("c"), 4);
     EXPECT_EQ(layout.Length(), 16);
 }

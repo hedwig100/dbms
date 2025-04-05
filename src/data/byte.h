@@ -22,23 +22,6 @@ class TypeByte : public DataType {
 
 const TypeByte kTypeByte;
 
-class Byte : public DataItem {
-  public:
-    explicit inline Byte(uint8_t value) : value_(value) {}
-
-    inline const TypeByte &Type() const { return kTypeByte; }
-
-    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    // Returns an owned integer.
-    inline uint8_t Value() const { return value_; }
-
-  private:
-    uint8_t value_;
-};
-
 // Reads a byte with the `offset` of `bytes`.
 ResultV<uint8_t> ReadByte(const std::vector<uint8_t> &bytes, const int offset);
 
@@ -50,6 +33,12 @@ Result WriteByte(std::vector<uint8_t> &bytes, const int offset,
 // functions extends `bytes` when `value` does not fit `bytes`.
 void WriteByteNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                      const uint8_t value);
+
+DataItem Byte(const uint8_t value);
+
+// Reads the byte of length `length` from `item`. This function should be
+// called only when you can make sure that the `item` is of type byte.
+uint8_t ReadByte(const data::DataItem &byte);
 
 } // namespace data
 

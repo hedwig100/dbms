@@ -1,5 +1,7 @@
 #include "table_scan.h"
 #include "data/byte.h"
+#include "data/char.h"
+#include "data/int.h"
 #include "disk.h"
 #include "result.h"
 #include "schema.h"
@@ -72,26 +74,33 @@ ResultV<bool> TableScan::Next() {
     }
 }
 
-ResultV<std::vector<uint8_t>>
-TableScan::GetBytes(const std::string &fieldname) {
+ResultV<data::DataItem> TableScan::Get(const std::string &fieldname) {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
                                     layout_.Offset(fieldname));
-    return transaction_.ReadBytes(position, layout_.Length(fieldname));
-}
-
-ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
-    disk::DiskPosition position(/*block_id=*/block_id_,
-                                /*offset=*/slot_ * layout_.Length() +
-                                    layout_.Offset(fieldname));
-    return transaction_.ReadChar(position, layout_.Length(fieldname));
+    data::DataItem item;
+    FIRST_TRY(transaction_.Read(position, layout_.Length(fieldname), item));
+    return Ok(item);
 }
 
 ResultV<int> TableScan::GetInt(const std::string &fieldname) {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
                                     layout_.Offset(fieldname));
-    return transaction_.ReadInt(position);
+    data::DataItem item;
+    FIRST_TRY(transaction_.Read(position, data::kTypeInt.ValueLength(), item));
+    return Ok(data::ReadInt(item));
+}
+
+ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
+    disk::DiskPosition position(/*block_id=*/block_id_,
+                                /*offset=*/slot_ * layout_.Length() +
+                                    layout_.Offset(fieldname));
+    data::DataItem item;
+    FIRST_TRY(transaction_.Read(position, layout_.Length(fieldname), item));
+    std::string value = data::ReadChar(item, layout_.Length(fieldname));
+    data::RightTrim(value);
+    return Ok(value);
 }
 
 Result TableScan::Update(const std::string &fieldname,
@@ -99,7 +108,8 @@ Result TableScan::Update(const std::string &fieldname,
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
                                     layout_.Offset(fieldname));
-    return transaction_.Write(position, item);
+    FIRST_TRY(transaction_.Write(position, layout_.Length(fieldname), item));
+    return Ok();
 }
 
 Result TableScan::Insert() {
@@ -135,7 +145,8 @@ Result TableScan::Insert() {
 Result TableScan::Delete() {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length());
-    return transaction_.Write(position, data::Byte(kUnusedFlag));
+    return transaction_.Write(position, data::kTypeByte.ValueLength(),
+                              data::Byte(kUnusedFlag));
 }
 
 Result TableScan::Close() { return Ok(); }
@@ -180,18 +191,16 @@ ResultV<bool> TableScan::NextSlot() {
 ResultV<bool> TableScan::IsUsed() {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length());
-    ResultV<uint8_t> flag = transaction_.ReadByte(position);
-    if (flag.IsError()) {
-        return flag + Error("TableScan::IsUsed() failed to read the flag");
-    }
-
-    return Ok(flag.Get() == kUsedFlag);
+    data::DataItem item;
+    FIRST_TRY(transaction_.Read(position, data::kTypeByte.ValueLength(), item));
+    return Ok(data::ReadByte(item) == kUsedFlag);
 }
 
 Result TableScan::SetUsed() {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length());
-    return transaction_.Write(position, data::Byte(kUsedFlag));
+    return transaction_.Write(position, data::kTypeByte.ValueLength(),
+                              data::Byte(kUsedFlag));
 }
 
 void TableScan::SetBlockNumber(int block_number) {

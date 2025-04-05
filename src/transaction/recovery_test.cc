@@ -67,15 +67,18 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccessWithVariousBlockSize) {
         const int expect_value                    = 4;
         const std::vector<uint8_t> previous_value = {expect_value, 0, 0, 0},
                                    dummy_value1   = {2, 0, 0, 0};
-        const data::Int dummy_value0(7), dummy_value2(5);
+        const data::DataItem dummy_value0         = data::Int(7),
+                             dummy_value2         = data::Int(5);
         disk::DiskPosition position1(
             disk::DiskPosition(disk::BlockID(filename1, 4), 3));
-        dblog::LogOperation log1(transaction_id, position1, previous_value,
+        dblog::LogOperation log1(transaction_id, position1,
+                                 data::kTypeInt.ValueLength(), previous_value,
                                  dummy_value0);
         ASSERT_TRUE(manager.WriteLog(log1).IsOk());
         disk::DiskPosition position2 =
             disk::DiskPosition(disk::BlockID(filename1, 8), 3);
-        dblog::LogOperation log2(0, position2, dummy_value1, dummy_value2);
+        dblog::LogOperation log2(0, position2, data::kTypeInt.ValueLength(),
+                                 dummy_value1, dummy_value2);
         ASSERT_TRUE(manager.WriteLog(log2).IsOk());
 
         Result rollback_result =
@@ -121,30 +124,35 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
     dblog::LogTransactionBegin log1(committed_transaction_id);
     ASSERT_TRUE(manager.WriteLog(log1).IsOk());
     const int expect_value0 = 4, expect_value1 = 3, expect_value2 = -7;
-    const std::vector<uint8_t> expect_bytes0 = {expect_value0, 0, 0, 0},
-                               expect_bytes1 = {expect_value1, 0, 0, 0},
-                               expect_bytes2 = {0xf9, 0xff, 0xff, 0xff} /*-7*/,
-                               dummy_bytes   = {0, 0, 0, 0};
-    const data::Int expected_data0(expect_value0),
-        expected_data1(expect_value1), expected_data2(expect_value2),
-        dummy_data(0);
+    const std::vector<uint8_t> expect_data0 = {expect_value0, 0, 0, 0},
+                               expect_data1 = {expect_value1, 0, 0, 0},
+                               expect_data2 = {0xf9, 0xff, 0xff, 0xff} /*-7*/,
+                               dummy_data   = {0, 0, 0, 0};
+    const data::DataItem expect_item0       = data::Int(expect_value0),
+                         expect_item1       = data::Int(expect_value1),
+                         expect_item2       = data::Int(expect_value2),
+                         dummy_item         = data::Int(0);
     disk::DiskPosition position0(
         disk::DiskPosition(disk::BlockID(filename1, 4), 3));
-    dblog::LogOperation log2(committed_transaction_id, position0, dummy_bytes,
-                             expected_data0);
+    dblog::LogOperation log2(committed_transaction_id, position0,
+                             data::kTypeInt.ValueLength(), dummy_data,
+                             expect_item0);
     ASSERT_TRUE(manager.WriteLog(log2).IsOk());
     dblog::LogOperation log3(rollbacked_transaction_id, position0,
-                             expect_bytes0, dummy_data);
+                             data::kTypeInt.ValueLength(), expect_data0,
+                             dummy_item);
     ASSERT_TRUE(manager.WriteLog(log3).IsOk());
     disk::DiskPosition position1 =
         disk::DiskPosition(disk::BlockID(filename1, 8), 3);
     dblog::LogOperation log4(rollbacked_transaction_id, position1,
-                             expect_bytes1, dummy_data);
+                             data::kTypeInt.ValueLength(), expect_data1,
+                             dummy_item);
     ASSERT_TRUE(manager.WriteLog(log4).IsOk());
     disk::DiskPosition position2 =
         disk::DiskPosition(disk::BlockID(filename1, 0), 3);
-    dblog::LogOperation log5(committed_transaction_id, position2, dummy_bytes,
-                             expected_data2);
+    dblog::LogOperation log5(committed_transaction_id, position2,
+                             data::kTypeInt.ValueLength(), dummy_data,
+                             expect_item2);
     ASSERT_TRUE(manager.WriteLog(log5).IsOk());
     Result commit_result = manager.Commit(committed_transaction_id);
     ASSERT_TRUE(commit_result.IsOk());

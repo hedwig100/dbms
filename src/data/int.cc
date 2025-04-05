@@ -26,12 +26,16 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteInt(bytes, offset, value);
 }
 
-Result Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteInt(bytes, offset, value_);
+DataItem Int(const int value) {
+    DataItem item(kIntBytesize);
+    std::memcpy(item.begin(), &value, kIntBytesize);
+    return item;
 }
 
-void Int::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteIntNoFail(bytes, offset, value_);
+int ReadInt(const data::DataItem &item) {
+    int value = 0;
+    std::memcpy(&value, item.begin(), kIntBytesize);
+    return value;
 }
 
 } // namespace data

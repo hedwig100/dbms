@@ -22,14 +22,14 @@ class TableScan : UpdateScan {
     // Move to the next row. Returns false if there are no more rows.
     ResultV<bool> Next();
 
-    // Get the bytes value of a field in the current row.
-    ResultV<std::vector<uint8_t>> GetBytes(const std::string &fieldname);
+    // Get the dataitem of a field in the current row.
+    ResultV<data::DataItem> Get(const std::string &fieldname);
 
-    // Get the string of the type CHAR in the current row.
-    ResultV<std::string> GetChar(const std::string &fieldname);
-
-    // Get the int of a field in the current row.
+    // Get the int value of a field in the current row.
     ResultV<int> GetInt(const std::string &fieldname);
+
+    // Get the string value of a field in the current row.
+    ResultV<std::string> GetChar(const std::string &fieldname);
 
     // Update the value of a field in the current row.
     Result Update(const std::string &fieldname, const data::DataItem &item);

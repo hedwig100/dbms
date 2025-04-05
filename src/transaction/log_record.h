@@ -110,6 +110,7 @@ class LogOperation : public LogRecord {
     // previous and new data. `previous_item_bytes` is the bytes because this is
     // read from the disk.
     LogOperation(TransactionID transaction_id, const disk::DiskPosition &offset,
+                 const int value_length,
                  const std::vector<uint8_t> &previous_item_bytes,
                  const data::DataItem &new_item);
 

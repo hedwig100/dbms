@@ -9,11 +9,11 @@ constexpr int kUsedFlagLength = 1;
 Layout::Layout(const Schema &schema) {
     int offset = kUsedFlagLength;
     for (const auto &field : schema.Fields()) {
-        field_lengths[field.FieldName()] = field.Length();
-        offsets[field.FieldName()]       = offset;
+        field_lengths_[field.FieldName()] = field.Length();
+        offsets_[field.FieldName()]       = offset;
         offset += field.Length();
     }
-    length = offset;
+    length_ = offset;
 }
 
 } // namespace schema

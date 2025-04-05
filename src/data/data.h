@@ -2,12 +2,46 @@
 #define _DATA_DATA_H
 
 #include "result.h"
+#include <array>
 #include <cstdint>
+#include <iterator>
+#include <variant>
 #include <vector>
 
 namespace data {
 
 using namespace ::result;
+
+// DataItem represents all data. This class is a commmon class for all data
+// types.
+class DataItem {
+  public:
+    DataItem() {}
+
+    DataItem(size_t length) { resize(length); }
+
+    size_t size() const;
+
+    void resize(size_t length);
+
+    uint8_t *begin();
+
+    const uint8_t *begin() const;
+
+    uint8_t &operator[](size_t index) { return begin()[index]; }
+
+    const uint8_t &operator[](size_t index) const { return begin()[index]; }
+
+    uint8_t *end();
+
+    const uint8_t *end() const;
+
+  private:
+    constexpr static size_t kMaxItemLength = 4;
+    using ConstLengthItem    = std::array<uint8_t, kMaxItemLength>;
+    using VariableLengthItem = std::vector<uint8_t>;
+    std::variant<ConstLengthItem, VariableLengthItem> item_;
+};
 
 enum class BaseDataType {
     // 32-bit integer
@@ -18,6 +52,9 @@ enum class BaseDataType {
 
     // Byte
     kByte = 2,
+
+    // Bytes
+    kBytes = 3,
 };
 
 // DataType represents the type of data such as integer, char with additional
@@ -31,22 +68,15 @@ class DataType {
     virtual int ValueLength() const = 0;
 };
 
-// DataItem represents one data item such as a integer, a char.
-class DataItem {
-  public:
-    // Type of the item such as integer, char...
-    virtual const DataType &Type() const = 0;
+// Reads `item` from `bytes` with the `offset`. If the `bytes` is not large
+// enough, returns Error.
+Result Read(DataItem &item, const std::vector<uint8_t> &bytes,
+            const size_t offset, int length);
 
-    // Writes the item to `bytes` with the `offset`. If the `bytes` is not large
-    // enough, returns Error.
-    virtual Result Write(std::vector<uint8_t> &bytes,
-                         const size_t offset) const = 0;
-
-    // Writes the item to `bytes` with the `offset`. If the `bytes` is not large
-    // enough, the `bytes` is extended.
-    virtual void WriteNoFail(std::vector<uint8_t> &bytes,
-                             const size_t offset) const = 0;
-};
+// Writes `item` to `bytes` with the `offset`. If the `bytes` is not
+// large enough, returns Error.
+Result Write(const DataItem &item, std::vector<uint8_t> &bytes,
+             const size_t offset, int length);
 
 } // namespace data
 

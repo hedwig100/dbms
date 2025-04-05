@@ -23,7 +23,8 @@
 
 TRANSACTION_FUNCTION(func0, {
     Result result = transaction.Write(
-        disk::DiskPosition(disk::BlockID(data_filename, 0), 0), data::Int(9));
+        disk::DiskPosition(disk::BlockID(data_filename, 0), 0),
+        data::kTypeInt.ValueLength(), data::Int(9));
     if (result.IsError()) { std::cerr << result.Error() << std::endl; }
 
     result = transaction.Commit();
@@ -32,7 +33,8 @@ TRANSACTION_FUNCTION(func0, {
 
 TRANSACTION_FUNCTION(func1, {
     Result result = transaction.Write(
-        disk::DiskPosition(disk::BlockID(data_filename, 0), 6), data::Int(8));
+        disk::DiskPosition(disk::BlockID(data_filename, 0), 6),
+        data::kTypeInt.ValueLength(), data::Int(8));
     if (result.IsError()) { std::cerr << result.Error() << std::endl; }
 
     result = transaction.Commit();
@@ -92,7 +94,8 @@ std::vector<bool> commit_results(4, false);
 TRANSACTION_FUNCTION(AtomicityTestFunc1, {
     for (int i : {0, 1}) {
         Result write_result =
-            transaction.Write(kPositionsForAtomicityTest[i], data::Int(1));
+            transaction.Write(kPositionsForAtomicityTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(1));
         if (write_result.IsError()) {
             std::cerr << "Transaction1 " << write_result.Error() << std::endl;
             return;
@@ -128,7 +131,8 @@ TRANSACTION_FUNCTION(AtomicityTestFunc1, {
 TRANSACTION_FUNCTION(AtomicityTestFunc2, {
     for (int i : {2, 3}) {
         Result write_result =
-            transaction.Write(kPositionsForAtomicityTest[i], data::Int(2));
+            transaction.Write(kPositionsForAtomicityTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(2));
         if (write_result.IsError()) {
             std::cerr << "Transaction2 " << write_result.Error() << std::endl;
             return;
@@ -164,7 +168,8 @@ TRANSACTION_FUNCTION(AtomicityTestFunc2, {
 TRANSACTION_FUNCTION(AtomicityTestFunc3, {
     for (int i : {4, 5}) {
         Result write_result =
-            transaction.Write(kPositionsForAtomicityTest[i], data::Int(3));
+            transaction.Write(kPositionsForAtomicityTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(3));
         if (write_result.IsError()) {
             std::cerr << "Transaction3 " << write_result.Error() << std::endl;
             return;
@@ -200,7 +205,8 @@ TRANSACTION_FUNCTION(AtomicityTestFunc3, {
 TRANSACTION_FUNCTION(AtomicityTestFunc4, {
     for (int i : {6, 7}) {
         Result write_result =
-            transaction.Write(kPositionsForAtomicityTest[i], data::Int(4));
+            transaction.Write(kPositionsForAtomicityTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(4));
         if (write_result.IsError()) {
             std::cerr << "Transaction4 " << write_result.Error() << std::endl;
             return;
@@ -296,7 +302,8 @@ TRANSACTION_FUNCTION(IsolationTestFunc1, {
 
     for (const int i : index) {
         Result write_result =
-            transaction.Write(kPositionsForIsolationTest[i], data::Int(1));
+            transaction.Write(kPositionsForIsolationTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(1));
         if (write_result.IsError()) {
             std::cerr << "Transaction1 " << write_result.Error() << std::endl;
             return;
@@ -316,7 +323,8 @@ TRANSACTION_FUNCTION(IsolationTestFunc2, {
 
     for (const int i : index) {
         Result write_result =
-            transaction.Write(kPositionsForIsolationTest[i], data::Int(2));
+            transaction.Write(kPositionsForIsolationTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(2));
         if (write_result.IsError()) {
             std::cerr << "Transaction2 " << write_result.Error() << std::endl;
             return;
@@ -336,7 +344,8 @@ TRANSACTION_FUNCTION(IsolationTestFunc3, {
 
     for (const int i : index) {
         Result write_result =
-            transaction.Write(kPositionsForIsolationTest[i], data::Int(3));
+            transaction.Write(kPositionsForIsolationTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(3));
         if (write_result.IsError()) {
             std::cerr << "Transaction3 " << write_result.Error() << std::endl;
             return;
@@ -356,7 +365,8 @@ TRANSACTION_FUNCTION(IsolationTestFunc4, {
 
     for (const int i : index) {
         Result write_result =
-            transaction.Write(kPositionsForIsolationTest[i], data::Int(4));
+            transaction.Write(kPositionsForIsolationTest[i],
+                              data::kTypeInt.ValueLength(), data::Int(4));
         if (write_result.IsError()) {
             std::cerr << "Transaction4 " << write_result.Error() << std::endl;
             return;

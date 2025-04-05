@@ -49,27 +49,27 @@ class Layout {
     explicit Layout(int length,
                     std::unordered_map<std::string, int> field_lengths,
                     std::unordered_map<std::string, int> offsets)
-        : length(length), field_lengths(field_lengths), offsets(offsets) {}
+        : length_(length), field_lengths_(field_lengths), offsets_(offsets) {}
 
     // Returns the offset of the field. If the field does not exist, raise an
     // exception.
     int Offset(const std::string &fieldname) const {
-        return offsets.at(fieldname);
+        return offsets_.at(fieldname);
     }
 
     // Returns the length of the field. If the field does not exist, raise an
     // exception.
     int Length(const std::string &fieldname) const {
-        return field_lengths.at(fieldname);
+        return field_lengths_.at(fieldname);
     }
 
     // Returns the length of the record (schema).
-    int Length() const { return length; }
+    int Length() const { return length_; }
 
   private:
-    int length;
-    std::unordered_map<std::string, int> field_lengths;
-    std::unordered_map<std::string, int> offsets;
+    int length_;
+    std::unordered_map<std::string, int> field_lengths_;
+    std::unordered_map<std::string, int> offsets_;
 };
 
 } // namespace schema
