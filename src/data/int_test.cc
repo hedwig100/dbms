@@ -1,26 +1,6 @@
 #include "int.h"
 #include <gtest/gtest.h>
 
-TEST(DataInt, DataItemIntTypeValue) {
-    data::Int two(2);
-
-    EXPECT_EQ(two.Type().BaseType(), data::BaseDataType::kInt);
-    EXPECT_EQ(two.Value(), 2);
-}
-
-TEST(DataInt, DataItemIntWriteOfSmallBytes) {
-    data::Int two(2);
-    std::vector<uint8_t> bytes;
-    const size_t offset = 3;
-
-    two.WriteNoFail(bytes, offset);
-
-    EXPECT_EQ(bytes.size(), offset + 4);
-    auto expect_int = data::ReadInt(bytes, offset);
-    EXPECT_TRUE(expect_int.IsOk());
-    EXPECT_EQ(expect_int.Get(), 2);
-}
-
 TEST(DataInt, CorrectlyReadInt) {
     std::vector<uint8_t> bytes = {'\0', 'V', '\0', '\0', '\0'};
 

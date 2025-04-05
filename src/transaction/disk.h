@@ -138,8 +138,12 @@ class Block {
     // Writes the string `value` with the `offset`.
     Result WriteString(const int offset, const std::string &value);
 
-    // Writes the `data_item` with the `offset`.
-    Result Write(const int offset, const data::DataItem &data_item);
+    // Writes the `item` of type `type` with the `offset`.
+    Result Write(const int offset, const data::DataType &type,
+                 const data::DataItem &item);
+
+    Result Read(const int offset, const data::DataType &type,
+                data::DataItem &item) const;
 
     // Returns the content of the block.
     const std::vector<uint8_t> &Content() const;

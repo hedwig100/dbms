@@ -26,6 +26,13 @@ class Transaction {
     // Blocksize of the disk.
     inline int BlockSize() const { return disk_manager_.BlockSize(); }
 
+    // Writes `item` of `type` to `position`.
+    Result Write(const disk::DiskPosition &position, const data::DataType &type,
+                 const data::DataItem &item);
+
+    Result Read(const disk::DiskPosition &position, const data::DataType &type,
+                data::DataItem &item);
+
     // Reads byte from `position` with `length`.
     ResultV<uint8_t> ReadByte(const disk::DiskPosition &position);
 
@@ -44,10 +51,6 @@ class Transaction {
     // spaces are removed as in the CHAR type specification.
     ResultV<std::string> ReadChar(const disk::DiskPosition &position,
                                   const size_t length);
-
-    // Writes the data to `position`.
-    Result Write(const disk::DiskPosition &position,
-                 const data::DataItem &data);
 
     // Commits the transaction.
     Result Commit();

@@ -6,6 +6,7 @@ add_library(buffer
   buffer.cc
 )
 target_link_libraries(buffer
+  data_copy
   disk
   log
 )
@@ -41,6 +42,7 @@ add_library(concurrency
   concurrency.cc
 )
 target_link_libraries(concurrency
+  data_copy
   disk
 )
 target_include_directories(concurrency
@@ -94,6 +96,7 @@ add_library(log
 )
 target_link_libraries(log
   checksum
+  data_copy
   disk
   log_record
 )

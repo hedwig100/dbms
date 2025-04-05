@@ -3,6 +3,7 @@
 
 #include "data/data.h"
 #include "result.h"
+#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,31 +21,14 @@ class TypeChar : public DataType {
 
     inline int ValueLength() const { return length_; }
 
-    // Returns the length parameter.
-    inline uint8_t Length() const { return length_; }
+    Result Read(DataItem &item, const std::vector<uint8_t> &bytes,
+                const size_t offset) const;
+
+    Result Write(const DataItem &item, std::vector<uint8_t> &bytes,
+                 const size_t offset) const;
 
   private:
     uint8_t length_;
-};
-
-// Char: fixed-length string. Its length is from 0 to 255 (represented as
-// an unsigned 8-bit integer).
-class Char : public DataItem {
-  public:
-    explicit Char(const std::string &value, uint8_t length);
-
-    inline const TypeChar &Type() const { return type_; }
-
-    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    // Returns a string owned.
-    inline std::string Value() const { return value_; }
-
-  private:
-    std::string value_;
-    TypeChar type_;
 };
 
 // Reads the string of length `length` with the `offset` of `bytes`.
@@ -60,6 +44,22 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 // this functions extends `bytes` when `value` does not fit `bytes`.
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
+
+inline DataItem String(const std::string &value) {
+    DataItem item(value.size());
+    std::memcpy(item.begin(), value.data(), value.size());
+    return item;
+}
+
+inline ResultV<std::string> ReadString(const data::DataItem &item,
+                                       const int length) {
+    if (item.size() < length)
+        return Error("data::Char() item size should be larger than length.");
+    std::string value;
+    value.resize(length);
+    std::memcpy(&value[0], item.begin(), length);
+    return Ok(value);
+}
 
 // Trims the trailing spaces of the string.
 void RightTrim(std::string &value);
