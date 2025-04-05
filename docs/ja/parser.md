@@ -6,7 +6,8 @@
 パーサーは`src/parser`ディレクトリに実装されている。
 
 - `parser.h, parser.cc`: パーサの実装がある。外から使う分にはこれを使えばよい。
-- `sql.h, sql.cc`: パースした構文木を定義するための構造体類が定義されている。
+- `execute/sql.h, execute/sql.cc`: パースした構文木を定義するための構造体類が定義されている。
+    - これらは対応するSQLを実行する責任を担うので`src/parser`ディレクトリではなくて、`src/execute`ディレクトリに存在する
 - `bison.y`: bisonを用いたパーサが定義されている。
 - `flex.l`: Flexを用いた字句解析器の実装がある。
 
@@ -25,7 +26,5 @@
 - Bison, Flexともにreentrantである、すなわちパーサーがスレッドセーフである用にしている。reentrantではない場合はグローバル変数を使用しスレッドセーフにならないため、このオプションを指定する。
     - [Flex reentrant lexer](https://westes.github.io/flex/manual/Reentrant.html#Reentrant)
     - [Bison pure parser](https://www.gnu.org/software/bison/manual/bison.html#Pure-Decl)
-
-- 
 
 

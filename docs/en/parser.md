@@ -6,7 +6,8 @@ This document explains the implementation of the SQL parser.
 The parser is implemented in the `src/parser` directory.
 
 - `parser.h, parser.cc`: Contains the parser implementation. These files should be used externally.
-- `sql.h, sql.cc`: Defines structures for the parsed syntax tree.
+- `execute/sql.h, execute/sql.cc`: Classes to define abstract syntax trees are defined here.
+    - These exist in `src/execute` not `src/parser`, because these classes are responsible for executing the corresponding SQL.
 - `bison.y`: Defines the parser using Bison.
 - `flex.l:` Implements the lexical analyzer using Flex.
 
