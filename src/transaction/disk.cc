@@ -154,8 +154,14 @@ Result Block::WriteString(const int offset, const std::string &value) {
     return data::WriteString(content_, offset, value.size(), value);
 }
 
-Result Block::Write(const int offset, const data::DataItem &data_item) {
-    return data_item.Write(content_, offset);
+Result Block::Write(const int offset, const data::DataType &type,
+                    const data::DataItem &item) {
+    return type.Write(item, content_, offset);
+}
+
+Result Block::Read(const int offset, const data::DataType &type,
+                   data::DataItem &item) const {
+    return type.Read(item, content_, offset);
 }
 
 const std::vector<uint8_t> &Block::Content() const { return content_; }

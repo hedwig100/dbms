@@ -1,7 +1,20 @@
 #include "int.h"
+#include "data/copy.h"
 #include <cstring>
 
 namespace data {
+
+Result TypeInt::Read(DataItem &item, const std::vector<uint8_t> &bytes,
+                     const size_t offset) const {
+    FIRST_TRY(internal::Read(item, bytes, offset, kIntBytesize));
+    return Ok();
+}
+
+Result TypeInt::Write(const DataItem &item, std::vector<uint8_t> &bytes,
+                      const size_t offset) const {
+    FIRST_TRY(internal::Write(item, bytes, offset, kIntBytesize));
+    return Ok();
+}
 
 ResultV<int> ReadInt(const std::vector<uint8_t> &bytes, const int offset) {
     if (offset < 0 || offset + kIntBytesize > bytes.size())
@@ -24,14 +37,6 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     if (offset + kIntBytesize > bytes.size())
         bytes.resize(offset + kIntBytesize);
     WriteInt(bytes, offset, value);
-}
-
-Result Int::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteInt(bytes, offset, value_);
-}
-
-void Int::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteIntNoFail(bytes, offset, value_);
 }
 
 } // namespace data

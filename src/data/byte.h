@@ -18,26 +18,15 @@ class TypeByte : public DataType {
     inline BaseDataType BaseType() const { return BaseDataType::kByte; }
 
     inline int ValueLength() const { return kByteBytesize; }
+
+    Result Read(DataItem &item, const std::vector<uint8_t> &bytes,
+                const size_t offset) const;
+
+    Result Write(const DataItem &item, std::vector<uint8_t> &bytes,
+                 const size_t offset) const;
 };
 
 const TypeByte kTypeByte;
-
-class Byte : public DataItem {
-  public:
-    explicit inline Byte(uint8_t value) : value_(value) {}
-
-    inline const TypeByte &Type() const { return kTypeByte; }
-
-    Result Write(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    void WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const;
-
-    // Returns an owned integer.
-    inline uint8_t Value() const { return value_; }
-
-  private:
-    uint8_t value_;
-};
 
 // Reads a byte with the `offset` of `bytes`.
 ResultV<uint8_t> ReadByte(const std::vector<uint8_t> &bytes, const int offset);
@@ -50,6 +39,19 @@ Result WriteByte(std::vector<uint8_t> &bytes, const int offset,
 // functions extends `bytes` when `value` does not fit `bytes`.
 void WriteByteNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                      const uint8_t value);
+
+inline DataItem Byte(const uint8_t value) {
+    DataItem item;
+    item.resize(kByteBytesize);
+    item[0] = value;
+    return item;
+}
+
+inline ResultV<uint8_t> ReadByte(const data::DataItem &byte) {
+    if (byte.size() < kByteBytesize)
+        return Error("data::Byte() byte size should be 1.");
+    return Ok(byte[0]);
+}
 
 } // namespace data
 

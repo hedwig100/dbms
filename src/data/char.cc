@@ -1,10 +1,23 @@
 #include "char.h"
+#include "data/copy.h"
 #include "uint32.h"
 #include <algorithm>
 #include <cstring>
 #include <memory>
 
 namespace data {
+
+Result TypeChar::Read(DataItem &item, const std::vector<uint8_t> &bytes,
+                      const size_t offset) const {
+    FIRST_TRY(internal::Read(item, bytes, offset, length_));
+    return Ok();
+}
+
+Result TypeChar::Write(const DataItem &item, std::vector<uint8_t> &bytes,
+                       const size_t offset) const {
+    FIRST_TRY(internal::Write(item, bytes, offset, length_));
+    return Ok();
+}
 
 ResultV<std::string> ReadString(const std::vector<uint8_t> &bytes,
                                 const int offset, const int length) {
@@ -32,19 +45,6 @@ void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     if (offset + value.size() > bytes.size())
         bytes.resize(offset + value.size());
     WriteString(bytes, offset, value.size(), value);
-}
-
-Char::Char(const std::string &value, uint8_t length) : type_(length) {
-    value_ = value.substr(0, length);
-    if (value_.size() < length) value_.resize(length, ' ');
-}
-
-Result Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteString(bytes, offset, type_.Length(), value_);
-}
-
-void Char::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
-    WriteStringNoFail(bytes, offset, value_);
 }
 
 void RightTrim(std::string &value) {
