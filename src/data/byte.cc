@@ -24,12 +24,13 @@ void WriteByteNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteByte(bytes, offset, value);
 }
 
-Result Byte::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteByte(bytes, offset, value_);
+DataItem Byte(const uint8_t value) {
+    DataItem item;
+    item.resize(kByteBytesize);
+    item[0] = value;
+    return item;
 }
 
-void Byte::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteByteNoFail(bytes, offset, value_);
-}
+uint8_t ReadByte(const data::DataItem &byte) { return byte[0]; }
 
 } // namespace data

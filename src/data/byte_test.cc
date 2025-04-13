@@ -1,26 +1,6 @@
 #include "byte.h"
 #include <gtest/gtest.h>
 
-TEST(DataByte, DataItemByteTypeValue) {
-    data::Byte two(2);
-
-    EXPECT_EQ(two.Type().BaseType(), data::BaseDataType::kByte);
-    EXPECT_EQ(two.Value(), 2);
-}
-
-TEST(DataByte, DataItemByteWriteOfSmallBytes) {
-    data::Byte two(2);
-    std::vector<uint8_t> bytes;
-    const size_t offset = 3;
-
-    two.WriteNoFail(bytes, offset);
-
-    EXPECT_EQ(bytes.size(), offset + 1);
-    auto expect_Byte = data::ReadByte(bytes, offset);
-    EXPECT_TRUE(expect_Byte.IsOk());
-    EXPECT_EQ(expect_Byte.Get(), 2);
-}
-
 TEST(DataByte, CorrectlyReadByte) {
     std::vector<uint8_t> bytes = {'\0', 'V', '\0', '\0', '\0'};
 
@@ -73,4 +53,18 @@ TEST(DataByte, WriteByteNoFailSuccessWithOutsideIndex) {
     auto expect_Byte = data::ReadByte(bytes, 28);
     ASSERT_TRUE(expect_Byte.IsOk());
     EXPECT_EQ(expect_Byte.Get(), 0xff);
+}
+
+TEST(DataByte, ToByte) {
+    data::DataItem x;
+    x = data::Byte(0x3c);
+    EXPECT_EQ(x[0], 0x3c);
+}
+
+TEST(DataByte, ReadFromDataItem) {
+    data::DataItem x;
+    x = data::Byte(0x3c);
+
+    uint8_t expect_byte = data::ReadByte(x);
+    EXPECT_EQ(expect_byte, 0x3c);
 }

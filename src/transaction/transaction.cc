@@ -1,4 +1,5 @@
 #include "transaction.h"
+#include "data/byte.h"
 #include "data/char.h"
 #include "data/int.h"
 
@@ -26,105 +27,8 @@ Transaction::Transaction(disk::DiskManager &disk_manager,
         }                                                                      \
     }
 
-// This macro is used to define functions (methods of Transaction) that read
-// data from the block. In the function, it locks the block, reads the block.
-// `read_block` is the block of code that reads the data from the block, and
-// returns the data.
-#define READ_FUNCTION(function_name, function_signature, read_block)           \
-    function_signature {                                                       \
-        Result lock_result = concurrent_manager_.ReadLock(position.BlockID()); \
-        if (lock_result.IsError()) {                                           \
-            ROLLBACK(lock_result);                                             \
-            return lock_result + Error("transaction::Transaction:"             \
-                                       ":" #function_name "() failed to "      \
-                                       "lock the block.");                     \
-        }                                                                      \
-                                                                               \
-        disk::Block block;                                                     \
-        Result read_result = buffer_manager_.Read(position.BlockID(), block);  \
-        if (read_result.IsError()) {                                           \
-            ROLLBACK(read_result);                                             \
-            return read_result + Error("transaction::Transaction:"             \
-                                       ":" #function_name "() failed to read " \
-                                       "the block.");                          \
-        }                                                                      \
-                                                                               \
-        read_block                                                             \
-    }
-
-READ_FUNCTION(
-    ReadByte,
-    ResultV<uint8_t> Transaction::ReadByte(const disk::DiskPosition &position),
-    {
-        ResultV<uint8_t> byte_result = block.ReadByte(position.Offset());
-        if (byte_result.IsError()) {
-            ROLLBACK(byte_result);
-            return byte_result + Error("transaction::Transaction::"
-                                       "ReadByte() failed to "
-                                       "read the byte.");
-        }
-        return byte_result;
-    })
-
-READ_FUNCTION(ReadBytes,
-              ResultV<std::vector<uint8_t>> Transaction::ReadBytes(
-                  const disk::DiskPosition &position, const size_t length),
-              {
-                  std::vector<uint8_t> bytes;
-                  Result byte_result =
-                      block.ReadBytes(position.Offset(), length, bytes);
-                  if (byte_result.IsError()) {
-                      ROLLBACK(byte_result);
-                      return byte_result + Error("transaction::Transaction::"
-                                                 "ReadBytes() failed to "
-                                                 "read the bytes.");
-                  }
-                  return Ok(bytes);
-              })
-
-READ_FUNCTION(
-    ReadInt,
-    ResultV<int> Transaction::ReadInt(const disk::DiskPosition &position), {
-        ResultV<int> int_result = block.ReadInt(position.Offset());
-        if (int_result.IsError()) {
-            ROLLBACK(int_result);
-            return int_result + Error("transaction::Transaction::"
-                                      "ReadInt() "
-                                      "failed to read the int.");
-        }
-        return int_result;
-    })
-
-READ_FUNCTION(ReadString,
-              ResultV<std::string> Transaction::ReadString(
-                  const disk::DiskPosition &position, const size_t length),
-              {
-                  ResultV<std::string> char_result =
-                      block.ReadString(position.Offset(), length);
-                  if (char_result.IsError()) {
-                      ROLLBACK(char_result);
-                      return char_result + Error("transaction::Transaction::"
-                                                 "ReadString() "
-                                                 "failed to read the string.");
-                  }
-                  return char_result;
-              })
-
-ResultV<std::string> Transaction::ReadChar(const disk::DiskPosition &position,
-                                           const size_t length) {
-    ResultV<std::string> char_result = ReadString(position, length);
-    if (char_result.IsError()) {
-        return char_result +
-               Error("transaction::Transaction::ReadChar() failed to "
-                     "read the char.");
-    }
-    std::string char_value = char_result.Get();
-    data::RightTrim(char_value);
-    return Ok(char_value);
-}
-
-Result Transaction::Write(const disk::DiskPosition &position,
-                          const data::DataItem &data) {
+Result Transaction::Write(const disk::DiskPosition &position, const int length,
+                          const data::DataItem &item) {
     Result lock_result = concurrent_manager_.WriteLock(position.BlockID());
     if (lock_result.IsError()) {
         ROLLBACK(lock_result);
@@ -143,8 +47,8 @@ Result Transaction::Write(const disk::DiskPosition &position,
     }
 
     std::vector<uint8_t> previous_item_bytes;
-    Result previous_data = block.ReadBytes(
-        position.Offset(), data.Type().ValueLength(), previous_item_bytes);
+    Result previous_data =
+        block.ReadBytes(position.Offset(), length, previous_item_bytes);
     if (previous_data.IsError()) {
         ROLLBACK(previous_data);
         return previous_data + Error("transaction::Transaction::"
@@ -154,7 +58,7 @@ Result Transaction::Write(const disk::DiskPosition &position,
 
     ResultV<dblog::LogSequenceNumber> lsn_result =
         recovery_manager_.WriteLog(dblog::LogOperation(
-            transaction_id_, position, previous_item_bytes, data));
+            transaction_id_, position, length, previous_item_bytes, item));
     if (lsn_result.IsError()) {
         ROLLBACK(lsn_result);
         return lsn_result + Error("transaction::Transaction::"
@@ -162,7 +66,7 @@ Result Transaction::Write(const disk::DiskPosition &position,
                                   "write a log record.");
     }
 
-    Result write_result = block.Write(position.Offset(), data);
+    Result write_result = block.Write(position.Offset(), length, item);
     if (write_result.IsError()) {
         ROLLBACK(write_result);
         return write_result + Error("transaction::Transaction::"
@@ -180,6 +84,39 @@ Result Transaction::Write(const disk::DiskPosition &position,
     }
 
     return Ok();
+}
+
+Result Transaction::Read(const disk::DiskPosition &position, const int length,
+                         data::DataItem &item) {
+    Result lock_result = concurrent_manager_.ReadLock(position.BlockID());
+    if (lock_result.IsError()) {
+        ROLLBACK(lock_result);
+        return lock_result + Error("transaction::Transaction::ReadByte() "
+                                   "failed to lock the block.");
+    }
+
+    disk::Block block;
+    Result read_result = buffer_manager_.Read(position.BlockID(), block);
+    if (read_result.IsError()) {
+        ROLLBACK(read_result);
+        return read_result + Error("transaction::Transaction::ReadByte() "
+                                   "failed to read the block.");
+    }
+
+    read_result = block.Read(position.Offset(), length, item);
+    if (read_result.IsError()) {
+        ROLLBACK(read_result);
+        return read_result + Error("transaction::Transaction::ReadByte() "
+                                   "failed to read the byte.");
+    }
+
+    return Ok();
+}
+
+ResultV<int> Transaction::ReadInt(const disk::DiskPosition &position) {
+    data::DataItem item;
+    FIRST_TRY(Read(position, data::kTypeInt.ValueLength(), item));
+    return Ok(data::ReadInt(item));
 }
 
 Result Transaction::Commit() {

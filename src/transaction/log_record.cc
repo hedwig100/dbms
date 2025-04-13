@@ -200,6 +200,7 @@ constexpr size_t kEstimatedAverageLogSize = 34;
 
 LogOperation::LogOperation(TransactionID transaction_id,
                            const disk::DiskPosition &offset,
+                           const int value_length,
                            const std::vector<uint8_t> &previous_item,
                            const data::DataItem &new_item)
     : transaction_id_(transaction_id), offset_(offset) {
@@ -219,7 +220,13 @@ LogOperation::LogOperation(TransactionID transaction_id,
     data::WriteBytesWithOffsetNoFail(log_body_, log_body_.size(), previous_item,
                                      0);
     new_item_offset_in_log_body_ = log_body_.size();
-    new_item.WriteNoFail(log_body_, log_body_.size());
+    log_body_.resize(log_body_.size() + value_length);
+    Result write_result = data::Write(
+        new_item, log_body_, new_item_offset_in_log_body_, value_length);
+    if (write_result.IsError())
+        throw std::runtime_error(
+            "dblog::LogOperation::LogOperation() failed to write new "
+            "item to the log body.");
 }
 
 LogOperation::LogOperation(TransactionID transaction_id,

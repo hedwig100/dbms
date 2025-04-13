@@ -1,44 +1,6 @@
 #include "char.h"
 #include <gtest/gtest.h>
 
-TEST(DataChar, DataItemCharTypeValueLength) {
-    data::Char hello("hello", 5);
-
-    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
-    EXPECT_EQ(hello.Type().Length(), 5);
-    EXPECT_EQ(hello.Value(), "hello");
-}
-
-TEST(DataChar, DataItemLongCharTypeValueLength) {
-    data::Char hello("hello world", 5);
-
-    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
-    EXPECT_EQ(hello.Type().Length(), 5);
-    EXPECT_EQ(hello.Value(), "hello");
-}
-
-TEST(DataChar, DataItemSmallCharTypeValueLength) {
-    data::Char hello("hello", 6);
-
-    EXPECT_EQ(hello.Type().BaseType(), data::BaseDataType::kChar);
-    EXPECT_EQ(hello.Type().Length(), 6);
-    EXPECT_EQ(hello.Value(), "hello ");
-}
-
-TEST(DataChar, DataItemCharWriteOfSmallBytes) {
-    const uint8_t length = 5;
-    data::Char hello("hello", length);
-    std::vector<uint8_t> bytes;
-    const size_t offset = 3;
-
-    hello.WriteNoFail(bytes, offset);
-
-    EXPECT_EQ(bytes.size(), offset + length);
-    auto expect_char = data::ReadString(bytes, offset, length);
-    EXPECT_TRUE(expect_char.IsOk());
-    EXPECT_EQ(expect_char.Get(), "hello");
-}
-
 TEST(DataChar, CorrectlyReadString) {
     std::vector<uint8_t> bytes = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
 
@@ -98,4 +60,21 @@ TEST(DataChar, WriteStringNoFailWithOutsideIndexSuccess) {
     auto expect_str = data::ReadString(bytes, 6, 3);
     ASSERT_TRUE(expect_str.IsOk());
     EXPECT_EQ(expect_str.Get(), "abc");
+}
+
+TEST(DataChar, ToChar) {
+    data::DataItem x;
+    x = data::Char("abc", 4);
+    EXPECT_EQ(x.size(), 4);
+    EXPECT_EQ(x[0], 'a');
+    EXPECT_EQ(x[1], 'b');
+    EXPECT_EQ(x[2], 'c');
+    EXPECT_EQ(x[3], 0);
+}
+
+TEST(DataChar, ReadStringFromDataItem) {
+    data::DataItem x;
+    x               = data::Char("abc", 4);
+    auto expect_str = data::ReadChar(x, 3);
+    EXPECT_EQ(expect_str, "abc");
 }

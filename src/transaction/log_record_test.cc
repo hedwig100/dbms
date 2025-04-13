@@ -30,8 +30,9 @@ TEST(LogRecordLogOperation, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
     const disk::BlockID block_id("file.txt", 3);
     const std::vector<uint8_t> int_value = {4, 0, 0, 0};
-    const data::Int dummy_value(0);
+    const data::DataItem dummy_value     = data::Int(0);
     dblog::LogOperation log_op(id, disk::DiskPosition(block_id, 4),
+                               data::kTypeInt.ValueLength(),
                                /*previous_item=*/int_value,
                                /*new_item=*/dummy_value);
 
@@ -76,11 +77,11 @@ TEST(LogRecordTransactionBegin, WriteReadCorrectly) {
 
 TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
     const std::vector<uint8_t> previous_value = {4, 0, 0, 0};
-    const data::Int new_value(6);
+    const data::DataItem new_value            = data::Int(6);
     dblog::LogOperation log_record(
         /*transaction_id=*/6,
-        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3), previous_value,
-        new_value);
+        disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3),
+        data::kTypeInt.ValueLength(), previous_value, new_value);
 
     auto log_body = log_record.LogBody();
     ResultV<std::unique_ptr<dblog::LogRecord>> log_record_ptr_result =
@@ -155,11 +156,12 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
                                                log_manager);
     const int expect_value               = 4;
     const std::vector<uint8_t> int_value = {expect_value, 0, 0, 0};
-    const data::Int dummy_value(0);
+    const data::DataItem dummy_value     = data::Int(0);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
         /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
+        data::kTypeInt.ValueLength(),
         /*previous_item=*/int_value, /*new_item=*/dummy_value);
     ASSERT_TRUE(
         disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
@@ -215,11 +217,13 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
     buffer::SimpleBufferManager buffer_manager(/*buffer_size=*/4, disk_manager,
                                                log_manager);
     const std::vector<uint8_t> dummy_value = {0, 0, 0, 0};
-    const data::Int int_value(4);
+    const int expect_value                 = 4;
+    const data::DataItem int_value         = data::Int(expect_value);
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
         /*transaction_id=*/4, disk::DiskPosition(block_id, offset),
+        data::kTypeInt.ValueLength(),
         /*previous_item=*/dummy_value, /*new_item=*/int_value);
     ASSERT_TRUE(
         disk_manager.AllocateNewBlocks(disk::BlockID(filename0, 2)).IsOk());
@@ -234,7 +238,7 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
 
     ResultV<int> int_result = block.ReadInt(offset);
     EXPECT_TRUE(int_result.IsOk());
-    EXPECT_EQ(int_result.Get(), int_value.Value());
+    EXPECT_EQ(int_result.Get(), expect_value);
 }
 
 TEST_F(LogRecordOperationWithFile, InitializedFromLogBytesThenReDoCorrectly) {

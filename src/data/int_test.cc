@@ -1,26 +1,6 @@
 #include "int.h"
 #include <gtest/gtest.h>
 
-TEST(DataInt, DataItemIntTypeValue) {
-    data::Int two(2);
-
-    EXPECT_EQ(two.Type().BaseType(), data::BaseDataType::kInt);
-    EXPECT_EQ(two.Value(), 2);
-}
-
-TEST(DataInt, DataItemIntWriteOfSmallBytes) {
-    data::Int two(2);
-    std::vector<uint8_t> bytes;
-    const size_t offset = 3;
-
-    two.WriteNoFail(bytes, offset);
-
-    EXPECT_EQ(bytes.size(), offset + 4);
-    auto expect_int = data::ReadInt(bytes, offset);
-    EXPECT_TRUE(expect_int.IsOk());
-    EXPECT_EQ(expect_int.Get(), 2);
-}
-
 TEST(DataInt, CorrectlyReadInt) {
     std::vector<uint8_t> bytes = {'\0', 'V', '\0', '\0', '\0'};
 
@@ -84,4 +64,21 @@ TEST(DataInt, WriteIntNoFailSuccessWithOutsideIndex) {
     auto expect_int = data::ReadInt(bytes, 28);
     ASSERT_TRUE(expect_int.IsOk());
     EXPECT_EQ(expect_int.Get(), -3);
+}
+
+TEST(DataInt, ToInt) {
+    const int value = 11111111;
+    data::DataItem x;
+    x = data::Int(value);
+    EXPECT_EQ(x[0], value & 0xff);
+    EXPECT_EQ(x[1], (value >> 8) & 0xff);
+    EXPECT_EQ(x[2], (value >> 16) & 0xff);
+    EXPECT_EQ(x[3], (value >> 24) & 0xff);
+}
+
+TEST(ReadInt, ReadIntFromDataItem) {
+    data::DataItem x;
+    x               = data::Int(11111111);
+    auto expect_int = data::ReadInt(x);
+    EXPECT_EQ(expect_int, 11111111);
 }

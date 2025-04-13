@@ -34,22 +34,20 @@ void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteString(bytes, offset, value.size(), value);
 }
 
-Char::Char(const std::string &value, uint8_t length) : type_(length) {
-    value_ = value.substr(0, length);
-    if (value_.size() < length) value_.resize(length, ' ');
+DataItem Char(const std::string &value, const int length) {
+    DataItem item(length);
+    std::memcpy(item.begin(), value.data(), value.size());
+    return item;
 }
 
-Result Char::Write(std::vector<uint8_t> &bytes, const size_t offset) const {
-    return WriteString(bytes, offset, type_.Length(), value_);
-}
-
-void Char::WriteNoFail(std::vector<uint8_t> &bytes, const size_t offset) const {
-    WriteStringNoFail(bytes, offset, value_);
+std::string ReadChar(const data::DataItem &item, const int length) {
+    std::string value(item.begin(), item.begin() + length);
+    return value;
 }
 
 void RightTrim(std::string &value) {
     value.erase(std::find_if(value.rbegin(), value.rend(),
-                             [](char ch) { return !std::isspace(ch); })
+                             [](char ch) { return ch && !std::isspace(ch); })
                     .base(),
                 value.end());
 }
