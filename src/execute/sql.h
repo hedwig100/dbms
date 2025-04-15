@@ -44,7 +44,8 @@ class Column {
 class Statement {
   public:
     virtual Result Execute(transaction::Transaction &transaction,
-                           execute::QueryResult &result) = 0;
+                           execute::QueryResult &result,
+                           const execute::Environment &env) = 0;
 };
 
 // SelectStatement class represents a SELECT statement.
@@ -58,7 +59,8 @@ class SelectStatement : public Statement {
 
     // TODO: Implement the SELECT statement execution logic.
     Result Execute(transaction::Transaction &transaction,
-                   execute::QueryResult &result) {
+                   execute::QueryResult &result,
+                   const execute::Environment &env) {
         return Ok();
     }
 
