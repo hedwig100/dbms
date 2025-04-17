@@ -1,6 +1,7 @@
 #ifndef _EXECUTE_SQL_H
 #define _EXECUTE_SQL_H
 
+#include "execute/environment.h"
 #include "execute/query_result.h"
 #include "result.h"
 #include "transaction/transaction.h"

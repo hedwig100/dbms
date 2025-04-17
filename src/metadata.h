@@ -3,7 +3,7 @@
 
 #include "result.h"
 #include "schema.h"
-#include "transaction.h"
+#include "transaction/transaction.h"
 #include <string>
 
 namespace metadata {
