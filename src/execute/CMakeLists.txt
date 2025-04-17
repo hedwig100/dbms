@@ -30,6 +30,12 @@ gtest_discover_tests(execute_test)
 add_library(sql
     sql.cc
 )
+target_link_libraries(sql
+  metadata
+  scans
+  table_scan
+  transaction
+)
 target_include_directories(sql
     PUBLIC ${PROJECT_SOURCE_DIR}/src
 )
@@ -42,6 +48,7 @@ target_include_directories(sql_test
 )
 target_link_libraries(sql_test
   sql
+  table_scan
   GTest::gtest_main
 )
 gtest_discover_tests(sql_test)
