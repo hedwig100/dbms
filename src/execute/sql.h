@@ -58,12 +58,10 @@ class SelectStatement : public Statement {
     Column *GetColumn() const { return column_; }
     Table *GetTable() const { return table_; }
 
-    // TODO: Implement the SELECT statement execution logic.
+    // SELECT statement
     Result Execute(transaction::Transaction &transaction,
                    execute::QueryResult &result,
-                   const execute::Environment &env) {
-        return Ok();
-    }
+                   const execute::Environment &env);
 
   private:
     Column *column_;
