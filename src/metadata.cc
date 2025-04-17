@@ -43,7 +43,7 @@ TableManager::TableManager() {}
 
 Result TableManager::CreateTable(const std::string &table_name,
                                  const schema::Schema &schema,
-                                 transaction::Transaction &transaction) {
+                                 transaction::Transaction &transaction) const {
     schema::Layout layout(schema);
     FIRST_TRY(UpdateTableMetadata(table_name, layout, transaction));
     TRY(UpdateFieldMetadata(table_name, schema, layout, transaction));
@@ -53,7 +53,7 @@ Result TableManager::CreateTable(const std::string &table_name,
 Result
 TableManager::UpdateTableMetadata(const std::string &table_name,
                                   const schema::Layout &layout,
-                                  transaction::Transaction &transaction) {
+                                  transaction::Transaction &transaction) const {
     if (table_name.size() > kMaxTablename) {
         return Error(
             "TableManager::UpdateTableMetadata() table name is too long");
@@ -70,7 +70,7 @@ TableManager::UpdateTableMetadata(const std::string &table_name,
 
 Result TableManager::UpdateFieldMetadata(
     const std::string &table_name, const schema::Schema &schema,
-    const schema::Layout &layout, transaction::Transaction &transaction) {
+    const schema::Layout &layout, transaction::Transaction &transaction) const {
     scan::TableScan field_scan(transaction, kFieldTableName, kFieldLayout);
     FIRST_TRY(field_scan.Init());
     for (const schema::Field &field : schema.Fields()) {
@@ -96,7 +96,7 @@ Result TableManager::UpdateFieldMetadata(
 
 ResultV<schema::Layout>
 TableManager::GetLayout(const std::string &table_name,
-                        transaction::Transaction &transaction) {
+                        transaction::Transaction &transaction) const {
     int slot_size = 0;
     scan::TableScan table_scan(transaction, kTableTableName, kTableLayout);
     FIRST_TRY(table_scan.Init());
