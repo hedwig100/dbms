@@ -105,6 +105,8 @@ target_include_directories(scans_test
 )
 target_link_libraries(scans_test
   GTest::gtest_main
+  int
+  scans
 )
 gtest_discover_tests(scans_test)
 
