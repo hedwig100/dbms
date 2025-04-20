@@ -4,14 +4,14 @@
 #include "result.h"
 #include "scan.h"
 #include "schema.h"
-#include "transaction.h"
+#include "transaction/transaction.h"
 #include <string>
 
 namespace scan {
 
 std::string TableFileName(const std::string &table_name);
 
-class TableScan : UpdateScan {
+class TableScan : public UpdateScan {
   public:
     TableScan(transaction::Transaction &transaction, std::string table_name,
               schema::Layout layout);

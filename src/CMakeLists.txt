@@ -2,6 +2,7 @@ enable_testing()
 include(GoogleTest)
 
 add_subdirectory(data)
+add_subdirectory(execute)
 add_subdirectory(parser)
 add_subdirectory(transaction)
 
@@ -84,6 +85,31 @@ target_link_libraries(sample_lib_test
   GTest::gtest_main
 )
 gtest_discover_tests(sample_lib_test)
+
+## scans
+add_library(scans
+  scans.cc
+)
+target_link_libraries(scans
+  table_scan
+)
+target_include_directories(scans
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(scans_test
+  scans_test.cc
+)
+target_include_directories(scans_test
+  PUBLIC ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(scans_test
+  GTest::gtest_main
+  int
+  scans
+)
+gtest_discover_tests(scans_test)
+
 
 ## schema
 add_library(schema
