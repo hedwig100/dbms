@@ -18,8 +18,11 @@ class DefaultResult {
 
 class SelectResult {
   public:
-    SelectResult(const std::vector<std::string> column_names)
+    SelectResult(const std::vector<std::string> &column_names)
         : column_names_(column_names) {}
+    SelectResult(const std::vector<std::string> &column_names,
+                 const std::vector<Row> &rows)
+        : column_names_(column_names), rows_(rows) {}
 
     // Add a row to the result.
     void Add(const Row &row) { rows_.push_back(row); }
