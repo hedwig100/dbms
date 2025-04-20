@@ -45,6 +45,8 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     while (true) {
         TRY_VALUE(item, select_scan.Get(column_->ColumnName()));
         select_result.Add({item.Get()});
+        TRY_VALUE(has_next, select_scan.Next());
+        if (!has_next.Get()) break;
     }
 
     result = select_result;
