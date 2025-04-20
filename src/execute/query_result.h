@@ -8,7 +8,13 @@ namespace execute {
 
 using Row = std::vector<data::DataItem>;
 
-class DefaultResult {};
+class DefaultResult {
+  public:
+    bool operator==(const DefaultResult &other) const { return true; }
+    bool operator!=(const DefaultResult &other) const {
+        return !(*this == other);
+    }
+};
 
 class SelectResult {
   public:
@@ -25,6 +31,14 @@ class SelectResult {
 
     // Get the rows.
     const std::vector<Row> &Rows() const { return rows_; }
+
+    bool operator==(const SelectResult &other) const {
+        return column_names_ == other.column_names_ && rows_ == other.rows_;
+    }
+
+    bool operator!=(const SelectResult &other) const {
+        return !(*this == other);
+    }
 
   private:
     std::vector<std::string> column_names_;
