@@ -2,6 +2,7 @@
 #include "data/byte.h"
 #include "data/char.h"
 #include "data/int.h"
+#include "debug.h"
 
 namespace transaction {
 
@@ -29,6 +30,10 @@ Transaction::Transaction(disk::DiskManager &disk_manager,
 
 Result Transaction::Write(const disk::DiskPosition &position, const int length,
                           const data::DataItem &item) {
+    DEBUG("transaction::Transaction::Write() called with position: ("
+          "block_index: "
+          << position.BlockID().BlockIndex()
+          << ", offset: " << position.Offset() << "), length: " << length);
     Result lock_result = concurrent_manager_.WriteLock(position.BlockID());
     if (lock_result.IsError()) {
         ROLLBACK(lock_result);
@@ -36,6 +41,7 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                                    "Write() failed to "
                                    "lock the block.");
     }
+    DEBUG("transaction::Transaction::Write() locked the block");
 
     disk::Block block;
     Result result = buffer_manager_.Read(position.BlockID(), block);
@@ -45,6 +51,7 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                               "Write() failed to read "
                               "the block.");
     }
+    DEBUG("transaction::Transaction::Write() read the block");
 
     std::vector<uint8_t> previous_item_bytes;
     Result previous_data =
@@ -55,6 +62,7 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                                      "Write() failed "
                                      "to read the previous data.");
     }
+    DEBUG("transaction::Transaction::Write() read the previous data");
 
     ResultV<dblog::LogSequenceNumber> lsn_result =
         recovery_manager_.WriteLog(dblog::LogOperation(
@@ -65,6 +73,7 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                                   "Write() failed to "
                                   "write a log record.");
     }
+    DEBUG("transaction::Transaction::Write() wrote the log record");
 
     Result write_result = block.Write(position.Offset(), length, item);
     if (write_result.IsError()) {
@@ -73,6 +82,7 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                                     "Write() failed "
                                     "to write the data.");
     }
+    DEBUG("transaction::Transaction::Write() wrote the data");
 
     write_result =
         buffer_manager_.Write(position.BlockID(), block, lsn_result.Get());
@@ -82,18 +92,24 @@ Result Transaction::Write(const disk::DiskPosition &position, const int length,
                                     "Write() failed "
                                     "to write the block.");
     }
+    DEBUG("transaction::Transaction::Write() wrote the block");
 
     return Ok();
 }
 
 Result Transaction::Read(const disk::DiskPosition &position, const int length,
                          data::DataItem &item) {
+    DEBUG("transaction::Transaction::Read() called with position: ("
+          "block_index: "
+          << position.BlockID().BlockIndex()
+          << ", offset: " << position.Offset() << "), length: " << length);
     Result lock_result = concurrent_manager_.ReadLock(position.BlockID());
     if (lock_result.IsError()) {
         ROLLBACK(lock_result);
         return lock_result + Error("transaction::Transaction::ReadByte() "
                                    "failed to lock the block.");
     }
+    DEBUG("transaction::Transaction::Read() locked the block");
 
     disk::Block block;
     Result read_result = buffer_manager_.Read(position.BlockID(), block);
@@ -102,6 +118,7 @@ Result Transaction::Read(const disk::DiskPosition &position, const int length,
         return read_result + Error("transaction::Transaction::ReadByte() "
                                    "failed to read the block.");
     }
+    DEBUG("transaction::Transaction::Read() read the block");
 
     read_result = block.Read(position.Offset(), length, item);
     if (read_result.IsError()) {
@@ -109,6 +126,7 @@ Result Transaction::Read(const disk::DiskPosition &position, const int length,
         return read_result + Error("transaction::Transaction::ReadByte() "
                                    "failed to read the byte.");
     }
+    DEBUG("transaction::Transaction::Read() read the data");
 
     return Ok();
 }
