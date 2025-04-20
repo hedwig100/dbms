@@ -49,6 +49,15 @@ const uint8_t *DataItem::end() const {
         item_);
 }
 
+bool DataItem::operator==(const DataItem &other) const {
+    if (size() != other.size()) return false;
+    return std::equal(begin(), end(), other.begin());
+}
+
+bool DataItem::operator!=(const DataItem &other) const {
+    return !(*this == other);
+}
+
 Result Read(DataItem &item, const std::vector<uint8_t> &bytes,
             const size_t offset, int length) {
     if (offset < 0 || offset + length > bytes.size())

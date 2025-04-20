@@ -36,6 +36,10 @@ class DataItem {
 
     const uint8_t *end() const;
 
+    bool operator==(const DataItem &other) const;
+
+    bool operator!=(const DataItem &other) const;
+
   private:
     constexpr static size_t kMaxItemLength = 4;
     using ConstLengthItem    = std::array<uint8_t, kMaxItemLength>;
