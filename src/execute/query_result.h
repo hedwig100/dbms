@@ -8,6 +8,8 @@ namespace execute {
 
 using Row = std::vector<data::DataItem>;
 
+class DefaultResult {};
+
 class SelectResult {
   public:
     SelectResult(const std::vector<std::string> column_names)
@@ -16,12 +18,20 @@ class SelectResult {
     // Add a row to the result.
     void Add(const Row &row) { rows_.push_back(row); }
 
+    // Get the column names.
+    const std::vector<std::string> &ColumnNames() const {
+        return column_names_;
+    }
+
+    // Get the rows.
+    const std::vector<Row> &Rows() const { return rows_; }
+
   private:
     std::vector<std::string> column_names_;
     std::vector<Row> rows_;
 };
 
-using QueryResult = std::variant<SelectResult>;
+using QueryResult = std::variant<DefaultResult, SelectResult>;
 
 } // namespace execute
 
