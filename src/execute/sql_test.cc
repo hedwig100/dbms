@@ -138,6 +138,8 @@ class SqlTest : public ::testing::Test {
 TEST_F(SqlTest, SelectSuccess) {
     sql::Columns *columns = new sql::Columns();
     columns->AddColumn(new sql::Column("field1"));
+    columns->AddColumn(new sql::Column("field2"));
+    columns->AddColumn(new sql::Column(0));
     sql::SelectStatement select_statement(columns,
                                           new sql::Table(tablename.c_str()));
     execute::QueryResult result = execute::DefaultResult();
@@ -147,17 +149,18 @@ TEST_F(SqlTest, SelectSuccess) {
 
     EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
     execute::QueryResult expect_result =
-        execute::SelectResult({"field1"}, {
-                                              {data::Int(0)},
-                                              {data::Int(1)},
-                                              {data::Int(2)},
-                                              {data::Int(3)},
-                                              {data::Int(4)},
-                                              {data::Int(5)},
-                                              {data::Int(6)},
-                                              {data::Int(7)},
-                                              {data::Int(8)},
-                                              {data::Int(9)},
-                                          });
+        execute::SelectResult({"field1", "field2", "0"},
+                              {
+                                  {data::Int(0), data::Int(0), data::Int(0)},
+                                  {data::Int(1), data::Int(-1), data::Int(0)},
+                                  {data::Int(2), data::Int(-2), data::Int(0)},
+                                  {data::Int(3), data::Int(-3), data::Int(0)},
+                                  {data::Int(4), data::Int(-4), data::Int(0)},
+                                  {data::Int(5), data::Int(-5), data::Int(0)},
+                                  {data::Int(6), data::Int(-6), data::Int(0)},
+                                  {data::Int(7), data::Int(-7), data::Int(0)},
+                                  {data::Int(8), data::Int(-8), data::Int(0)},
+                                  {data::Int(9), data::Int(-9), data::Int(0)},
+                              });
     EXPECT_EQ(result, expect_result);
 }
