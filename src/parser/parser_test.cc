@@ -14,7 +14,8 @@ TEST(ParserTest, ExampleSuccessTest) {
     sql::SelectStatement *select_statement =
         dynamic_cast<sql::SelectStatement *>(statement);
     ASSERT_TRUE(statement != nullptr);
-    EXPECT_EQ(select_statement->GetColumn()->ColumnName(), "a");
+    EXPECT_EQ(select_statement->GetColumns()->GetColumns()[0]->ColumnName(),
+              "a");
     EXPECT_EQ(select_statement->GetTable()->TableName(), "table");
 }
 

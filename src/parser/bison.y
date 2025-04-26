@@ -50,6 +50,7 @@ typedef void* yyscan_t;
 
     sql::Statement *statement;
     sql::SelectStatement *select_statement;
+    sql::Columns *columns;
     sql::Column *column;
     sql::Table *table;
 }
@@ -74,6 +75,7 @@ typedef void* yyscan_t;
 /* Non-terminal symbols (https://www.gnu.org/software/bison/manual/html_node/Type-Decl.html) */
 %type <statement> statement
 %type <select_statement> select_statement
+%type <columns> columns
 %type <column> column
 %type <table> table
 
@@ -97,7 +99,12 @@ statement
     ;
   
 select_statement
-    : SELECT column FROM table ';' { $$ = new sql::SelectStatement($2, $4); }
+    : SELECT columns FROM table ';' { $$ = new sql::SelectStatement($2, $4); }
+    ;
+
+columns
+    : column { $$ = new sql::Columns(); $$->AddColumn($1); }
+    | columns ',' column { $$ = $1; $$->AddColumn($3); }
     ;
 
 column
