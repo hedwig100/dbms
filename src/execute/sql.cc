@@ -1,4 +1,6 @@
 #include "sql.h"
+#include "data/int.h"
+#include "debug.h"
 #include "execute/query_result.h"
 #include "scans.h"
 #include "table_scan.h"
@@ -6,7 +8,7 @@
 
 namespace sql {
 
-bool Column::IsColumnName() {
+bool Column::IsColumnName() const {
     return std::holds_alternative<std::string>(column_name_or_const_integer_);
 }
 
@@ -24,18 +26,25 @@ int Column::ConstInteger() const {
     return 0;
 }
 
+std::string Column::Name() const {
+    if (std::holds_alternative<std::string>(column_name_or_const_integer_)) {
+        return std::get<std::string>(column_name_or_const_integer_);
+    }
+    return std::to_string(std::get<int>(column_name_or_const_integer_));
+}
+
+ResultV<data::DataItem> Column::GetColumn(scan::Scan &scan) const {
+    if (IsColumnName()) {
+        TRY_VALUE(item, scan.Get(ColumnName()));
+        return Ok(item.Get());
+    }
+    return Ok(data::Int(ConstInteger()));
+}
+
 Result SelectStatement::Execute(transaction::Transaction &transaction,
                                 execute::QueryResult &result,
                                 const execute::Environment &env) {
-
-    // TODO: Implement when column represents a const integer;
-    for (auto column : columns_->GetColumns()) {
-        if (!column->IsColumnName()) {
-            return Error("[TODO] We have to implement when column_ is a const "
-                         "integer");
-        }
-    }
-
+    DEBUG("SelectStatement::Execute() called");
     const metadata::TableManager &table_manager = env.GetTableManager();
     TRY_VALUE(layout,
               table_manager.GetLayout(table_->TableName(), transaction));
@@ -46,8 +55,8 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     FIRST_TRY(select_scan.Init());
     while (true) {
         execute::Row row;
-        for (auto column : columns_->GetColumns()) {
-            TRY_VALUE(item, select_scan.Get(column->ColumnName()));
+        for (const Column *column : columns_->GetColumns()) {
+            TRY_VALUE(item, column->GetColumn(select_scan));
             row.push_back(item.Get());
         }
         select_result.Add(row);

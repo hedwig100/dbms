@@ -1,11 +1,52 @@
 #include "data/int.h"
 #include "execute/environment.h"
 #include "execute/query_result.h"
+#include "scans_test.h"
 #include "sql.h"
 #include "table_scan.h"
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+
+TEST(Column, IsColumnName) {
+    sql::Column column("field1");
+    EXPECT_TRUE(column.IsColumnName());
+    EXPECT_EQ(column.ColumnName(), "field1");
+}
+
+TEST(Column, ConstInteger) {
+    sql::Column column(42);
+    EXPECT_FALSE(column.IsColumnName());
+    EXPECT_EQ(column.ConstInteger(), 42);
+}
+
+TEST(Column, Name) {
+    sql::Column column("field1");
+    EXPECT_EQ(column.Name(), "field1");
+
+    sql::Column int_column(42);
+    EXPECT_EQ(int_column.Name(), "42");
+}
+
+TEST(Column, ColumnNameGetColumn) {
+    sql::Column column("field1");
+    ScanForTest scan;
+
+    auto result = column.GetColumn(scan);
+
+    EXPECT_TRUE(result.IsOk());
+    EXPECT_EQ(result.Get(), data::Int(1));
+}
+
+TEST(Column, ConstIntegerGetColumn) {
+    sql::Column column(42);
+    ScanForTest scan;
+
+    auto result = column.GetColumn(scan);
+
+    EXPECT_TRUE(result.IsOk());
+    EXPECT_EQ(result.Get(), data::Int(42));
+}
 
 const std::string data_directory_path = "data_dir/";
 const std::string log_directory_path  = "log_dir/";

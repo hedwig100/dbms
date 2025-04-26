@@ -4,6 +4,7 @@
 #include "execute/environment.h"
 #include "execute/query_result.h"
 #include "result.h"
+#include "scan.h"
 #include "transaction/transaction.h"
 #include <string>
 #include <variant>
@@ -30,7 +31,7 @@ class Column {
     Column(int const_integer) : column_name_or_const_integer_(const_integer) {}
 
     // Check if the column represents a column name.
-    bool IsColumnName();
+    bool IsColumnName() const;
 
     // Returns the column name if it is a column name.
     std::string ColumnName() const;
@@ -39,13 +40,10 @@ class Column {
     int ConstInteger() const;
 
     // This is used to get the name of the column or constant integer.
-    std::string Name() const {
-        if (std::holds_alternative<std::string>(
-                column_name_or_const_integer_)) {
-            return std::get<std::string>(column_name_or_const_integer_);
-        }
-        return std::to_string(std::get<int>(column_name_or_const_integer_));
-    }
+    std::string Name() const;
+
+    // Get the column value using the scan.
+    ResultV<data::DataItem> GetColumn(scan::Scan &scan) const;
 
   private:
     std::variant<std::string, int> column_name_or_const_integer_;
@@ -59,9 +57,9 @@ class Columns {
 
     std::vector<Column *> GetColumns() const { return columns_; }
 
-    std::vector<std ::string> GetColmnNames() const {
+    std::vector<std::string> GetColmnNames() const {
         std::vector<std::string> column_names;
-        for (const auto &column : columns_) {
+        for (const Column *column : columns_) {
             column_names.push_back(column->Name());
         }
         return column_names;
