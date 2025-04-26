@@ -1,6 +1,41 @@
 #include "data/data.h"
 #include <gtest/gtest.h>
 
+TEST(Data, Equal) {
+    data::DataItem item1;
+    data::DataItem item2;
+    item1.resize(4);
+    item2.resize(4);
+    item1[0] = 'a';
+    item1[1] = 'b';
+    item1[2] = 'c';
+    item1[3] = 'd';
+    item2[0] = 'a';
+    item2[1] = 'b';
+    item2[2] = 'c';
+    item2[3] = 'd';
+
+    EXPECT_TRUE(item1 == item2);
+}
+
+TEST(Data, NotEqual) {
+    data::DataItem item1;
+    data::DataItem item2;
+    item1.resize(4);
+    item2.resize(4);
+    item1[0] = 'a';
+    item1[1] = 'b';
+    item1[2] = 'c';
+    item1[3] = 'd';
+
+    item2[0] = 'a';
+    item2[1] = 'b';
+    item2[2] = 'c';
+    item2[3] = 'e';
+
+    EXPECT_TRUE(item1 != item2);
+}
+
 TEST(DataCopy, ReadSuccess) {
     std::vector<uint8_t> bytes = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
     data::DataItem item;

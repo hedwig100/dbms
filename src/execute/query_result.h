@@ -8,12 +8,21 @@ namespace execute {
 
 using Row = std::vector<data::DataItem>;
 
-class DefaultResult {};
+class DefaultResult {
+  public:
+    bool operator==(const DefaultResult &other) const { return true; }
+    bool operator!=(const DefaultResult &other) const {
+        return !(*this == other);
+    }
+};
 
 class SelectResult {
   public:
-    SelectResult(const std::vector<std::string> column_names)
+    SelectResult(const std::vector<std::string> &column_names)
         : column_names_(column_names) {}
+    SelectResult(const std::vector<std::string> &column_names,
+                 const std::vector<Row> &rows)
+        : column_names_(column_names), rows_(rows) {}
 
     // Add a row to the result.
     void Add(const Row &row) { rows_.push_back(row); }
@@ -25,6 +34,14 @@ class SelectResult {
 
     // Get the rows.
     const std::vector<Row> &Rows() const { return rows_; }
+
+    bool operator==(const SelectResult &other) const {
+        return column_names_ == other.column_names_ && rows_ == other.rows_;
+    }
+
+    bool operator!=(const SelectResult &other) const {
+        return !(*this == other);
+    }
 
   private:
     std::vector<std::string> column_names_;
