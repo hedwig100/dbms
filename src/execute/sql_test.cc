@@ -146,11 +146,18 @@ TEST_F(SqlTest, SelectSuccess) {
         select_statement.Execute(transaction, result, environment);
 
     EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
-    EXPECT_TRUE(std::holds_alternative<execute::SelectResult>(result));
-    const execute::SelectResult &select_result =
-        std::get<execute::SelectResult>(result);
-    EXPECT_EQ(select_result.Rows().size(), 10);
-    for (int i = 0; i < 10; ++i) {
-        EXPECT_EQ(data::ReadInt(select_result.Rows()[i][0]), i);
-    }
+    execute::QueryResult expect_result =
+        execute::SelectResult({"field1"}, {
+                                              {data::Int(0)},
+                                              {data::Int(1)},
+                                              {data::Int(2)},
+                                              {data::Int(3)},
+                                              {data::Int(4)},
+                                              {data::Int(5)},
+                                              {data::Int(6)},
+                                              {data::Int(7)},
+                                              {data::Int(8)},
+                                              {data::Int(9)},
+                                          });
+    EXPECT_EQ(result, expect_result);
 }
