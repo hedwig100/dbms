@@ -1,11 +1,52 @@
 #include "data/int.h"
 #include "execute/environment.h"
 #include "execute/query_result.h"
+#include "scans_test.h"
 #include "sql.h"
 #include "table_scan.h"
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+
+TEST(Column, IsColumnName) {
+    sql::Column column("field1");
+    EXPECT_TRUE(column.IsColumnName());
+    EXPECT_EQ(column.ColumnName(), "field1");
+}
+
+TEST(Column, ConstInteger) {
+    sql::Column column(42);
+    EXPECT_FALSE(column.IsColumnName());
+    EXPECT_EQ(column.ConstInteger(), 42);
+}
+
+TEST(Column, Name) {
+    sql::Column column("field1");
+    EXPECT_EQ(column.Name(), "field1");
+
+    sql::Column int_column(42);
+    EXPECT_EQ(int_column.Name(), "42");
+}
+
+TEST(Column, ColumnNameGetColumn) {
+    sql::Column column("field1");
+    ScanForTest scan;
+
+    auto result = column.GetColumn(scan);
+
+    EXPECT_TRUE(result.IsOk());
+    EXPECT_EQ(result.Get(), data::Int(1));
+}
+
+TEST(Column, ConstIntegerGetColumn) {
+    sql::Column column(42);
+    ScanForTest scan;
+
+    auto result = column.GetColumn(scan);
+
+    EXPECT_TRUE(result.IsOk());
+    EXPECT_EQ(result.Get(), data::Int(42));
+}
 
 const std::string data_directory_path = "data_dir/";
 const std::string log_directory_path  = "log_dir/";
@@ -95,7 +136,11 @@ class SqlTest : public ::testing::Test {
 };
 
 TEST_F(SqlTest, SelectSuccess) {
-    sql::SelectStatement select_statement(new sql::Column("field1"),
+    sql::Columns *columns = new sql::Columns();
+    columns->AddColumn(new sql::Column("field1"));
+    columns->AddColumn(new sql::Column("field2"));
+    columns->AddColumn(new sql::Column(0));
+    sql::SelectStatement select_statement(columns,
                                           new sql::Table(tablename.c_str()));
     execute::QueryResult result = execute::DefaultResult();
 
@@ -103,11 +148,19 @@ TEST_F(SqlTest, SelectSuccess) {
         select_statement.Execute(transaction, result, environment);
 
     EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
-    EXPECT_TRUE(std::holds_alternative<execute::SelectResult>(result));
-    const execute::SelectResult &select_result =
-        std::get<execute::SelectResult>(result);
-    EXPECT_EQ(select_result.Rows().size(), 10);
-    for (int i = 0; i < 10; ++i) {
-        EXPECT_EQ(data::ReadInt(select_result.Rows()[i][0]), i);
-    }
+    execute::QueryResult expect_result =
+        execute::SelectResult({"field1", "field2", "0"},
+                              {
+                                  {data::Int(0), data::Int(0), data::Int(0)},
+                                  {data::Int(1), data::Int(-1), data::Int(0)},
+                                  {data::Int(2), data::Int(-2), data::Int(0)},
+                                  {data::Int(3), data::Int(-3), data::Int(0)},
+                                  {data::Int(4), data::Int(-4), data::Int(0)},
+                                  {data::Int(5), data::Int(-5), data::Int(0)},
+                                  {data::Int(6), data::Int(-6), data::Int(0)},
+                                  {data::Int(7), data::Int(-7), data::Int(0)},
+                                  {data::Int(8), data::Int(-8), data::Int(0)},
+                                  {data::Int(9), data::Int(-9), data::Int(0)},
+                              });
+    EXPECT_EQ(result, expect_result);
 }

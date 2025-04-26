@@ -4,6 +4,7 @@
 #include "execute/environment.h"
 #include "execute/query_result.h"
 #include "result.h"
+#include "scan.h"
 #include "transaction/transaction.h"
 #include <string>
 #include <variant>
@@ -30,7 +31,7 @@ class Column {
     Column(int const_integer) : column_name_or_const_integer_(const_integer) {}
 
     // Check if the column represents a column name.
-    bool IsColumnName();
+    bool IsColumnName() const;
 
     // Returns the column name if it is a column name.
     std::string ColumnName() const;
@@ -38,8 +39,34 @@ class Column {
     // Returns the constant integer if it is a constant integer.
     int ConstInteger() const;
 
+    // This is used to get the name of the column or constant integer.
+    std::string Name() const;
+
+    // Get the column value using the scan.
+    ResultV<data::DataItem> GetColumn(scan::Scan &scan) const;
+
   private:
     std::variant<std::string, int> column_name_or_const_integer_;
+};
+
+class Columns {
+  public:
+    Columns() {}
+
+    void AddColumn(Column *column) { columns_.push_back(column); }
+
+    std::vector<Column *> GetColumns() const { return columns_; }
+
+    std::vector<std::string> GetColmnNames() const {
+        std::vector<std::string> column_names;
+        for (const Column *column : columns_) {
+            column_names.push_back(column->Name());
+        }
+        return column_names;
+    }
+
+  private:
+    std::vector<Column *> columns_;
 };
 
 class Statement {
@@ -52,10 +79,10 @@ class Statement {
 // SelectStatement class represents a SELECT statement.
 class SelectStatement : public Statement {
   public:
-    SelectStatement(Column *column, Table *table)
-        : column_(column), table_(table) {}
+    SelectStatement(Columns *columns, Table *table)
+        : columns_(columns), table_(table) {}
 
-    Column *GetColumn() const { return column_; }
+    Columns *GetColumns() const { return columns_; }
     Table *GetTable() const { return table_; }
 
     // SELECT statement
@@ -64,7 +91,7 @@ class SelectStatement : public Statement {
                    const execute::Environment &env);
 
   private:
-    Column *column_;
+    Columns *columns_;
     Table *table_;
 };
 
