@@ -164,3 +164,17 @@ TEST_F(SqlTest, SelectSuccess) {
                               });
     EXPECT_EQ(result, expect_result);
 }
+
+TEST_F(SqlTest, SelectFailure) {
+    sql::Columns *columns = new sql::Columns();
+    columns->AddColumn(new sql::Column("invalid-field"));
+    columns->AddColumn(new sql::Column("field2"));
+    sql::SelectStatement select_statement(columns,
+                                          new sql::Table(tablename.c_str()));
+    execute::QueryResult result = execute::DefaultResult();
+
+    Result execute_result =
+        select_statement.Execute(transaction, result, environment);
+
+    EXPECT_TRUE(execute_result.IsError());
+}

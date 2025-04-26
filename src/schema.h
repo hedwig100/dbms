@@ -66,6 +66,11 @@ class Layout {
     // Returns the length of the record (schema).
     int Length() const { return length_; }
 
+    // Returns true if the field exists in the schema.
+    bool HasField(const std::string &fieldname) const {
+        return field_lengths_.find(fieldname) != field_lengths_.end();
+    }
+
   private:
     int length_;
     std::unordered_map<std::string, int> field_lengths_;

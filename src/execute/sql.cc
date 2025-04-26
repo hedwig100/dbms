@@ -41,6 +41,11 @@ ResultV<data::DataItem> Column::GetColumn(scan::Scan &scan) const {
     return Ok(data::Int(ConstInteger()));
 }
 
+bool Column::IsValid(const schema::Layout &layout) const {
+    if (IsColumnName()) { return layout.HasField(ColumnName()); }
+    return true;
+}
+
 Result SelectStatement::Execute(transaction::Transaction &transaction,
                                 execute::QueryResult &result,
                                 const execute::Environment &env) {
@@ -48,9 +53,13 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     const metadata::TableManager &table_manager = env.GetTableManager();
     TRY_VALUE(layout,
               table_manager.GetLayout(table_->TableName(), transaction));
+    if (!IsValidColumns(layout.Get())) {
+        return Error("SelectStatement::Execute() Invalid columns in the SELECT "
+                     "statement");
+    }
+
     scan::TableScan table_scan(transaction, table_->TableName(), layout.Get());
     scan::SelectScan select_scan(table_scan);
-
     execute::SelectResult select_result(columns_->GetColmnNames());
     FIRST_TRY(select_scan.Init());
     while (true) {
@@ -66,6 +75,13 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
 
     result = select_result;
     return Ok();
+}
+
+bool SelectStatement::IsValidColumns(const schema::Layout &layout) const {
+    for (const Column *column : columns_->GetColumns()) {
+        if (!column->IsValid(layout)) { return false; }
+    }
+    return true;
 }
 
 } // namespace sql

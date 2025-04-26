@@ -45,6 +45,9 @@ class Column {
     // Get the column value using the scan.
     ResultV<data::DataItem> GetColumn(scan::Scan &scan) const;
 
+    // Returns true if the column is valid in the given layout.
+    bool IsValid(const schema::Layout &layout) const;
+
   private:
     std::variant<std::string, int> column_name_or_const_integer_;
 };
@@ -91,6 +94,7 @@ class SelectStatement : public Statement {
                    const execute::Environment &env);
 
   private:
+    bool IsValidColumns(const schema::Layout &layout) const;
     Columns *columns_;
     Table *table_;
 };
