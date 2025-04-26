@@ -95,7 +95,9 @@ class SqlTest : public ::testing::Test {
 };
 
 TEST_F(SqlTest, SelectSuccess) {
-    sql::SelectStatement select_statement(new sql::Column("field1"),
+    sql::Columns *columns = new sql::Columns();
+    columns->AddColumn(new sql::Column("field1"));
+    sql::SelectStatement select_statement(columns,
                                           new sql::Table(tablename.c_str()));
     execute::QueryResult result = execute::DefaultResult();
 

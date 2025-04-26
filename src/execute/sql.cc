@@ -28,10 +28,12 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
                                 execute::QueryResult &result,
                                 const execute::Environment &env) {
 
-    // TODO: Implement when column_ represents a const integer;
-    if (!column_->IsColumnName()) {
-        return Error("[TODO] We have to implement when column_ is a const "
-                     "integer");
+    // TODO: Implement when column represents a const integer;
+    for (auto column : columns_->GetColumns()) {
+        if (!column->IsColumnName()) {
+            return Error("[TODO] We have to implement when column_ is a const "
+                         "integer");
+        }
     }
 
     const metadata::TableManager &table_manager = env.GetTableManager();
@@ -40,11 +42,15 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     scan::TableScan table_scan(transaction, table_->TableName(), layout.Get());
     scan::SelectScan select_scan(table_scan);
 
-    execute::SelectResult select_result({column_->ColumnName()});
+    execute::SelectResult select_result(columns_->GetColmnNames());
     FIRST_TRY(select_scan.Init());
     while (true) {
-        TRY_VALUE(item, select_scan.Get(column_->ColumnName()));
-        select_result.Add({item.Get()});
+        execute::Row row;
+        for (auto column : columns_->GetColumns()) {
+            TRY_VALUE(item, select_scan.Get(column->ColumnName()));
+            row.push_back(item.Get());
+        }
+        select_result.Add(row);
         TRY_VALUE(has_next, select_scan.Next());
         if (!has_next.Get()) break;
     }
