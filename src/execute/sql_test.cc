@@ -217,3 +217,37 @@ TEST_F(SqlTest, SelectFailureWithInvalidColumn) {
 
     EXPECT_TRUE(execute_result.IsError());
 }
+
+TEST_F(SqlTest, SelectSuccessWithWhereCondition) {
+    sql::Columns *columns            = new sql::Columns(true);
+    sql::Expression *where_condition = new sql::Expression(
+        new sql::BooleanPrimary(new sql::Column("field1"), new sql::Column(0)));
+    sql::SelectStatement select_statement(
+        columns, new sql::Table(tablename.c_str()), where_condition);
+    execute::QueryResult result = execute::DefaultResult();
+
+    Result execute_result =
+        select_statement.Execute(transaction, result, environment);
+
+    EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
+    execute::QueryResult expect_result = execute::SelectResult(
+        {"field1", "field2"}, {
+                                  {data::Int(0), data::Int(0)},
+                              });
+    EXPECT_EQ(result, expect_result);
+}
+
+TEST_F(SqlTest, SelectFailWithWhereConditionWithInvalidColumn) {
+    sql::Columns *columns = new sql::Columns(true);
+    sql::Expression *where_condition =
+        new sql::Expression(new sql::BooleanPrimary(
+            new sql::Column("invalid-field"), new sql::Column(0)));
+    sql::SelectStatement select_statement(
+        columns, new sql::Table(tablename.c_str()), where_condition);
+    execute::QueryResult result = execute::DefaultResult();
+
+    Result execute_result =
+        select_statement.Execute(transaction, result, environment);
+
+    EXPECT_TRUE(execute_result.IsError());
+}

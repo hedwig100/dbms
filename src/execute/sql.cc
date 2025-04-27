@@ -46,6 +46,17 @@ bool Column::IsValid(const schema::Layout &layout) const {
     return true;
 }
 
+ResultV<bool> BooleanPrimary::Evaluate(scan::Scan &scan) const {
+    TRY_VALUE(left_value, left_->GetColumn(scan));
+    TRY_VALUE(right_value, right_->GetColumn(scan));
+    return Ok(left_value.Get() == right_value.Get());
+}
+
+ResultV<bool> Expression::Evaluate(scan::Scan &scan) const {
+    if (boolean_primary_ == nullptr) { return Ok(true); }
+    return boolean_primary_->Evaluate(scan);
+}
+
 void Columns::PopulateColumns(const schema::Layout &layout) {
     if (!is_all_column_) { return; }
     for (const auto &fieldname : layout.FieldNames()) {
@@ -72,12 +83,16 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     execute::SelectResult select_result(columns_->GetColmnNames());
     FIRST_TRY(select_scan.Init());
     while (true) {
-        execute::Row row;
-        for (const Column *column : columns_->GetColumns()) {
-            TRY_VALUE(item, column->GetColumn(select_scan));
-            row.push_back(item.Get());
+        TRY_VALUE(where, WhereConditionIsTrue(select_scan));
+        if (where.Get()) {
+            execute::Row row;
+            for (const Column *column : columns_->GetColumns()) {
+                TRY_VALUE(item, column->GetColumn(select_scan));
+                row.push_back(item.Get());
+            }
+            select_result.Add(row);
         }
-        select_result.Add(row);
+
         TRY_VALUE(has_next, select_scan.Next());
         if (!has_next.Get()) break;
     }
@@ -91,6 +106,13 @@ bool SelectStatement::IsValidColumns(const schema::Layout &layout) const {
         if (!column->IsValid(layout)) { return false; }
     }
     return true;
+}
+
+ResultV<bool>
+SelectStatement::WhereConditionIsTrue(scan::SelectScan &scan) const {
+    if (where_condition_ == nullptr) { return Ok(true); }
+    TRY_VALUE(is_true, where_condition_->Evaluate(scan));
+    return Ok(is_true.Get());
 }
 
 } // namespace sql
