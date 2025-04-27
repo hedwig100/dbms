@@ -128,6 +128,7 @@ target_include_directories(schema_test
 target_link_libraries(schema_test
   schema
   GTest::gtest_main
+  GTest::gmock_main
 )
 gtest_discover_tests(schema_test)
 

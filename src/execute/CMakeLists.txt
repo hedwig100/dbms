@@ -50,5 +50,6 @@ target_link_libraries(sql_test
   sql
   table_scan
   GTest::gtest_main
+  GTest::gmock_main
 )
 gtest_discover_tests(sql_test)

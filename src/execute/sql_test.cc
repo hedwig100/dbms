@@ -6,6 +6,7 @@
 #include "table_scan.h"
 #include <filesystem>
 #include <fstream>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 TEST(Column, IsColumnName) {
@@ -46,6 +47,18 @@ TEST(Column, ConstIntegerGetColumn) {
 
     EXPECT_TRUE(result.IsOk());
     EXPECT_EQ(result.Get(), data::Int(42));
+}
+
+TEST(Columns, PopulateColumns) {
+    sql::Columns all_columns(true);
+    schema::Layout layout(
+        schema::Schema({schema::Field("field1", data::kTypeInt),
+                        schema::Field("field2", data::kTypeInt)}));
+
+    all_columns.PopulateColumns(layout);
+
+    EXPECT_THAT(all_columns.GetColmnNames(),
+                ::testing::ElementsAre("field1", "field2"));
 }
 
 const std::string data_directory_path = "data_dir/";
@@ -163,4 +176,44 @@ TEST_F(SqlTest, SelectSuccess) {
                                   {data::Int(9), data::Int(-9), data::Int(0)},
                               });
     EXPECT_EQ(result, expect_result);
+}
+
+TEST_F(SqlTest, SelectSuccessWithAllColumns) {
+    sql::Columns *columns = new sql::Columns(true);
+    sql::SelectStatement select_statement(columns,
+                                          new sql::Table(tablename.c_str()));
+    execute::QueryResult result = execute::DefaultResult();
+
+    Result execute_result =
+        select_statement.Execute(transaction, result, environment);
+
+    EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
+    execute::QueryResult expect_result = execute::SelectResult(
+        {"field1", "field2"}, {
+                                  {data::Int(0), data::Int(0)},
+                                  {data::Int(1), data::Int(-1)},
+                                  {data::Int(2), data::Int(-2)},
+                                  {data::Int(3), data::Int(-3)},
+                                  {data::Int(4), data::Int(-4)},
+                                  {data::Int(5), data::Int(-5)},
+                                  {data::Int(6), data::Int(-6)},
+                                  {data::Int(7), data::Int(-7)},
+                                  {data::Int(8), data::Int(-8)},
+                                  {data::Int(9), data::Int(-9)},
+                              });
+    EXPECT_EQ(result, expect_result);
+}
+
+TEST_F(SqlTest, SelectFailureWithInvalidColumn) {
+    sql::Columns *columns = new sql::Columns();
+    columns->AddColumn(new sql::Column("invalid-field"));
+    columns->AddColumn(new sql::Column("field2"));
+    sql::SelectStatement select_statement(columns,
+                                          new sql::Table(tablename.c_str()));
+    execute::QueryResult result = execute::DefaultResult();
+
+    Result execute_result =
+        select_statement.Execute(transaction, result, environment);
+
+    EXPECT_TRUE(execute_result.IsError());
 }

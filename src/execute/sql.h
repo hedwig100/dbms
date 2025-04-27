@@ -45,13 +45,21 @@ class Column {
     // Get the column value using the scan.
     ResultV<data::DataItem> GetColumn(scan::Scan &scan) const;
 
+    // Returns true if the column is valid in the given layout.
+    bool IsValid(const schema::Layout &layout) const;
+
   private:
     std::variant<std::string, int> column_name_or_const_integer_;
 };
 
 class Columns {
   public:
-    Columns() {}
+    Columns() : is_all_column_(false) {}
+    explicit Columns(bool is_all_column) : is_all_column_(is_all_column) {}
+
+    // Populate all columns from layout. This is used when `*` symbol i used in
+    // SQL.
+    void PopulateColumns(const schema::Layout &layout);
 
     void AddColumn(Column *column) { columns_.push_back(column); }
 
@@ -66,6 +74,7 @@ class Columns {
     }
 
   private:
+    bool is_all_column_;
     std::vector<Column *> columns_;
 };
 
@@ -91,6 +100,7 @@ class SelectStatement : public Statement {
                    const execute::Environment &env);
 
   private:
+    bool IsValidColumns(const schema::Layout &layout) const;
     Columns *columns_;
     Table *table_;
 };

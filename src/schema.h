@@ -48,8 +48,7 @@ class Layout {
     explicit Layout(const Schema &schema);
     explicit Layout(int length,
                     std::unordered_map<std::string, int> field_lengths,
-                    std::unordered_map<std::string, int> offsets)
-        : length_(length), field_lengths_(field_lengths), offsets_(offsets) {}
+                    std::unordered_map<std::string, int> offsets);
 
     // Returns the offset of the field. If the field does not exist, raise an
     // exception.
@@ -66,10 +65,21 @@ class Layout {
     // Returns the length of the record (schema).
     int Length() const { return length_; }
 
+    // Returns all field names in the schema.
+    const std::vector<std::string> &FieldNames() const {
+        return sorted_field_names_;
+    }
+
+    // Returns true if the field exists in the schema.
+    bool HasField(const std::string &fieldname) const {
+        return field_lengths_.find(fieldname) != field_lengths_.end();
+    }
+
   private:
     int length_;
     std::unordered_map<std::string, int> field_lengths_;
     std::unordered_map<std::string, int> offsets_;
+    std::vector<std::string> sorted_field_names_;
 };
 
 } // namespace schema
