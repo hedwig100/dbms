@@ -19,8 +19,9 @@ SQLステートメントとしては以下をサポートする.
 
 ```
 <statement> = ( <select-statement> ) ";"
-<select-statement> = "SELECT" <column> "FROM" <table>
+<select-statement> = "SELECT" <columns> "FROM" <table>
 
+<columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>
 <table> = <id>
 <integer> = [0-9]+
