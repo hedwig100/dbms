@@ -38,7 +38,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 SELECT {return TOKEN_SELECT;}
 FROM {return TOKEN_FROM;}
 
-[+,;] { return yytext[0]; }
+[+*,;] { return yytext[0]; }
 
 {DIGIT}+ {
     yylval->ival = strtoll(yytext, nullptr, 0);

@@ -103,7 +103,8 @@ select_statement
     ;
 
 columns
-    : column { $$ = new sql::Columns(); $$->AddColumn($1); }
+    : '*' { $$ = new sql::Columns(/*is_all_column=*/true); }
+    | column { $$ = new sql::Columns(); $$->AddColumn($1); }
     | columns ',' column { $$ = $1; $$->AddColumn($3); }
     ;
 

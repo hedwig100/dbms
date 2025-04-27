@@ -145,4 +145,19 @@ INSTANTIATE_TEST_SUITE_P(
                                  {data::Int(7), data::Int(0), data::Int(-7)},
                                  {data::Int(8), data::Int(0), data::Int(-8)},
                                  {data::Int(9), data::Int(0), data::Int(-9)},
-                             }))));
+                             })),
+        ExecuteTestParam(
+            "SELECT * FROM table_for_test;",
+            execute::SelectResult({"field1", "field2"},
+                                  {
+                                      {data::Int(0), data::Int(0)},
+                                      {data::Int(1), data::Int(-1)},
+                                      {data::Int(2), data::Int(-2)},
+                                      {data::Int(3), data::Int(-3)},
+                                      {data::Int(4), data::Int(-4)},
+                                      {data::Int(5), data::Int(-5)},
+                                      {data::Int(6), data::Int(-6)},
+                                      {data::Int(7), data::Int(-7)},
+                                      {data::Int(8), data::Int(-8)},
+                                      {data::Int(9), data::Int(-9)},
+                                  }))));
