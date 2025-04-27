@@ -51,6 +51,9 @@ typedef void* yyscan_t;
     sql::Statement *statement;
     sql::SelectStatement *select_statement;
     sql::Columns *columns;
+    sql::Expression *where_clause;
+    sql::Expression *expr;
+    sql::BooleanPrimary *boolean_primary;
     sql::Column *column;
     sql::Table *table;
 }
@@ -70,12 +73,15 @@ typedef void* yyscan_t;
 %token <ival> INTEGER_VAL
 %token <identifier> IDENTIFIER
 
-%token SELECT FROM
+%token SELECT FROM WHERE
 
 /* Non-terminal symbols (https://www.gnu.org/software/bison/manual/html_node/Type-Decl.html) */
 %type <statement> statement
 %type <select_statement> select_statement
 %type <columns> columns
+%type <where_clause> where_clause
+%type <expr> expr
+%type <boolean_primary> boolean_primary
 %type <column> column
 %type <table> table
 
@@ -99,13 +105,26 @@ statement
     ;
   
 select_statement
-    : SELECT columns FROM table ';' { $$ = new sql::SelectStatement($2, $4); }
+    : SELECT columns FROM table where_clause ';' { $$ = new sql::SelectStatement($2, $4, $5); }
     ;
 
 columns
     : '*' { $$ = new sql::Columns(/*is_all_column=*/true); }
     | column { $$ = new sql::Columns(); $$->AddColumn($1); }
     | columns ',' column { $$ = $1; $$->AddColumn($3); }
+    ;
+
+where_clause
+    : %empty { $$ = nullptr; }
+    | WHERE expr { $$ = $2; }
+    ;
+
+expr
+    : boolean_primary { $$ = new sql::Expression($1); }
+    ;
+
+boolean_primary
+    : column '=' column { $$ = new sql::BooleanPrimary($1, $3); }
     ;
 
 column

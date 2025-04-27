@@ -5,6 +5,7 @@
 #include "execute/query_result.h"
 #include "result.h"
 #include "scan.h"
+#include "scans.h"
 #include "transaction/transaction.h"
 #include <string>
 #include <variant>
@@ -52,6 +53,30 @@ class Column {
     std::variant<std::string, int> column_name_or_const_integer_;
 };
 
+class BooleanPrimary {
+  public:
+    explicit BooleanPrimary(Column *left, Column *right)
+        : left_(left), right_(right) {}
+
+    // Evaluate the boolean expression
+    ResultV<bool> Evaluate(scan::Scan &scan) const;
+
+  private:
+    Column *left_, *right_;
+};
+
+class Expression {
+  public:
+    Expression(BooleanPrimary *boolean_primary)
+        : boolean_primary_(boolean_primary) {}
+
+    // Evaluate the expression
+    ResultV<bool> Evaluate(scan::Scan &scan) const;
+
+  public:
+    BooleanPrimary *boolean_primary_;
+};
+
 class Columns {
   public:
     Columns() : is_all_column_(false) {}
@@ -88,8 +113,9 @@ class Statement {
 // SelectStatement class represents a SELECT statement.
 class SelectStatement : public Statement {
   public:
-    SelectStatement(Columns *columns, Table *table)
-        : columns_(columns), table_(table) {}
+    SelectStatement(Columns *columns, Table *table,
+                    Expression *where_condition = nullptr)
+        : columns_(columns), table_(table), where_condition_(where_condition) {}
 
     Columns *GetColumns() const { return columns_; }
     Table *GetTable() const { return table_; }
@@ -100,9 +126,15 @@ class SelectStatement : public Statement {
                    const execute::Environment &env);
 
   private:
+    // Check if the column names are valid in the given layout.
     bool IsValidColumns(const schema::Layout &layout) const;
+
+    // Return true if the WHERE condition is true.
+    ResultV<bool> WhereConditionIsTrue(scan::SelectScan &scan) const;
+
     Columns *columns_;
     Table *table_;
+    Expression *where_condition_;
 };
 
 // ParseResult class represents the result of parsing.

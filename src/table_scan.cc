@@ -75,40 +75,52 @@ ResultV<bool> TableScan::Next() {
 }
 
 ResultV<data::DataItem> TableScan::Get(const std::string &fieldname) {
+    TRY_VALUE(field_length, layout_.Length(fieldname));
+    TRY_VALUE(field_offset, layout_.Offset(fieldname));
+
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
-                                    layout_.Offset(fieldname));
+                                    field_offset.Get());
     data::DataItem item;
-    FIRST_TRY(transaction_.Read(position, layout_.Length(fieldname), item));
+    FIRST_TRY(transaction_.Read(position, field_length.Get(), item));
     return Ok(item);
 }
 
 ResultV<int> TableScan::GetInt(const std::string &fieldname) {
+    TRY_VALUE(field_length, layout_.Length(fieldname));
+    TRY_VALUE(field_offset, layout_.Offset(fieldname));
+
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
-                                    layout_.Offset(fieldname));
+                                    field_offset.Get());
     data::DataItem item;
     FIRST_TRY(transaction_.Read(position, data::kTypeInt.ValueLength(), item));
     return Ok(data::ReadInt(item));
 }
 
 ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
+    TRY_VALUE(field_length, layout_.Length(fieldname));
+    TRY_VALUE(field_offset, layout_.Offset(fieldname));
+
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
-                                    layout_.Offset(fieldname));
+                                    field_offset.Get());
     data::DataItem item;
-    FIRST_TRY(transaction_.Read(position, layout_.Length(fieldname), item));
-    std::string value = data::ReadChar(item, layout_.Length(fieldname));
+    FIRST_TRY(transaction_.Read(position, field_length.Get(), item));
+    std::string value = data::ReadChar(item, field_length.Get());
     data::RightTrim(value);
     return Ok(value);
 }
 
 Result TableScan::Update(const std::string &fieldname,
                          const data::DataItem &item) {
+    TRY_VALUE(field_length, layout_.Length(fieldname));
+    TRY_VALUE(field_offset, layout_.Offset(fieldname));
+
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
-                                    layout_.Offset(fieldname));
-    FIRST_TRY(transaction_.Write(position, layout_.Length(fieldname), item));
+                                    field_offset.Get());
+    FIRST_TRY(transaction_.Write(position, field_length.Get(), item));
     return Ok();
 }
 

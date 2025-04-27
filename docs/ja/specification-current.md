@@ -19,7 +19,11 @@ SQLステートメントとしては以下をサポートする.
 
 ```
 <statement> = ( <select-statement> ) ";"
-<select-statement> = "SELECT" <columns> "FROM" <table>
+<select-statement> = "SELECT" <columns> "FROM" <table> <where-clause>
+
+<where-clause> = ( "WHERE" <expr> )?
+<expr> = <boolean_primary>
+<boolean_primary> = <column> '=' <column>
 
 <columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>

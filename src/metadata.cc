@@ -87,8 +87,8 @@ Result TableManager::UpdateFieldMetadata(
         TRY(field_scan.Update("field_type",
                               data::Int(static_cast<int>(field.Type()))));
         TRY(field_scan.Update("field_length", data::Int(field.Length())));
-        TRY(field_scan.Update("field_offset",
-                              data::Int(layout.Offset(field.FieldName()))));
+        TRY_VALUE(field_offset, layout.Offset(field.FieldName()));
+        TRY(field_scan.Update("field_offset", data::Int(field_offset.Get())));
     }
     TRY(field_scan.Close());
     return Ok();

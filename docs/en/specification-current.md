@@ -20,8 +20,10 @@ This dbms supports the following sql statements.
 
 ```
 <statement> = ( <select-statement> ) ";"
-<select-statement> = "SELECT" <columns> "FROM" <table>
+<select-statement> = "SELECT" <columns> "FROM" <table> "WHERE" <expr>
 
+<expr> = <boolean_primary>
+<boolean_primary> = <column> '=' <column>
 <columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>
 <table> = <id>

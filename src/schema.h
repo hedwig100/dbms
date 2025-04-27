@@ -52,14 +52,18 @@ class Layout {
 
     // Returns the offset of the field. If the field does not exist, raise an
     // exception.
-    int Offset(const std::string &fieldname) const {
-        return offsets_.at(fieldname);
+    ResultV<int> Offset(const std::string &fieldname) const {
+        if (offsets_.find(fieldname) == offsets_.end())
+            return Error("Field " + fieldname + " not found");
+        return Ok(offsets_.at(fieldname));
     }
 
     // Returns the length of the field. If the field does not exist, raise an
     // exception.
-    int Length(const std::string &fieldname) const {
-        return field_lengths_.at(fieldname);
+    ResultV<int> Length(const std::string &fieldname) const {
+        if (field_lengths_.find(fieldname) == field_lengths_.end())
+            return Error("Field " + fieldname + " not found");
+        return Ok(field_lengths_.at(fieldname));
     }
 
     // Returns the length of the record (schema).
