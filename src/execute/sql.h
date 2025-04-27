@@ -54,7 +54,12 @@ class Column {
 
 class Columns {
   public:
-    Columns() {}
+    Columns() : is_all_column_(false) {}
+    explicit Columns(bool is_all_column) : is_all_column_(is_all_column) {}
+
+    // Populate all columns from layout. This is used when `*` symbol i used in
+    // SQL.
+    void PopulateColumns(const schema::Layout &layout);
 
     void AddColumn(Column *column) { columns_.push_back(column); }
 
@@ -69,6 +74,7 @@ class Columns {
     }
 
   private:
+    bool is_all_column_;
     std::vector<Column *> columns_;
 };
 

@@ -46,6 +46,14 @@ bool Column::IsValid(const schema::Layout &layout) const {
     return true;
 }
 
+void Columns::PopulateColumns(const schema::Layout &layout) {
+    if (!is_all_column_) { return; }
+    for (const auto &fieldname : layout.FieldNames()) {
+        columns_.push_back(new Column(fieldname.c_str()));
+    }
+    return;
+}
+
 Result SelectStatement::Execute(transaction::Transaction &transaction,
                                 execute::QueryResult &result,
                                 const execute::Environment &env) {
@@ -53,6 +61,7 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
     const metadata::TableManager &table_manager = env.GetTableManager();
     TRY_VALUE(layout,
               table_manager.GetLayout(table_->TableName(), transaction));
+    columns_->PopulateColumns(layout.Get());
     if (!IsValidColumns(layout.Get())) {
         return Error("SelectStatement::Execute() Invalid columns in the SELECT "
                      "statement");
