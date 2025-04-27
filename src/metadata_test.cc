@@ -32,8 +32,20 @@ TEST_F(MetadataManagerTest, GetLayoutSuucess) {
     EXPECT_TRUE(layout_res.IsOk()) << layout_res.Error();
     auto layout = layout_res.Get();
     EXPECT_EQ(layout.Length(), 15);
-    EXPECT_EQ(layout.Length("field0"), 4);
-    EXPECT_EQ(layout.Length("field1"), 10);
-    EXPECT_EQ(layout.Offset("field0"), 1);
-    EXPECT_EQ(layout.Offset("field1"), 5);
+
+    ResultV<int> length_res = layout.Length("field0");
+    EXPECT_TRUE(length_res.IsOk()) << length_res.Error();
+    EXPECT_EQ(length_res.Get(), 4);
+
+    length_res = layout.Length("field1");
+    EXPECT_TRUE(length_res.IsOk()) << length_res.Error();
+    EXPECT_EQ(length_res.Get(), 10);
+
+    ResultV<int> offset_res = layout.Offset("field0");
+    EXPECT_TRUE(offset_res.IsOk()) << offset_res.Error();
+    EXPECT_EQ(offset_res.Get(), 1);
+
+    offset_res = layout.Offset("field1");
+    EXPECT_TRUE(offset_res.IsOk()) << offset_res.Error();
+    EXPECT_EQ(offset_res.Get(), 5);
 }
