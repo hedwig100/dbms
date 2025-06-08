@@ -73,12 +73,17 @@ TEST(Layout, FieldNamesWithSecondConstructor) {
         {"b", 7},
         {"c", 4},
     };
+    std::unordered_map<std::string, data::BaseDataType> field_types = {
+        {"a", data::BaseDataType::kInt},
+        {"b", data::BaseDataType::kChar},
+        {"c", data::BaseDataType::kInt},
+    };
     std::unordered_map<std::string, int> offsets = {
         {"a", 1},
         {"b", 5},
         {"c", 12},
     };
-    schema::Layout layout(16, field_lengths, offsets);
+    schema::Layout layout(16, field_types, field_lengths, offsets);
 
     EXPECT_THAT(layout.FieldNames(), ::testing::ElementsAre("a", "b", "c"));
 }
