@@ -74,8 +74,9 @@ ResultV<bool> TableScan::Next() {
     }
 }
 
-ResultV<data::DataItem> TableScan::Get(const std::string &fieldname) {
+ResultV<data::DataItemWithType> TableScan::Get(const std::string &fieldname) {
     TRY_VALUE(field_length, layout_.Length(fieldname));
+    TRY_VALUE(field_type, layout_.Type(fieldname));
     TRY_VALUE(field_offset, layout_.Offset(fieldname));
 
     disk::DiskPosition position(/*block_id=*/block_id_,
@@ -83,7 +84,8 @@ ResultV<data::DataItem> TableScan::Get(const std::string &fieldname) {
                                     field_offset.Get());
     data::DataItem item;
     FIRST_TRY(transaction_.Read(position, field_length.Get(), item));
-    return Ok(item);
+    return Ok(
+        data::DataItemWithType(item, field_type.Get(), field_length.Get()));
 }
 
 ResultV<int> TableScan::GetInt(const std::string &fieldname) {

@@ -58,6 +58,14 @@ class Layout {
         return Ok(offsets_.at(fieldname));
     }
 
+    // Returns the type of the field. If the field does not exist, raise an
+    // exception.
+    ResultV<data::BaseDataType> Type(const std::string &fieldname) const {
+        if (field_types_.find(fieldname) == field_types_.end())
+            return Error("Field " + fieldname + " not found");
+        return Ok(field_types_.at(fieldname));
+    }
+
     // Returns the length of the field. If the field does not exist, raise an
     // exception.
     ResultV<int> Length(const std::string &fieldname) const {
@@ -82,6 +90,7 @@ class Layout {
   private:
     int length_;
     std::unordered_map<std::string, int> field_lengths_;
+    std::unordered_map<std::string, data::BaseDataType> field_types_;
     std::unordered_map<std::string, int> offsets_;
     std::vector<std::string> sorted_field_names_;
 };

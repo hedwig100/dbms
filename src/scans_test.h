@@ -27,13 +27,13 @@ class ScanForTest : public scan::UpdateScan {
     }
 
     // Get the bytes value of a field in the current row.
-    ResultV<data::DataItem> Get(const std::string &fieldname) override {
+    ResultV<data::DataItemWithType> Get(const std::string &fieldname) override {
         if (records_[current_row_].is_empty) { return Error("Row is empty"); }
         auto it = records_[current_row_].values.find(fieldname);
         if (it == records_[current_row_].values.end()) {
             return Error("Field not found");
         }
-        return Ok(data::DataItem(it->second));
+        return Ok(data::DataItemWithType(it->second, data::kTypeInt));
     }
 
     Result Update(const std::string &fieldname,

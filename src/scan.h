@@ -22,7 +22,8 @@ class Scan {
     virtual ResultV<bool> Next() = 0;
 
     // Get the bytes value of a field in the current row.
-    virtual ResultV<data::DataItem> Get(const std::string &fieldname) = 0;
+    virtual ResultV<data::DataItemWithType>
+    Get(const std::string &fieldname) = 0;
 
     // Closes the scan.
     virtual Result Close() = 0;

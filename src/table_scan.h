@@ -23,7 +23,7 @@ class TableScan : public UpdateScan {
     ResultV<bool> Next();
 
     // Get the dataitem of a field in the current row.
-    ResultV<data::DataItem> Get(const std::string &fieldname);
+    ResultV<data::DataItemWithType> Get(const std::string &fieldname);
 
     // Get the int value of a field in the current row.
     ResultV<int> GetInt(const std::string &fieldname);
