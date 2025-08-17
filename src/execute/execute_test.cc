@@ -1,3 +1,4 @@
+#include "data/char.h"
 #include "data/int.h"
 #include "execute.h"
 #include "execute/environment.h"
@@ -9,10 +10,12 @@
 #include <gtest/gtest.h>
 
 struct ExecuteTestParam {
-    ExecuteTestParam(const std::string &sql, const execute::QueryResult &result)
-        : sql(sql), result(result) {}
+    ExecuteTestParam(const std::string &sql, const bool expect_success,
+                     const execute::QueryResult &result)
+        : sql(sql), expect_success(expect_success), result(result) {}
 
     std::string sql;
+    bool expect_success;
     execute::QueryResult result;
 };
 
@@ -71,6 +74,7 @@ class ExecuteTest : public ::testing::TestWithParam<ExecuteTestParam> {
             TRY(table_scan.Insert());
             TRY(table_scan.Update("field1", data::Int(i)));
             TRY(table_scan.Update("field2", data::Int(-i)));
+            TRY(table_scan.Update("field3", data::Char("test", 4)));
         }
         TRY(table_scan.Close());
         TRY(insert_transaction.Commit());
@@ -91,6 +95,7 @@ class ExecuteTest : public ::testing::TestWithParam<ExecuteTestParam> {
     schema::Schema schema  = schema::Schema({
         schema::Field("field1", data::TypeInt()),
         schema::Field("field2", data::TypeInt()),
+        schema::Field("field3", data::TypeChar(4)),
     });
 
     disk::DiskManager data_disk_manager;
@@ -110,14 +115,19 @@ TEST_P(ExecuteTest, Select) {
     Result execute_result =
         execute::Execute(sql, result, transaction, environment);
 
-    EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
-    EXPECT_EQ(result, GetParam().result);
+    if (GetParam().expect_success) {
+        EXPECT_TRUE(execute_result.IsOk()) << execute_result.Error();
+        EXPECT_EQ(result, GetParam().result);
+    } else {
+        EXPECT_TRUE(execute_result.IsError());
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(
     ExecuteTestSuite, ExecuteTest,
     ::testing::Values(
         ExecuteTestParam("SELECT field1 FROM table_for_test;",
+                         /*expect_success=*/true,
                          execute::SelectResult({"field1"},
                                                {
                                                    {data::Int(0)},
@@ -132,6 +142,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                    {data::Int(9)},
                                                })),
         ExecuteTestParam("SELECT field1, 0, field2 FROM table_for_test;",
+                         /*expect_success=*/true,
                          execute::SelectResult(
                              {"field1", "0", "field2"},
                              {
@@ -148,6 +159,24 @@ INSTANTIATE_TEST_SUITE_P(
                              })),
         ExecuteTestParam(
             "SELECT * FROM table_for_test;",
+            /*expect_success=*/true,
+            execute::SelectResult(
+                {"field1", "field2", "field3"},
+                {
+                    {data::Int(0), data::Int(0), data::Char("test", 4)},
+                    {data::Int(1), data::Int(-1), data::Char("test", 4)},
+                    {data::Int(2), data::Int(-2), data::Char("test", 4)},
+                    {data::Int(3), data::Int(-3), data::Char("test", 4)},
+                    {data::Int(4), data::Int(-4), data::Char("test", 4)},
+                    {data::Int(5), data::Int(-5), data::Char("test", 4)},
+                    {data::Int(6), data::Int(-6), data::Char("test", 4)},
+                    {data::Int(7), data::Int(-7), data::Char("test", 4)},
+                    {data::Int(8), data::Int(-8), data::Char("test", 4)},
+                    {data::Int(9), data::Int(-9), data::Char("test", 4)},
+                })),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE 0 = 0;",
+            /*expect_success=*/true,
             execute::SelectResult({"field1", "field2"},
                                   {
                                       {data::Int(0), data::Int(0)},
@@ -162,7 +191,52 @@ INSTANTIATE_TEST_SUITE_P(
                                       {data::Int(9), data::Int(-9)},
                                   })),
         ExecuteTestParam(
-            "SELECT * FROM table_for_test WHERE 0 = 0;",
+            "SELECT field1, field2 FROM table_for_test WHERE field1 = 7;",
+            /*expect_success=*/true,
+            execute::SelectResult({"field1", "field2"},
+                                  {
+
+                                      {data::Int(7), data::Int(-7)},
+
+                                  })),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE field1 = field2;",
+            /*expect_success=*/true,
+            execute::SelectResult({"field1", "field2"},
+                                  {
+
+                                      {data::Int(0), data::Int(0)},
+
+                                  })),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE field1 < field2;",
+            /*expect_success=*/true,
+            execute::SelectResult({"field1", "field2"}, {})),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE field1 > field2;",
+            /*expect_success=*/true,
+            execute::SelectResult({"field1", "field2"},
+                                  {
+                                      {data::Int(1), data::Int(-1)},
+                                      {data::Int(2), data::Int(-2)},
+                                      {data::Int(3), data::Int(-3)},
+                                      {data::Int(4), data::Int(-4)},
+                                      {data::Int(5), data::Int(-5)},
+                                      {data::Int(6), data::Int(-6)},
+                                      {data::Int(7), data::Int(-7)},
+                                      {data::Int(8), data::Int(-8)},
+                                      {data::Int(9), data::Int(-9)},
+                                  })),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE field1 <= field2;",
+            /*expect_success=*/true,
+            execute::SelectResult({"field1", "field2"},
+                                  {
+                                      {data::Int(0), data::Int(0)},
+                                  })),
+        ExecuteTestParam(
+            "SELECT field1, field2 FROM table_for_test WHERE field1 >= field2;",
+            /*expect_success=*/true,
             execute::SelectResult({"field1", "field2"},
                                   {
                                       {data::Int(0), data::Int(0)},
@@ -176,54 +250,5 @@ INSTANTIATE_TEST_SUITE_P(
                                       {data::Int(8), data::Int(-8)},
                                       {data::Int(9), data::Int(-9)},
                                   })),
-        ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 = 7;",
-                         execute::SelectResult({"field1", "field2"},
-                                               {
-
-                                                   {data::Int(7),
-                                                    data::Int(-7)},
-
-                                               })),
-        ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 = field2;",
-                         execute::SelectResult({"field1", "field2"},
-                                               {
-
-                                                   {data::Int(0), data::Int(0)},
-
-                                               })),
-        ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 < field2;",
-                         execute::SelectResult({"field1", "field2"}, {})),
-        ExecuteTestParam(
-            "SELECT * FROM table_for_test WHERE field1 > field2;",
-            execute::SelectResult({"field1", "field2"},
-                                  {
-                                      {data::Int(1), data::Int(-1)},
-                                      {data::Int(2), data::Int(-2)},
-                                      {data::Int(3), data::Int(-3)},
-                                      {data::Int(4), data::Int(-4)},
-                                      {data::Int(5), data::Int(-5)},
-                                      {data::Int(6), data::Int(-6)},
-                                      {data::Int(7), data::Int(-7)},
-                                      {data::Int(8), data::Int(-8)},
-                                      {data::Int(9), data::Int(-9)},
-                                  })),
-        ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 <= field2;",
-                         execute::SelectResult({"field1", "field2"},
-                                               {
-                                                   {data::Int(0), data::Int(0)},
-                                               })),
-        ExecuteTestParam(
-            "SELECT * FROM table_for_test WHERE field1 >= field2;",
-            execute::SelectResult({"field1", "field2"},
-                                  {
-                                      {data::Int(0), data::Int(0)},
-                                      {data::Int(1), data::Int(-1)},
-                                      {data::Int(2), data::Int(-2)},
-                                      {data::Int(3), data::Int(-3)},
-                                      {data::Int(4), data::Int(-4)},
-                                      {data::Int(5), data::Int(-5)},
-                                      {data::Int(6), data::Int(-6)},
-                                      {data::Int(7), data::Int(-7)},
-                                      {data::Int(8), data::Int(-8)},
-                                      {data::Int(9), data::Int(-9)},
-                                  }))));
+        ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 = field3;",
+                         /*expect_success=*/false, execute::DefaultResult())));

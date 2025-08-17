@@ -49,13 +49,14 @@ bool Column::IsValid(const schema::Layout &layout) const {
 ResultV<bool> Compare(const data::DataItemWithType &left,
                       const data::DataItemWithType &right,
                       ComparisonOperator op) {
-    // TODO: Support other data types.
-    // TODO: Raise an error when the types do not match in parsing.
+    // TODO: Raise an error when the types do not match while parsing (not
+    // here).
     if (left.BaseType() != right.BaseType()) {
-        return Error("Column types do not match in comparison");
+        return Error("Compare() Column types do not match");
     }
+    // TODO: Support other data types.
     if (left.BaseType() != data::BaseDataType::kInt) {
-        return Error("Only integer comparison is supported");
+        return Error("Compare() Only integer comparison is supported");
     }
 
     int left_value  = data::ReadInt(left.Item());
@@ -73,7 +74,7 @@ ResultV<bool> Compare(const data::DataItemWithType &left,
     case ComparisonOperator::GreaterOrEqual:
         return Ok(left_value >= right_value);
     }
-    return Error("Invalid comparison operator");
+    return Error("Compare() Invalid comparison operator");
 }
 
 ResultV<bool> BooleanPrimary::Evaluate(scan::Scan &scan) const {
