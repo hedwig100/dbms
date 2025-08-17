@@ -21,9 +21,10 @@ class SelectScan : public UpdateScan {
     ResultV<bool> Next();
 
     // Get the bytes value of a field in the current row.
-    ResultV<data::DataItem> Get(const std::string &fieldname);
+    ResultV<data::DataItemWithType> Get(const std::string &fieldname);
 
-    Result Update(const std::string &fieldname, const data::DataItem &item);
+    Result Update(const std::string &fieldname,
+                  const data::DataItemWithType &item);
 
     // Insert a new row to somewhere in the table. The scan moves to the newly
     // inserted row.

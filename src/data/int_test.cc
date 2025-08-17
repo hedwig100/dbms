@@ -68,17 +68,17 @@ TEST(DataInt, WriteIntNoFailSuccessWithOutsideIndex) {
 
 TEST(DataInt, ToInt) {
     const int value = 11111111;
-    data::DataItem x;
+    data::DataItemWithType x;
     x = data::Int(value);
-    EXPECT_EQ(x[0], value & 0xff);
-    EXPECT_EQ(x[1], (value >> 8) & 0xff);
-    EXPECT_EQ(x[2], (value >> 16) & 0xff);
-    EXPECT_EQ(x[3], (value >> 24) & 0xff);
+    EXPECT_EQ(x.Item()[0], value & 0xff);
+    EXPECT_EQ(x.Item()[1], (value >> 8) & 0xff);
+    EXPECT_EQ(x.Item()[2], (value >> 16) & 0xff);
+    EXPECT_EQ(x.Item()[3], (value >> 24) & 0xff);
 }
 
 TEST(ReadInt, ReadIntFromDataItem) {
-    data::DataItem x;
+    data::DataItemWithType x;
     x               = data::Int(11111111);
-    auto expect_int = data::ReadInt(x);
+    auto expect_int = data::ReadInt(x.Item());
     EXPECT_EQ(expect_int, 11111111);
 }

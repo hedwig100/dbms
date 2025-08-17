@@ -6,7 +6,7 @@
 
 namespace execute {
 
-using Row = std::vector<data::DataItem>;
+using Row = std::vector<data::DataItemWithType>;
 
 class DefaultResult {
   public:

@@ -39,7 +39,7 @@ Result WriteString(std::vector<uint8_t> &bytes, const int offset,
 void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                        const std::string &value);
 
-DataItem Char(const std::string &value, const int length);
+DataItemWithType Char(const std::string &value, const int length);
 
 // Reads the string of length `length` from `item`. This function should be
 // called only when you can make sure that the `item` is of type `char`.

@@ -8,12 +8,12 @@ Result SelectScan::Init() { return scan_.Init(); }
 
 ResultV<bool> SelectScan::Next() { return scan_.Next(); }
 
-ResultV<data::DataItem> SelectScan::Get(const std::string &fieldname) {
+ResultV<data::DataItemWithType> SelectScan::Get(const std::string &fieldname) {
     return scan_.Get(fieldname);
 }
 
 Result SelectScan::Update(const std::string &fieldname,
-                          const data::DataItem &item) {
+                          const data::DataItemWithType &item) {
     return scan_.Update(fieldname, item);
 }
 

@@ -46,9 +46,11 @@ class Schema {
 class Layout {
   public:
     explicit Layout(const Schema &schema);
-    explicit Layout(int length,
-                    std::unordered_map<std::string, int> field_lengths,
-                    std::unordered_map<std::string, int> offsets);
+    explicit Layout(
+        int length,
+        std::unordered_map<std::string, data::BaseDataType> field_types,
+        std::unordered_map<std::string, int> field_lengths,
+        std::unordered_map<std::string, int> offsets);
 
     // Returns the offset of the field. If the field does not exist, raise an
     // exception.
@@ -56,6 +58,14 @@ class Layout {
         if (offsets_.find(fieldname) == offsets_.end())
             return Error("Field " + fieldname + " not found");
         return Ok(offsets_.at(fieldname));
+    }
+
+    // Returns the type of the field. If the field does not exist, raise an
+    // exception.
+    ResultV<data::BaseDataType> Type(const std::string &fieldname) const {
+        if (field_types_.find(fieldname) == field_types_.end())
+            return Error("Field " + fieldname + " not found");
+        return Ok(field_types_.at(fieldname));
     }
 
     // Returns the length of the field. If the field does not exist, raise an
@@ -82,6 +92,7 @@ class Layout {
   private:
     int length_;
     std::unordered_map<std::string, int> field_lengths_;
+    std::unordered_map<std::string, data::BaseDataType> field_types_;
     std::unordered_map<std::string, int> offsets_;
     std::vector<std::string> sorted_field_names_;
 };

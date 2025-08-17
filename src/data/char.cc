@@ -34,10 +34,10 @@ void WriteStringNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteString(bytes, offset, value.size(), value);
 }
 
-DataItem Char(const std::string &value, const int length) {
+DataItemWithType Char(const std::string &value, const int length) {
     DataItem item(length);
     std::memcpy(item.begin(), value.data(), value.size());
-    return item;
+    return DataItemWithType(item, BaseDataType::kChar, length);
 }
 
 std::string ReadChar(const data::DataItem &item, const int length) {

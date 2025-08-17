@@ -1,4 +1,5 @@
 #include "data/data.h"
+#include "data/int.h"
 #include <gtest/gtest.h>
 
 TEST(Data, Equal) {
@@ -61,4 +62,12 @@ TEST(DataCopy, WriteSuccess) {
 
     EXPECT_TRUE(data::Write(item, bytes, 5, 4).IsOk());
     EXPECT_EQ(bytes, expect_bytes);
+}
+
+TEST(DataItemWithType, EqualSucess) {
+    data::DataItemWithType item1 = data::Int(1234);
+    data::DataItemWithType item2 = data::Int(1234);
+    data::DataItemWithType item3 = data::Int(5678);
+    EXPECT_TRUE(item1 == item2);
+    EXPECT_TRUE(item1 != item3);
 }

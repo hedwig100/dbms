@@ -26,10 +26,10 @@ void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteInt(bytes, offset, value);
 }
 
-DataItem Int(const int value) {
+DataItemWithType Int(const int value) {
     DataItem item(kIntBytesize);
     std::memcpy(item.begin(), &value, kIntBytesize);
-    return item;
+    return DataItemWithType(item, kTypeInt);
 }
 
 int ReadInt(const data::DataItem &item) {

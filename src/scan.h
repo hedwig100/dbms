@@ -22,7 +22,8 @@ class Scan {
     virtual ResultV<bool> Next() = 0;
 
     // Get the bytes value of a field in the current row.
-    virtual ResultV<data::DataItem> Get(const std::string &fieldname) = 0;
+    virtual ResultV<data::DataItemWithType>
+    Get(const std::string &fieldname) = 0;
 
     // Closes the scan.
     virtual Result Close() = 0;
@@ -33,7 +34,7 @@ class UpdateScan : public Scan {
   public:
     // Update the value of a field in the current row.
     virtual Result Update(const std::string &fieldname,
-                          const data::DataItem &item) = 0;
+                          const data::DataItemWithType &item) = 0;
 
     // Insert a new row to somewhere in the table. The scan moves to the newly
     // inserted row.

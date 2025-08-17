@@ -23,7 +23,7 @@ class TableScan : public UpdateScan {
     ResultV<bool> Next();
 
     // Get the dataitem of a field in the current row.
-    ResultV<data::DataItem> Get(const std::string &fieldname);
+    ResultV<data::DataItemWithType> Get(const std::string &fieldname);
 
     // Get the int value of a field in the current row.
     ResultV<int> GetInt(const std::string &fieldname);
@@ -32,7 +32,8 @@ class TableScan : public UpdateScan {
     ResultV<std::string> GetChar(const std::string &fieldname);
 
     // Update the value of a field in the current row.
-    Result Update(const std::string &fieldname, const data::DataItem &item);
+    Result Update(const std::string &fieldname,
+                  const data::DataItemWithType &item);
 
     // Insert a new row to somewhere in the table. The scan moves to the newly
     // inserted row.

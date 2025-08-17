@@ -30,7 +30,7 @@ TEST(LogRecordLogOperation, InstantiationSuccess) {
     const dblog::TransactionID id = 10;
     const disk::BlockID block_id("file.txt", 3);
     const std::vector<uint8_t> int_value = {4, 0, 0, 0};
-    const data::DataItem dummy_value     = data::Int(0);
+    const data::DataItem dummy_value     = data::Int(0).Item();
     dblog::LogOperation log_op(id, disk::DiskPosition(block_id, 4),
                                data::kTypeInt.ValueLength(),
                                /*previous_item=*/int_value,
@@ -77,7 +77,7 @@ TEST(LogRecordTransactionBegin, WriteReadCorrectly) {
 
 TEST(LogRecordOperation, UpdateWriteReadCorrectly) {
     const std::vector<uint8_t> previous_value = {4, 0, 0, 0};
-    const data::DataItem new_value            = data::Int(6);
+    const data::DataItem new_value            = data::Int(6).Item();
     dblog::LogOperation log_record(
         /*transaction_id=*/6,
         disk::DiskPosition(disk::BlockID("xxx.txt", 4), 3),
@@ -156,7 +156,7 @@ TEST_F(LogRecordOperationWithFile, UnDoCorrectly) {
                                                log_manager);
     const int expect_value               = 4;
     const std::vector<uint8_t> int_value = {expect_value, 0, 0, 0};
-    const data::DataItem dummy_value     = data::Int(0);
+    const data::DataItem dummy_value     = data::Int(0).Item();
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(
@@ -218,7 +218,7 @@ TEST_F(LogRecordOperationWithFile, ReDoCorrectly) {
                                                log_manager);
     const std::vector<uint8_t> dummy_value = {0, 0, 0, 0};
     const int expect_value                 = 4;
-    const data::DataItem int_value         = data::Int(expect_value);
+    const data::DataItem int_value         = data::Int(expect_value).Item();
     const disk::BlockID block_id(filename0, 0);
     const int offset = 7;
     dblog::LogOperation log_record(

@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -81,6 +82,32 @@ Result Read(DataItem &item, const std::vector<uint8_t> &bytes,
 // large enough, returns Error.
 Result Write(const DataItem &item, std::vector<uint8_t> &bytes,
              const size_t offset, int length);
+
+class DataItemWithType {
+  public:
+    DataItemWithType() {}
+
+    DataItemWithType(const DataItem &data, const DataType &type)
+        : item_(data), type_(type.BaseType()), length_(type.ValueLength()) {}
+
+    DataItemWithType(const DataItem &data, BaseDataType type, int length)
+        : item_(data), type_(type), length_(length) {}
+
+    const DataItem &Item() const { return item_; }
+
+    bool operator==(const DataItemWithType &other) const {
+        return type_ == other.type_ && item_ == other.item_;
+    }
+
+    bool operator!=(const DataItemWithType &other) const {
+        return !(*this == other);
+    }
+
+  private:
+    DataItem item_;
+    BaseDataType type_;
+    int length_;
+};
 
 } // namespace data
 

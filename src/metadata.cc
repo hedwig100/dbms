@@ -121,14 +121,18 @@ TableManager::GetLayout(const std::string &table_name,
     scan::TableScan field_scan(transaction, kFieldTableName, kFieldLayout);
     TRY(field_scan.Init());
     std::unordered_map<std::string, int> field_lengths, offsets;
+    std::unordered_map<std::string, data::BaseDataType> field_types;
     while (true) {
         TRY_VALUE(name, field_scan.GetChar("table_name"));
         if (name.Get() == table_name) {
             TRY_VALUE(field_name, field_scan.GetChar("field_name"));
+            TRY_VALUE(field_type, field_scan.GetInt("field_type"));
             TRY_VALUE(field_length, field_scan.GetInt("field_length"));
             TRY_VALUE(field_offset, field_scan.GetInt("field_offset"));
             field_lengths[field_name.Get()] = field_length.Get();
-            offsets[field_name.Get()]       = field_offset.Get();
+            field_types[field_name.Get()] =
+                static_cast<data::BaseDataType>(field_type.Get());
+            offsets[field_name.Get()] = field_offset.Get();
         }
 
         TRY_VALUE(has_next, field_scan.Next());
@@ -136,7 +140,7 @@ TableManager::GetLayout(const std::string &table_name,
     }
     TRY(field_scan.Close());
 
-    return Ok(schema::Layout(slot_size, field_lengths, offsets));
+    return Ok(schema::Layout(slot_size, field_types, field_lengths, offsets));
 }
 
 } // namespace metadata
