@@ -26,3 +26,10 @@ TEST(ParserTest, ExampleFailureTest) {
     EXPECT_TRUE(result.IsError());
     std::cout << result.Error() << std::endl;
 }
+
+TEST(ParserTest, CompareSuccess) {
+    sql::Parser parser;
+    const std::string sql_stmt = "SELECT a FROM b WHERE a <= 4;";
+    auto result                = parser.Parse(sql_stmt);
+    EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
+}

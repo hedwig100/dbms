@@ -23,7 +23,8 @@ SQLステートメントとしては以下をサポートする.
 
 <where-clause> = ( "WHERE" <expr> )?
 <expr> = <boolean_primary>
-<boolean_primary> = <column> '=' <column>
+<boolean_primary> = <column> <comparison-operator> <column>
+<comparison-operator> = '=' | '<' | '>' | '<=' | '>='
 
 <columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>
@@ -36,5 +37,6 @@ SQLステートメントとしては以下をサポートする.
 ```
 SELECT a FROM table;
 SELECT 2 FROM tab;
+SELECT a, 2 FROM table WHERE a <= 5;
 ```
 などがある.
