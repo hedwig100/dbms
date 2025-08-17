@@ -85,6 +85,8 @@ Result Write(const DataItem &item, std::vector<uint8_t> &bytes,
 
 class DataItemWithType {
   public:
+    DataItemWithType() {}
+
     DataItemWithType(const DataItem &data, const DataType &type)
         : item_(data), type_(type.BaseType()), length_(type.ValueLength()) {}
 

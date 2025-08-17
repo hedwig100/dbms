@@ -34,7 +34,7 @@ Result WriteByte(std::vector<uint8_t> &bytes, const int offset,
 void WriteByteNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                      const uint8_t value);
 
-DataItem Byte(const uint8_t value);
+DataItemWithType Byte(const uint8_t value);
 
 // Reads the byte of length `length` from `item`. This function should be
 // called only when you can make sure that the `item` is of type byte.

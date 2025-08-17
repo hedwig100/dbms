@@ -44,7 +44,7 @@ class Column {
     std::string Name() const;
 
     // Get the column value using the scan.
-    ResultV<data::DataItem> GetColumn(scan::Scan &scan) const;
+    ResultV<data::DataItemWithType> GetColumn(scan::Scan &scan) const;
 
     // Returns true if the column is valid in the given layout.
     bool IsValid(const schema::Layout &layout) const;

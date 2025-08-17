@@ -33,11 +33,11 @@ class ScanForTest : public scan::UpdateScan {
         if (it == records_[current_row_].values.end()) {
             return Error("Field not found");
         }
-        return Ok(data::DataItemWithType(it->second, data::kTypeInt));
+        return Ok(it->second);
     }
 
     Result Update(const std::string &fieldname,
-                  const data::DataItem &item) override {
+                  const data::DataItemWithType &item) override {
         if (records_[current_row_].is_empty) { return Error("Row is empty"); }
         records_[current_row_].values[fieldname] = item;
         return Ok();
@@ -72,7 +72,7 @@ class ScanForTest : public scan::UpdateScan {
   private:
     struct Record {
         bool is_empty;
-        std::map<std::string, data::DataItem> values;
+        std::map<std::string, data::DataItemWithType> values;
     };
     int current_row_             = 0;
     std::vector<Record> records_ = {

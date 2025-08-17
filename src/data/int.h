@@ -39,7 +39,7 @@ Result WriteInt(std::vector<uint8_t> &bytes, const int offset, const int value);
 void WriteIntNoFail(std::vector<uint8_t> &bytes, const size_t offset,
                     const int value);
 
-DataItem Int(const int value);
+DataItemWithType Int(const int value);
 
 int ReadInt(const data::DataItem &item);
 

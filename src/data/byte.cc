@@ -24,11 +24,11 @@ void WriteByteNoFail(std::vector<uint8_t> &bytes, const size_t offset,
     WriteByte(bytes, offset, value);
 }
 
-DataItem Byte(const uint8_t value) {
+DataItemWithType Byte(const uint8_t value) {
     DataItem item;
     item.resize(kByteBytesize);
     item[0] = value;
-    return item;
+    return DataItemWithType(item, kTypeByte);
 }
 
 uint8_t ReadByte(const data::DataItem &byte) { return byte[0]; }

@@ -115,14 +115,14 @@ ResultV<std::string> TableScan::GetChar(const std::string &fieldname) {
 }
 
 Result TableScan::Update(const std::string &fieldname,
-                         const data::DataItem &item) {
+                         const data::DataItemWithType &item) {
     TRY_VALUE(field_length, layout_.Length(fieldname));
     TRY_VALUE(field_offset, layout_.Offset(fieldname));
 
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length() +
                                     field_offset.Get());
-    FIRST_TRY(transaction_.Write(position, field_length.Get(), item));
+    FIRST_TRY(transaction_.Write(position, field_length.Get(), item.Item()));
     return Ok();
 }
 
@@ -160,7 +160,7 @@ Result TableScan::Delete() {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length());
     return transaction_.Write(position, data::kTypeByte.ValueLength(),
-                              data::Byte(kUnusedFlag));
+                              data::Byte(kUnusedFlag).Item());
 }
 
 Result TableScan::Close() { return Ok(); }
@@ -214,7 +214,7 @@ Result TableScan::SetUsed() {
     disk::DiskPosition position(/*block_id=*/block_id_,
                                 /*offset=*/slot_ * layout_.Length());
     return transaction_.Write(position, data::kTypeByte.ValueLength(),
-                              data::Byte(kUsedFlag));
+                              data::Byte(kUsedFlag).Item());
 }
 
 void TableScan::SetBlockNumber(int block_number) {

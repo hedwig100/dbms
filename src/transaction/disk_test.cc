@@ -348,7 +348,7 @@ TEST(Block, WriteStringWithOutsideIndex) {
 
 TEST(Block, CorrectlyWriteDataItem) {
     disk::Block block(20);
-    data::DataItem x = data::Int(4);
+    data::DataItem x = data::Int(4).Item();
 
     EXPECT_TRUE(
         block.Write(/*offset=*/3, data::kTypeInt.ValueLength(), x).IsOk());
@@ -360,7 +360,7 @@ TEST(Block, CorrectlyWriteDataItem) {
 
 TEST(Block, WriteDataItemWithOutsideIndex) {
     disk::Block block(20);
-    data::DataItem x = data::Int(4);
+    data::DataItem x = data::Int(4).Item();
 
     EXPECT_TRUE(
         block.Write(/*offset=*/18, data::kTypeInt.ValueLength(), x).IsError());

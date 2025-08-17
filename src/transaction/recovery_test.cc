@@ -67,8 +67,8 @@ TEST_F(RecoveryManagerTwoFileTest, RollbackSuccessWithVariousBlockSize) {
         const int expect_value                    = 4;
         const std::vector<uint8_t> previous_value = {expect_value, 0, 0, 0},
                                    dummy_value1   = {2, 0, 0, 0};
-        const data::DataItem dummy_value0         = data::Int(7),
-                             dummy_value2         = data::Int(5);
+        const data::DataItem dummy_value0         = data::Int(7).Item(),
+                             dummy_value2         = data::Int(5).Item();
         disk::DiskPosition position1(
             disk::DiskPosition(disk::BlockID(filename1, 4), 3));
         dblog::LogOperation log1(transaction_id, position1,
@@ -128,10 +128,10 @@ TEST_F(RecoveryManagerTwoFileTest, RecoverSuccess) {
                                expect_data1 = {expect_value1, 0, 0, 0},
                                expect_data2 = {0xf9, 0xff, 0xff, 0xff} /*-7*/,
                                dummy_data   = {0, 0, 0, 0};
-    const data::DataItem expect_item0       = data::Int(expect_value0),
-                         expect_item1       = data::Int(expect_value1),
-                         expect_item2       = data::Int(expect_value2),
-                         dummy_item         = data::Int(0);
+    const data::DataItem expect_item0       = data::Int(expect_value0).Item(),
+                         expect_item1       = data::Int(expect_value1).Item(),
+                         expect_item2       = data::Int(expect_value2).Item(),
+                         dummy_item         = data::Int(0).Item();
     disk::DiskPosition position0(
         disk::DiskPosition(disk::BlockID(filename1, 4), 3));
     dblog::LogOperation log2(committed_transaction_id, position0,

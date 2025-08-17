@@ -56,15 +56,15 @@ TEST(DataByte, WriteByteNoFailSuccessWithOutsideIndex) {
 }
 
 TEST(DataByte, ToByte) {
-    data::DataItem x;
+    data::DataItemWithType x;
     x = data::Byte(0x3c);
-    EXPECT_EQ(x[0], 0x3c);
+    EXPECT_EQ(x.Item()[0], 0x3c);
 }
 
 TEST(DataByte, ReadFromDataItem) {
-    data::DataItem x;
+    data::DataItemWithType x;
     x = data::Byte(0x3c);
 
-    uint8_t expect_byte = data::ReadByte(x);
+    uint8_t expect_byte = data::ReadByte(x.Item());
     EXPECT_EQ(expect_byte, 0x3c);
 }

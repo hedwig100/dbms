@@ -84,6 +84,7 @@ target_include_directories(data_test
 )
 target_link_libraries(data_test
   data
+  int
   GTest::gtest_main
 )
 gtest_discover_tests(data_test)

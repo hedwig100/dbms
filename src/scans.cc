@@ -13,7 +13,7 @@ ResultV<data::DataItemWithType> SelectScan::Get(const std::string &fieldname) {
 }
 
 Result SelectScan::Update(const std::string &fieldname,
-                          const data::DataItem &item) {
+                          const data::DataItemWithType &item) {
     return scan_.Update(fieldname, item);
 }
 

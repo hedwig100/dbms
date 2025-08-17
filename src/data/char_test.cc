@@ -63,18 +63,18 @@ TEST(DataChar, WriteStringNoFailWithOutsideIndexSuccess) {
 }
 
 TEST(DataChar, ToChar) {
-    data::DataItem x;
+    data::DataItemWithType x;
     x = data::Char("abc", 4);
-    EXPECT_EQ(x.size(), 4);
-    EXPECT_EQ(x[0], 'a');
-    EXPECT_EQ(x[1], 'b');
-    EXPECT_EQ(x[2], 'c');
-    EXPECT_EQ(x[3], 0);
+    EXPECT_EQ(x.Item().size(), 4);
+    EXPECT_EQ(x.Item()[0], 'a');
+    EXPECT_EQ(x.Item()[1], 'b');
+    EXPECT_EQ(x.Item()[2], 'c');
+    EXPECT_EQ(x.Item()[3], 0);
 }
 
 TEST(DataChar, ReadStringFromDataItem) {
-    data::DataItem x;
+    data::DataItemWithType x;
     x               = data::Char("abc", 4);
-    auto expect_str = data::ReadChar(x, 3);
+    auto expect_str = data::ReadChar(x.Item(), 3);
     EXPECT_EQ(expect_str, "abc");
 }

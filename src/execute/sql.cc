@@ -33,7 +33,7 @@ std::string Column::Name() const {
     return std::to_string(std::get<int>(column_name_or_const_integer_));
 }
 
-ResultV<data::DataItem> Column::GetColumn(scan::Scan &scan) const {
+ResultV<data::DataItemWithType> Column::GetColumn(scan::Scan &scan) const {
     if (IsColumnName()) {
         TRY_VALUE(item, scan.Get(ColumnName()));
         return Ok(item.Get());
