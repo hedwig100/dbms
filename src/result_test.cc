@@ -194,3 +194,20 @@ TEST(FunctionReturningResult, UseOkWithNoArgument) {
     EXPECT_TRUE(err_result.IsError());
     EXPECT_EQ(err_result.Error(), "fd should be plus.");
 }
+
+result::ResultV<bool> test3(int a, int b) {
+    if (a < 0 || b < 0) return result::Error("a and b should not be negative.");
+    return result::Ok(a == b);
+}
+
+TEST(FunctionReturningResult, ResultVWithBoolSuccess) {
+    const auto ok_result  = test3(2, 2);
+    const auto ng_result  = test3(2, 3);
+    const auto err_result = test3(-1, 2);
+
+    EXPECT_TRUE(ok_result.IsOk());
+    EXPECT_TRUE(ok_result.Get());
+    EXPECT_TRUE(ng_result.IsOk());
+    EXPECT_FALSE(ng_result.Get());
+    EXPECT_TRUE(err_result.IsError());
+}
