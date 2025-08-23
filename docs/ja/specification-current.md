@@ -21,12 +21,14 @@ SQLステートメントとしては以下をサポートする.
 <statement> = ( <select-statement> ) ";"
 <select-statement> = "SELECT" <columns> "FROM" <table> <where-clause>
 
-<where-clause> = ( "WHERE" <expr> )?
+<columns> =  '*' | <select-expr> | <columns> ',' <select-expr>
+<select-expr> = <column> | <expr>
 <expr> = <boolean_primary>
+
+<where-clause> = ( "WHERE" <boolean_primary> )?
 <boolean_primary> = <column> <comparison-operator> <column>
 <comparison-operator> = '=' | '<' | '>' | '<=' | '>='
 
-<columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>
 <table> = <id>
 <integer> = [0-9]+

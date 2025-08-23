@@ -31,25 +31,20 @@ class Column {
         : column_name_or_const_integer_(column_name) {}
     Column(int const_integer) : column_name_or_const_integer_(const_integer) {}
 
-    // Check if the column represents a column name.
-    bool IsColumnName() const;
+    // Get the column value using the scan.
+    ResultV<data::DataItemWithType> Evaluate(scan::Scan &scan) const;
 
     // Returns the column name if it is a column name.
+    // If it is a constant integer, an empty string is returned.
     std::string ColumnName() const;
 
-    // Returns the constant integer if it is a constant integer.
-    int ConstInteger() const;
-
     // This is used to get the name of the column or constant integer.
-    std::string Name() const;
-
-    // Get the column value using the scan.
-    ResultV<data::DataItemWithType> GetColumn(scan::Scan &scan) const;
-
-    // Returns true if the column is valid in the given layout.
-    bool IsValid(const schema::Layout &layout) const;
+    std::string DisplayName() const;
 
   private:
+    bool IsColumnName() const;
+    int ConstInteger() const;
+
     std::variant<std::string, int> column_name_or_const_integer_;
 };
 
@@ -72,8 +67,16 @@ class BooleanPrimary {
     // Evaluate the boolean expression
     ResultV<bool> Evaluate(scan::Scan &scan) const;
 
+    // Get the column names used in the boolean expression
+    std::vector<std::string> GetColumnNames() const {
+        return {left_->ColumnName(), right_->ColumnName()};
+    }
+
+    // Get the display name of the boolean expression
+    std::string DisplayName() const;
+
   private:
-    Column *left_, *right_;
+    Column *left_ = nullptr, *right_ = nullptr;
     ComparisonOperator comparison_operator_;
 };
 
@@ -83,10 +86,43 @@ class Expression {
         : boolean_primary_(boolean_primary) {}
 
     // Evaluate the expression
-    ResultV<bool> Evaluate(scan::Scan &scan) const;
+    ResultV<data::DataItemWithType> Evaluate(scan::Scan &scan) const;
+
+    // Get the column names used in the expression
+    std::vector<std::string> GetColumnNames() const {
+        return boolean_primary_->GetColumnNames();
+    }
+
+    // Get the display name of the expression
+    std::string DisplayName() const { return boolean_primary_->DisplayName(); }
 
   public:
-    BooleanPrimary *boolean_primary_;
+    BooleanPrimary *boolean_primary_ = nullptr;
+};
+
+class SelectExpression {
+  public:
+    explicit SelectExpression(Column *column) : column_(column) {}
+    explicit SelectExpression(Expression *expression)
+        : expression_(expression) {}
+
+    // Evaluate returns the expression.
+    ResultV<data::DataItemWithType> Evaluate(scan::Scan &scan) const;
+
+    // Get the column names used in the expression
+    std::vector<std::string> GetColumnNames() const {
+        if (column_) { return {column_->ColumnName()}; }
+        return expression_->GetColumnNames();
+    }
+
+    std::string DisplayName() const {
+        if (column_) { return column_->DisplayName(); }
+        return expression_->DisplayName();
+    }
+
+  private:
+    Column *column_         = nullptr;
+    Expression *expression_ = nullptr;
 };
 
 class Columns {
@@ -98,21 +134,33 @@ class Columns {
     // SQL.
     void PopulateColumns(const schema::Layout &layout);
 
-    void AddColumn(Column *column) { columns_.push_back(column); }
+    void AddSelectExpression(SelectExpression *expression) {
+        select_expressions_.push_back(expression);
+    }
 
-    std::vector<Column *> GetColumns() const { return columns_; }
+    ResultV<std::vector<data::DataItemWithType>>
+    Evaluate(scan::Scan &scan) const;
 
-    std::vector<std::string> GetColmnNames() const {
+    std::vector<std::string> GetColumnNames() const {
         std::vector<std::string> column_names;
-        for (const Column *column : columns_) {
-            column_names.push_back(column->Name());
+        for (const SelectExpression *expression : select_expressions_) {
+            auto names = expression->GetColumnNames();
+            column_names.insert(column_names.end(), names.begin(), names.end());
         }
         return column_names;
     }
 
+    std::vector<std::string> DisplayName() const {
+        std::vector<std::string> names;
+        for (const SelectExpression *expression : select_expressions_) {
+            names.push_back(expression->DisplayName());
+        }
+        return names;
+    }
+
   private:
     bool is_all_column_;
-    std::vector<Column *> columns_;
+    std::vector<SelectExpression *> select_expressions_;
 };
 
 class Statement {
@@ -126,16 +174,19 @@ class Statement {
 class SelectStatement : public Statement {
   public:
     SelectStatement(Columns *columns, Table *table,
-                    Expression *where_condition = nullptr)
+                    BooleanPrimary *where_condition = nullptr)
         : columns_(columns), table_(table), where_condition_(where_condition) {}
 
-    Columns *GetColumns() const { return columns_; }
     Table *GetTable() const { return table_; }
 
     // SELECT statement
     Result Execute(transaction::Transaction &transaction,
                    execute::QueryResult &result,
                    const execute::Environment &env);
+
+    std::vector<std::string> GetColumnNames() const {
+        return columns_->GetColumnNames();
+    }
 
   private:
     // Check if the column names are valid in the given layout.
@@ -144,9 +195,9 @@ class SelectStatement : public Statement {
     // Return true if the WHERE condition is true.
     ResultV<bool> WhereConditionIsTrue(scan::SelectScan &scan) const;
 
-    Columns *columns_;
-    Table *table_;
-    Expression *where_condition_;
+    Columns *columns_                = nullptr;
+    Table *table_                    = nullptr;
+    BooleanPrimary *where_condition_ = nullptr;
 };
 
 // ParseResult class represents the result of parsing.

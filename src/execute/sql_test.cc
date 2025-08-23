@@ -11,39 +11,32 @@
 
 TEST(Column, IsColumnName) {
     sql::Column column("field1");
-    EXPECT_TRUE(column.IsColumnName());
     EXPECT_EQ(column.ColumnName(), "field1");
 }
 
-TEST(Column, ConstInteger) {
-    sql::Column column(42);
-    EXPECT_FALSE(column.IsColumnName());
-    EXPECT_EQ(column.ConstInteger(), 42);
-}
-
-TEST(Column, Name) {
+TEST(Column, DisplayName) {
     sql::Column column("field1");
-    EXPECT_EQ(column.Name(), "field1");
+    EXPECT_EQ(column.DisplayName(), "field1");
 
     sql::Column int_column(42);
-    EXPECT_EQ(int_column.Name(), "42");
+    EXPECT_EQ(int_column.DisplayName(), "42");
 }
 
-TEST(Column, ColumnNameGetColumn) {
+TEST(Column, ColumnNameEvaluate) {
     sql::Column column("field1");
     ScanForTest scan;
 
-    auto result = column.GetColumn(scan);
+    auto result = column.Evaluate(scan);
 
     EXPECT_TRUE(result.IsOk());
     EXPECT_EQ(result.Get(), data::Int(1));
 }
 
-TEST(Column, ConstIntegerGetColumn) {
+TEST(Column, ConstIntegerEvaluate) {
     sql::Column column(42);
     ScanForTest scan;
 
-    auto result = column.GetColumn(scan);
+    auto result = column.Evaluate(scan);
 
     EXPECT_TRUE(result.IsOk());
     EXPECT_EQ(result.Get(), data::Int(42));
@@ -57,7 +50,7 @@ TEST(Columns, PopulateColumns) {
 
     all_columns.PopulateColumns(layout);
 
-    EXPECT_THAT(all_columns.GetColmnNames(),
+    EXPECT_THAT(all_columns.GetColumnNames(),
                 ::testing::ElementsAre("field1", "field2"));
 }
 
@@ -150,9 +143,11 @@ class SqlTest : public ::testing::Test {
 
 TEST_F(SqlTest, SelectSuccess) {
     sql::Columns *columns = new sql::Columns();
-    columns->AddColumn(new sql::Column("field1"));
-    columns->AddColumn(new sql::Column("field2"));
-    columns->AddColumn(new sql::Column(0));
+    columns->AddSelectExpression(
+        new sql::SelectExpression(new sql::Column("field1")));
+    columns->AddSelectExpression(
+        new sql::SelectExpression(new sql::Column("field2")));
+    columns->AddSelectExpression(new sql::SelectExpression(new sql::Column(0)));
     sql::SelectStatement select_statement(columns,
                                           new sql::Table(tablename.c_str()));
     execute::QueryResult result = execute::DefaultResult();
@@ -206,8 +201,10 @@ TEST_F(SqlTest, SelectSuccessWithAllColumns) {
 
 TEST_F(SqlTest, SelectFailureWithInvalidColumn) {
     sql::Columns *columns = new sql::Columns();
-    columns->AddColumn(new sql::Column("invalid-field"));
-    columns->AddColumn(new sql::Column("field2"));
+    columns->AddSelectExpression(
+        new sql::SelectExpression(new sql::Column("invalid-field")));
+    columns->AddSelectExpression(
+        new sql::SelectExpression(new sql::Column("field2")));
     sql::SelectStatement select_statement(columns,
                                           new sql::Table(tablename.c_str()));
     execute::QueryResult result = execute::DefaultResult();
@@ -219,11 +216,10 @@ TEST_F(SqlTest, SelectFailureWithInvalidColumn) {
 }
 
 TEST_F(SqlTest, SelectSuccessWithWhereCondition) {
-    sql::Columns *columns = new sql::Columns(true);
-    sql::Expression *where_condition =
-        new sql::Expression(new sql::BooleanPrimary(
-            new sql::Column("field1"), sql::ComparisonOperator::Equal,
-            new sql::Column(0)));
+    sql::Columns *columns                = new sql::Columns(true);
+    sql::BooleanPrimary *where_condition = new sql::BooleanPrimary(
+        new sql::Column("field1"), sql::ComparisonOperator::Equal,
+        new sql::Column(0));
     sql::SelectStatement select_statement(
         columns, new sql::Table(tablename.c_str()), where_condition);
     execute::QueryResult result = execute::DefaultResult();
@@ -240,11 +236,10 @@ TEST_F(SqlTest, SelectSuccessWithWhereCondition) {
 }
 
 TEST_F(SqlTest, SelectFailWithWhereConditionWithInvalidColumn) {
-    sql::Columns *columns = new sql::Columns(true);
-    sql::Expression *where_condition =
-        new sql::Expression(new sql::BooleanPrimary(
-            new sql::Column("invalid-field"), sql::ComparisonOperator::Equal,
-            new sql::Column(0)));
+    sql::Columns *columns                = new sql::Columns(true);
+    sql::BooleanPrimary *where_condition = new sql::BooleanPrimary(
+        new sql::Column("invalid-field"), sql::ComparisonOperator::Equal,
+        new sql::Column(0));
     sql::SelectStatement select_statement(
         columns, new sql::Table(tablename.c_str()), where_condition);
     execute::QueryResult result = execute::DefaultResult();

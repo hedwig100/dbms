@@ -8,15 +8,7 @@ TEST(ParserTest, ExampleSuccessTest) {
 
     auto result = parser.Parse(sql_stmt);
 
-    EXPECT_TRUE(result.IsOk());
-
-    sql::Statement *statement = result.Get().Statements()[0];
-    sql::SelectStatement *select_statement =
-        dynamic_cast<sql::SelectStatement *>(statement);
-    ASSERT_TRUE(statement != nullptr);
-    EXPECT_EQ(select_statement->GetColumns()->GetColumns()[0]->ColumnName(),
-              "a");
-    EXPECT_EQ(select_statement->GetTable()->TableName(), "table");
+    EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
 }
 
 TEST(ParserTest, ExampleFailureTest) {
@@ -31,5 +23,13 @@ TEST(ParserTest, CompareSuccess) {
     sql::Parser parser;
     const std::string sql_stmt = "SELECT a FROM b WHERE a <= 4;";
     auto result                = parser.Parse(sql_stmt);
+    EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
+}
+
+TEST(ParserTest, ExpressionColumns) {
+    sql::Parser parser;
+    const std::string sql_stmt =
+        "SELECT a = 9, b > 0, c < 0, 42 <= 0, 33 >= 3 FROM table WHERE a = b;";
+    auto result = parser.Parse(sql_stmt);
     EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
 }

@@ -1,3 +1,4 @@
+#include "data/byte.h"
 #include "data/char.h"
 #include "data/int.h"
 #include "execute.h"
@@ -251,4 +252,13 @@ INSTANTIATE_TEST_SUITE_P(
                                       {data::Int(9), data::Int(-9)},
                                   })),
         ExecuteTestParam("SELECT * FROM table_for_test WHERE field1 = field3;",
-                         /*expect_success=*/false, execute::DefaultResult())));
+                         /*expect_success=*/false, execute::DefaultResult()),
+        ExecuteTestParam("SELECT field1 > 0, 33 < 0, 42 <= 0, 33 >= 3 FROM "
+                         "table_for_test WHERE field1 = 0;",
+                         /*expect_success=*/true,
+                         execute::SelectResult(
+                             {"field1 > 0", "33 < 0", "42 <= 0", "33 >= 3"},
+                             {
+                                 {data::Byte(0), data::Byte(0), data::Byte(0),
+                                  data::Byte(1)},
+                             }))));
