@@ -11,6 +11,7 @@ using namespace result;
 constexpr int kByteBytesize = 1;
 
 // TypeByte represents the type of byte.
+// This is also used as Bool.
 class TypeByte : public DataType {
   public:
     inline TypeByte() {}
