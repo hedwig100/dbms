@@ -261,4 +261,13 @@ INSTANTIATE_TEST_SUITE_P(
                              {
                                  {data::Byte(0), data::Byte(0), data::Byte(0),
                                   data::Byte(1)},
+                             })),
+        ExecuteTestParam("SELECT 2 AS two, field1 > 0 AS is_positive, field2 "
+                         "AS column_alias FROM "
+                         "table_for_test WHERE field2 = 0;",
+                         /*expect_success=*/true,
+                         execute::SelectResult(
+                             {"two", "is_positive", "column_alias"},
+                             {
+                                 {data::Int(2), data::Byte(0), data::Int(0)},
                              }))));

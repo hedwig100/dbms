@@ -38,6 +38,7 @@ ID [_a-zA-Z][_a-zA-Z0-9]*
 SELECT {return TOKEN_SELECT;}
 FROM {return TOKEN_FROM;}
 WHERE {return TOKEN_WHERE;}
+AS {return TOKEN_AS;}
 
 [<>+=*,;] { return yytext[0]; }
 

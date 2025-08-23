@@ -24,6 +24,17 @@ class Table {
     std::string table_name_;
 };
 
+// As class represents an alias in the SQL statement.
+class As {
+  public:
+    As(const char *alias_name) : alias_name_(alias_name) {}
+
+    std::string AliasName() const { return alias_name_; }
+
+  private:
+    std::string alias_name_;
+};
+
 // Column class represents a column in the SQL statement.
 class Column {
   public:
@@ -102,9 +113,10 @@ class Expression {
 
 class SelectExpression {
   public:
-    explicit SelectExpression(Column *column) : column_(column) {}
-    explicit SelectExpression(Expression *expression)
-        : expression_(expression) {}
+    explicit SelectExpression(Column *column, As *alias = nullptr)
+        : column_(column), alias_(alias) {}
+    explicit SelectExpression(Expression *expression, As *alias = nullptr)
+        : expression_(expression), alias_(alias) {}
 
     // Evaluate returns the expression.
     ResultV<data::DataItemWithType> Evaluate(scan::Scan &scan) const;
@@ -116,6 +128,7 @@ class SelectExpression {
     }
 
     std::string DisplayName() const {
+        if (alias_) { return alias_->AliasName(); }
         if (column_) { return column_->DisplayName(); }
         return expression_->DisplayName();
     }
@@ -123,6 +136,7 @@ class SelectExpression {
   private:
     Column *column_         = nullptr;
     Expression *expression_ = nullptr;
+    As *alias_              = nullptr;
 };
 
 class Columns {

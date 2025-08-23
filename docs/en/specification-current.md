@@ -23,7 +23,7 @@ This dbms supports the following sql statements.
 <select-statement> = "SELECT" <columns> "FROM" <table> <where-clause>
 
 <columns> =  '*' | <select-expr> | <columns> ',' <select-expr>
-<select-expr> = <column> | <expr>
+<select-expr> = ( <column> | <expr> ) <as>
 <expr> = <boolean_primary>
 
 <where-clause> = ( "WHERE" <boolean_primary> )?
@@ -31,6 +31,7 @@ This dbms supports the following sql statements.
 <comparison-operator> = '=' | '<' | '>' | '<=' | '>='
 
 <column> = <integer> | <id>
+<as> = ( "AS" <id> )?
 <table> = <id>
 <integer> = [0-9]+
 <id> = [_a-zA-Z][_a-zA-Z0-9]*

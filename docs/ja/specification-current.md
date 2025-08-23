@@ -22,7 +22,7 @@ SQLステートメントとしては以下をサポートする.
 <select-statement> = "SELECT" <columns> "FROM" <table> <where-clause>
 
 <columns> =  '*' | <select-expr> | <columns> ',' <select-expr>
-<select-expr> = <column> | <expr>
+<select-expr> = ( <column> | <expr> ) <as>
 <expr> = <boolean_primary>
 
 <where-clause> = ( "WHERE" <boolean_primary> )?
@@ -30,6 +30,7 @@ SQLステートメントとしては以下をサポートする.
 <comparison-operator> = '=' | '<' | '>' | '<=' | '>='
 
 <column> = <integer> | <id>
+<as> = ( "AS" <id> )?
 <table> = <id>
 <integer> = [0-9]+
 <id> = [_a-zA-Z][_a-zA-Z0-9]*

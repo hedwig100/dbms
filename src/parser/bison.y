@@ -57,6 +57,7 @@ typedef void* yyscan_t;
     sql::BooleanPrimary *boolean_primary;
     sql::ComparisonOperator comparison_operator;
     sql::Column *column;
+    sql::As *as;
     sql::Table *table;
 }
 
@@ -76,7 +77,7 @@ typedef void* yyscan_t;
 %token <ival> INTEGER_VAL
 %token <identifier> IDENTIFIER
 
-%token SELECT FROM WHERE
+%token SELECT FROM WHERE AS
 
 /* Non-terminal symbols (https://www.gnu.org/software/bison/manual/html_node/Type-Decl.html) */
 %type <statement> statement
@@ -88,6 +89,7 @@ typedef void* yyscan_t;
 %type <boolean_primary> boolean_primary
 %type <comparison_operator> comparison_operator
 %type <column> column
+%type <as> as
 %type <table> table
 
 %code provides {
@@ -120,8 +122,8 @@ columns
     ;
 
 select_expr
-    : column { $$ = new sql::SelectExpression(/*column=*/$1); }
-    | expr { $$ = new sql::SelectExpression(/*expression=*/$1); }
+    : column as { $$ = new sql::SelectExpression(/*column=*/$1, /*as=*/$2); }
+    | expr as { $$ = new sql::SelectExpression(/*expression=*/$1, /*as=*/$2); }
     ;
 
 expr
@@ -148,6 +150,11 @@ comparison_operator
 column
     : INTEGER_VAL { $$ = new sql::Column($1); }
     | IDENTIFIER { $$ = new sql::Column($1); }
+    ;
+
+as
+    : %empty { $$ = nullptr; }
+    | AS IDENTIFIER { $$ = new sql::As($2); }
     ;
 
 table

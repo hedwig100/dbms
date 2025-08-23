@@ -33,3 +33,11 @@ TEST(ParserTest, ExpressionColumns) {
     auto result = parser.Parse(sql_stmt);
     EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
 }
+
+TEST(ParserTest, ColumnAlias) {
+    sql::Parser parser;
+    const std::string sql_stmt =
+        "SELECT a = 9 AS alias1, 43 AS const_value FROM table WHERE a = b;";
+    auto result = parser.Parse(sql_stmt);
+    EXPECT_TRUE(result.IsOk()) << "Error: " << result.Error();
+}
