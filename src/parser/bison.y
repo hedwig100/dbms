@@ -51,7 +51,8 @@ typedef void* yyscan_t;
     sql::Statement *statement;
     sql::SelectStatement *select_statement;
     sql::Columns *columns;
-    sql::Expression *where_clause;
+    sql::SelectExpression *select_expr;
+    sql::BooleanPrimary *where_clause;
     sql::Expression *expr;
     sql::BooleanPrimary *boolean_primary;
     sql::ComparisonOperator comparison_operator;
@@ -81,8 +82,9 @@ typedef void* yyscan_t;
 %type <statement> statement
 %type <select_statement> select_statement
 %type <columns> columns
-%type <where_clause> where_clause
+%type <select_expr> select_expr
 %type <expr> expr
+%type <where_clause> where_clause
 %type <boolean_primary> boolean_primary
 %type <comparison_operator> comparison_operator
 %type <column> column
@@ -113,17 +115,22 @@ select_statement
 
 columns
     : '*' { $$ = new sql::Columns(/*is_all_column=*/true); }
-    | column { $$ = new sql::Columns(); $$->AddColumn($1); }
-    | columns ',' column { $$ = $1; $$->AddColumn($3); }
+    | select_expr { $$ = new sql::Columns(); $$->AddSelectExpression($1); }
+    | columns ',' select_expr { $$ = $1; $$->AddSelectExpression($3); }
     ;
 
-where_clause
-    : %empty { $$ = nullptr; }
-    | WHERE expr { $$ = $2; }
+select_expr
+    : column { $$ = new sql::SelectExpression(/*column=*/$1); }
+    | expr { $$ = new sql::SelectExpression(/*expression=*/$1); }
     ;
 
 expr
     : boolean_primary { $$ = new sql::Expression($1); }
+    ;
+
+where_clause
+    : %empty { $$ = nullptr; }
+    | WHERE boolean_primary { $$ = $2; }
     ;
 
 boolean_primary

@@ -1,4 +1,5 @@
 #include "sql.h"
+#include "data/byte.h"
 #include "data/int.h"
 #include "debug.h"
 #include "execute/query_result.h"
@@ -26,24 +27,19 @@ int Column::ConstInteger() const {
     return 0;
 }
 
-std::string Column::Name() const {
+std::string Column::DisplayName() const {
     if (std::holds_alternative<std::string>(column_name_or_const_integer_)) {
         return std::get<std::string>(column_name_or_const_integer_);
     }
     return std::to_string(std::get<int>(column_name_or_const_integer_));
 }
 
-ResultV<data::DataItemWithType> Column::GetColumn(scan::Scan &scan) const {
+ResultV<data::DataItemWithType> Column::Evaluate(scan::Scan &scan) const {
     if (IsColumnName()) {
         TRY_VALUE(item, scan.Get(ColumnName()));
         return Ok(item.Get());
     }
     return Ok(data::Int(ConstInteger()));
-}
-
-bool Column::IsValid(const schema::Layout &layout) const {
-    if (IsColumnName()) { return layout.HasField(ColumnName()); }
-    return true;
 }
 
 ResultV<bool> Compare(const data::DataItemWithType &left,
@@ -78,24 +74,66 @@ ResultV<bool> Compare(const data::DataItemWithType &left,
 }
 
 ResultV<bool> BooleanPrimary::Evaluate(scan::Scan &scan) const {
-    TRY_VALUE(left_value, left_->GetColumn(scan));
-    TRY_VALUE(right_value, right_->GetColumn(scan));
+    TRY_VALUE(left_value, left_->Evaluate(scan));
+    TRY_VALUE(right_value, right_->Evaluate(scan));
     TRY_VALUE(eval_result, Compare(left_value.Get(), right_value.Get(),
                                    comparison_operator_));
     return Ok(eval_result.Get());
 }
 
-ResultV<bool> Expression::Evaluate(scan::Scan &scan) const {
-    if (boolean_primary_ == nullptr) { return Ok(true); }
-    return boolean_primary_->Evaluate(scan);
+std::string BooleanPrimary::DisplayName() const {
+    std::string op_str;
+    switch (comparison_operator_) {
+    case ComparisonOperator::Equal:
+        op_str = "=";
+        break;
+    case ComparisonOperator::Less:
+        op_str = "<";
+        break;
+    case ComparisonOperator::Greater:
+        op_str = ">";
+        break;
+    case ComparisonOperator::LessOrEqual:
+        op_str = "<=";
+        break;
+    case ComparisonOperator::GreaterOrEqual:
+        op_str = ">=";
+        break;
+    }
+    return left_->DisplayName() + " " + op_str + " " + right_->DisplayName();
+}
+
+ResultV<data::DataItemWithType> Expression::Evaluate(scan::Scan &scan) const {
+    if (boolean_primary_ == nullptr) {
+        return Error("Expression::Evaluate() boolean_primary_ is null");
+    }
+    TRY_VALUE(result, boolean_primary_->Evaluate(scan));
+    return Ok(data::Byte(result.Get() ? 1 : 0));
+}
+
+ResultV<data::DataItemWithType>
+SelectExpression::Evaluate(scan::Scan &scan) const {
+    if (column_) { return column_->Evaluate(scan); }
+    return expression_->Evaluate(scan);
 }
 
 void Columns::PopulateColumns(const schema::Layout &layout) {
     if (!is_all_column_) { return; }
     for (const auto &fieldname : layout.FieldNames()) {
-        columns_.push_back(new Column(fieldname.c_str()));
+        select_expressions_.push_back(
+            new SelectExpression(new Column(fieldname.c_str())));
     }
     return;
+}
+
+ResultV<std::vector<data::DataItemWithType>>
+Columns::Evaluate(scan::Scan &scan) const {
+    std::vector<data::DataItemWithType> results;
+    for (const SelectExpression *expression : select_expressions_) {
+        TRY_VALUE(item, expression->Evaluate(scan));
+        results.push_back(item.Get());
+    }
+    return Ok(results);
 }
 
 Result SelectStatement::Execute(transaction::Transaction &transaction,
@@ -113,17 +151,13 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
 
     scan::TableScan table_scan(transaction, table_->TableName(), layout.Get());
     scan::SelectScan select_scan(table_scan);
-    execute::SelectResult select_result(columns_->GetColmnNames());
+    execute::SelectResult select_result(columns_->DisplayName());
     FIRST_TRY(select_scan.Init());
     while (true) {
         TRY_VALUE(where, WhereConditionIsTrue(select_scan));
         if (where.Get()) {
-            execute::Row row;
-            for (const Column *column : columns_->GetColumns()) {
-                TRY_VALUE(item, column->GetColumn(select_scan));
-                row.push_back(item.Get());
-            }
-            select_result.Add(row);
+            TRY_VALUE(row, columns_->Evaluate(select_scan));
+            select_result.Add(row.Get());
         }
 
         TRY_VALUE(has_next, select_scan.Next());
@@ -135,8 +169,11 @@ Result SelectStatement::Execute(transaction::Transaction &transaction,
 }
 
 bool SelectStatement::IsValidColumns(const schema::Layout &layout) const {
-    for (const Column *column : columns_->GetColumns()) {
-        if (!column->IsValid(layout)) { return false; }
+    for (const std::string &column_name : columns_->GetColumnNames()) {
+        // Skip empty column names because Column returns an empty
+        // string for constant values
+        if (column_name.empty()) continue;
+        if (!layout.HasField(column_name)) { return false; }
     }
     return true;
 }
