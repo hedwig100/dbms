@@ -262,7 +262,7 @@ template <typename E> class ErrorValue {
 
     // Returns ResultVE<V, E>, which represents error value
     template <typename T, typename F> operator ResultVE<T, F>() const {
-        return ResultVE<T, F>(error_);
+        return ResultVE<T, F>(static_cast<F>(error_));
     }
 
     // Returns ResultVE<V, V>, which represents error value

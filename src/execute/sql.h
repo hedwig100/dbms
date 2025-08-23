@@ -53,16 +53,28 @@ class Column {
     std::variant<std::string, int> column_name_or_const_integer_;
 };
 
+enum class ComparisonOperator {
+    Equal,
+    Less,
+    Greater,
+    LessOrEqual,
+    GreaterOrEqual
+};
+
 class BooleanPrimary {
   public:
-    explicit BooleanPrimary(Column *left, Column *right)
-        : left_(left), right_(right) {}
+    explicit BooleanPrimary(Column *left,
+                            ComparisonOperator comparison_operator,
+                            Column *right)
+        : left_(left), comparison_operator_(comparison_operator),
+          right_(right) {}
 
     // Evaluate the boolean expression
     ResultV<bool> Evaluate(scan::Scan &scan) const;
 
   private:
     Column *left_, *right_;
+    ComparisonOperator comparison_operator_;
 };
 
 class Expression {

@@ -46,10 +46,43 @@ bool Column::IsValid(const schema::Layout &layout) const {
     return true;
 }
 
+ResultV<bool> Compare(const data::DataItemWithType &left,
+                      const data::DataItemWithType &right,
+                      ComparisonOperator op) {
+    // TODO: Raise an error when the types do not match while parsing (not
+    // here).
+    if (left.BaseType() != right.BaseType()) {
+        return Error("Compare() Column types do not match");
+    }
+    // TODO: Support other data types.
+    if (left.BaseType() != data::BaseDataType::kInt) {
+        return Error("Compare() Only integer comparison is supported");
+    }
+
+    int left_value  = data::ReadInt(left.Item());
+    int right_value = data::ReadInt(right.Item());
+
+    switch (op) {
+    case ComparisonOperator::Equal:
+        return Ok(left_value == right_value);
+    case ComparisonOperator::Less:
+        return Ok(left_value < right_value);
+    case ComparisonOperator::Greater:
+        return Ok(left_value > right_value);
+    case ComparisonOperator::LessOrEqual:
+        return Ok(left_value <= right_value);
+    case ComparisonOperator::GreaterOrEqual:
+        return Ok(left_value >= right_value);
+    }
+    return Error("Compare() Invalid comparison operator");
+}
+
 ResultV<bool> BooleanPrimary::Evaluate(scan::Scan &scan) const {
     TRY_VALUE(left_value, left_->GetColumn(scan));
     TRY_VALUE(right_value, right_->GetColumn(scan));
-    return Ok(left_value.Get() == right_value.Get());
+    TRY_VALUE(eval_result, Compare(left_value.Get(), right_value.Get(),
+                                   comparison_operator_));
+    return Ok(eval_result.Get());
 }
 
 ResultV<bool> Expression::Evaluate(scan::Scan &scan) const {

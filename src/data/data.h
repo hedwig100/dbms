@@ -95,6 +95,8 @@ class DataItemWithType {
 
     const DataItem &Item() const { return item_; }
 
+    const BaseDataType &BaseType() const { return type_; }
+
     bool operator==(const DataItemWithType &other) const {
         return type_ == other.type_ && item_ == other.item_;
     }

@@ -54,6 +54,7 @@ typedef void* yyscan_t;
     sql::Expression *where_clause;
     sql::Expression *expr;
     sql::BooleanPrimary *boolean_primary;
+    sql::ComparisonOperator comparison_operator;
     sql::Column *column;
     sql::Table *table;
 }
@@ -61,6 +62,7 @@ typedef void* yyscan_t;
 
 // Destructor (https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html)
 %destructor {} <ival>
+%destructor {} <comparison_operator>
 %destructor { delete($$); } <*>
 
 
@@ -82,6 +84,7 @@ typedef void* yyscan_t;
 %type <where_clause> where_clause
 %type <expr> expr
 %type <boolean_primary> boolean_primary
+%type <comparison_operator> comparison_operator
 %type <column> column
 %type <table> table
 
@@ -124,7 +127,15 @@ expr
     ;
 
 boolean_primary
-    : column '=' column { $$ = new sql::BooleanPrimary($1, $3); }
+    : column comparison_operator column { $$ = new sql::BooleanPrimary($1, $2, $3); }
+    ;
+
+comparison_operator
+    : '=' { $$ = sql::ComparisonOperator::Equal; }
+    | '<' { $$ = sql::ComparisonOperator::Less; }
+    | '>' { $$ = sql::ComparisonOperator::Greater; }
+    | '<' '=' { $$ = sql::ComparisonOperator::LessOrEqual; }
+    | '>' '=' { $$ = sql::ComparisonOperator::GreaterOrEqual; }
     ;
 
 column

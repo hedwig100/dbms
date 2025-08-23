@@ -219,9 +219,11 @@ TEST_F(SqlTest, SelectFailureWithInvalidColumn) {
 }
 
 TEST_F(SqlTest, SelectSuccessWithWhereCondition) {
-    sql::Columns *columns            = new sql::Columns(true);
-    sql::Expression *where_condition = new sql::Expression(
-        new sql::BooleanPrimary(new sql::Column("field1"), new sql::Column(0)));
+    sql::Columns *columns = new sql::Columns(true);
+    sql::Expression *where_condition =
+        new sql::Expression(new sql::BooleanPrimary(
+            new sql::Column("field1"), sql::ComparisonOperator::Equal,
+            new sql::Column(0)));
     sql::SelectStatement select_statement(
         columns, new sql::Table(tablename.c_str()), where_condition);
     execute::QueryResult result = execute::DefaultResult();
@@ -241,7 +243,8 @@ TEST_F(SqlTest, SelectFailWithWhereConditionWithInvalidColumn) {
     sql::Columns *columns = new sql::Columns(true);
     sql::Expression *where_condition =
         new sql::Expression(new sql::BooleanPrimary(
-            new sql::Column("invalid-field"), new sql::Column(0)));
+            new sql::Column("invalid-field"), sql::ComparisonOperator::Equal,
+            new sql::Column(0)));
     sql::SelectStatement select_statement(
         columns, new sql::Table(tablename.c_str()), where_condition);
     execute::QueryResult result = execute::DefaultResult();

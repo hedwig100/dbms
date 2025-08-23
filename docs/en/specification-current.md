@@ -20,10 +20,13 @@ This dbms supports the following sql statements.
 
 ```
 <statement> = ( <select-statement> ) ";"
-<select-statement> = "SELECT" <columns> "FROM" <table> "WHERE" <expr>
+<select-statement> = "SELECT" <columns> "FROM" <table> <where-clause>
 
+<where-clause> = ( "WHERE" <expr> )?
 <expr> = <boolean_primary>
-<boolean_primary> = <column> '=' <column>
+<boolean_primary> = <column> <comparison-operator> <column>
+<comparison-operator> = '=' | '<' | '>' | '<=' | '>='
+
 <columns> = '*' | <column> | <columns> ',' <column>
 <column> = <integer> | <id>
 <table> = <id>
@@ -35,4 +38,5 @@ For example, the following statements satisfy the grammer.
 ```
 SELECT a FROM table;
 SELECT 2 FROM tab;
+SELECT a, 2 FROM table WHERE a <= 5;
 ```
